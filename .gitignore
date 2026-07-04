@@ -1,0 +1,16 @@
+.gradle/
+build/
+out/
+target/
+
+*.class
+*.log
+
+.idea/
+*.iml
+.vscode/
+
+.DS_Store
+Thumbs.db
+
+docker-compose.override.yml
