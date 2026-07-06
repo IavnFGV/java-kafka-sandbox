@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 public class ScenarioRuntimeService {
 
     private final Map<String, Integer> currentStepByScenario = new ConcurrentHashMap<>();
+    private volatile ActiveScenarioRuntimeState activeRuntime = new ActiveScenarioRuntimeState(null, 0, false, false, null);
 
     public ScenarioRuntimeState getState(ScenarioGraph scenario) {
         int stepIndex = currentStepByScenario.getOrDefault(scenario.id(), 0);
@@ -32,6 +33,29 @@ public class ScenarioRuntimeService {
     public ScenarioRuntimeState reset(ScenarioGraph scenario) {
         currentStepByScenario.put(scenario.id(), 0);
         return new ScenarioRuntimeState(scenario.id(), 0);
+    }
+
+    public ActiveScenarioRuntimeState activeRuntime() {
+        return activeRuntime;
+    }
+
+    public ActiveScenarioRuntimeState startActiveSession(ScenarioGraph scenario, String testName) {
+        currentStepByScenario.put(scenario.id(), 0);
+        activeRuntime = new ActiveScenarioRuntimeState(scenario.id(), 0, true, false, testName);
+        return activeRuntime;
+    }
+
+    public ActiveScenarioRuntimeState updateActiveStep(ScenarioGraph scenario, int stepIndex) {
+        int clamped = clamp(stepIndex, scenario);
+        currentStepByScenario.put(scenario.id(), clamped);
+        activeRuntime = new ActiveScenarioRuntimeState(scenario.id(), clamped, true, false, activeRuntime.testName());
+        return activeRuntime;
+    }
+
+    public ActiveScenarioRuntimeState completeActiveSession(ScenarioGraph scenario) {
+        int currentIndex = currentStepByScenario.getOrDefault(scenario.id(), 0);
+        activeRuntime = new ActiveScenarioRuntimeState(scenario.id(), clamp(currentIndex, scenario), false, true, activeRuntime.testName());
+        return activeRuntime;
     }
 
     private int clamp(int stepIndex, ScenarioGraph scenario) {

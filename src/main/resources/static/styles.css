@@ -13,6 +13,8 @@
     --consumer: #7c3aed;
     --monitor: #be185d;
     --active: #dc2626;
+    --ready: #16a34a;
+    --ready-soft: rgba(22, 163, 74, 0.22);
 }
 
 * {
@@ -200,9 +202,37 @@ button:hover {
     filter: drop-shadow(0 0 14px rgba(220, 38, 38, 0.26));
 }
 
+.node.ready .node-card {
+    filter: drop-shadow(0 0 18px rgba(22, 163, 74, 0.34));
+}
+
+.node.ready.active .node-card {
+    stroke: inherit;
+    filter: drop-shadow(0 0 18px rgba(22, 163, 74, 0.34));
+}
+
+.node.ready .node-ready-ring {
+    opacity: 1;
+}
+
+.node-ready-ring {
+    fill: var(--ready-soft);
+    opacity: 0;
+}
+
 .edge.active {
     stroke: var(--active);
     stroke-width: 5;
+}
+
+.edge.ready {
+    filter: drop-shadow(0 0 8px rgba(22, 163, 74, 0.34));
+}
+
+.edge.ready.active {
+    stroke: rgba(31, 41, 55, 0.28);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 8px rgba(22, 163, 74, 0.34));
 }
 
 .signal-label {

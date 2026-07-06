@@ -7,6 +7,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class ScenarioCatalog {
 
+    public ScenarioGraph scenarioById(String scenarioId) {
+        return switch (scenarioId) {
+            case "trade-flow" -> tradeFlowScenario();
+            case "system-ready" -> systemReadyScenario();
+            default -> throw new IllegalArgumentException("Unknown scenario id: " + scenarioId);
+        };
+    }
+
     public ScenarioGraph tradeFlowScenario() {
         return new ScenarioGraph(
                 "trade-flow",
@@ -112,6 +120,86 @@ public class ScenarioCatalog {
                                 List.of("inspect-listener"),
                                 "listener",
                                 "observer"
+                        )
+                )
+        );
+    }
+
+    public ScenarioGraph systemReadyScenario() {
+        return new ScenarioGraph(
+                "system-ready",
+                "System Ready",
+                "A basic readiness walkthrough: the Spring Boot app starts, Kafka-facing components are injected, and the sandbox is ready.",
+                1100,
+                640,
+                List.of(
+                        new ScenarioNode("spring-app", "Spring Boot Application", "container", 250, 120, 420, 320, null,
+                                "The application context starts and wires the sandbox components."),
+                        new ScenarioNode("publisher", "TradeEventPublisher", "service", 36, 86, 170, 96, "spring-app",
+                                "The publisher bean is created and ready to send events."),
+                        new ScenarioNode("listener", "TradeEventListener", "consumer", 212, 86, 170, 96, "spring-app",
+                                "The Kafka listener bean is created and ready to receive events."),
+                        new ScenarioNode("kafka", "Kafka Broker", "broker", 760, 250, 190, 96, null,
+                                "Kafka is reachable from the sandbox application.")
+                ),
+                List.of(
+                        new ScenarioEdge("publisher-kafka", "publisher", "kafka", "publisher ready"),
+                        new ScenarioEdge("listener-kafka", "listener", "kafka", "listener subscribed")
+                ),
+                List.of(
+                        new ScenarioStep("step-1", "Spring context started",
+                                "The application context boots and the Spring Boot container becomes available.",
+                                List.of("event-spring-started")),
+                        new ScenarioStep("step-2", "Publisher bean ready",
+                                "TradeEventPublisher is injected and ready to send messages to Kafka.",
+                                List.of("event-publisher-ready")),
+                        new ScenarioStep("step-3", "Listener bean ready",
+                                "TradeEventListener is injected and can subscribe to Kafka records.",
+                                List.of("event-listener-ready")),
+                        new ScenarioStep("step-4", "System ready",
+                                "All key components are alive, wired, and ready for scenario execution.",
+                                List.of("event-system-ready"))
+                ),
+                List.of(
+                        new VisualizationEvent(
+                                "event-spring-started",
+                                "startup",
+                                "Context Up",
+                                "The Spring Boot application context has started.",
+                                List.of("spring-app"),
+                                List.of(),
+                                null,
+                                null
+                        ),
+                        new VisualizationEvent(
+                                "event-publisher-ready",
+                                "readiness",
+                                "Publisher Ready",
+                                "TradeEventPublisher has been injected and is ready to publish.",
+                                List.of("spring-app", "publisher", "kafka"),
+                                List.of("publisher-kafka"),
+                                "publisher",
+                                "kafka"
+                        ),
+                        new VisualizationEvent(
+                                "event-listener-ready",
+                                "readiness",
+                                "Listener Ready",
+                                "TradeEventListener has been injected and is ready to consume from Kafka.",
+                                List.of("spring-app", "listener", "kafka"),
+                                List.of("listener-kafka"),
+                                "listener",
+                                "kafka"
+                        ),
+                        new VisualizationEvent(
+                                "event-system-ready",
+                                "status",
+                                "System Ready",
+                                "The sandbox is healthy and can start scenario execution.",
+                                List.of("spring-app", "publisher", "listener", "kafka"),
+                                List.of("publisher-kafka", "listener-kafka"),
+                                null,
+                                null
                         )
                 )
         );

@@ -2,7 +2,8 @@ const state = {
   scenario: null,
   stepIndex: 0,
   timerId: null,
-  drag: null
+  drag: null,
+  activeScenarioId: null
 };
 
 const graph = document.getElementById("graph");
@@ -14,18 +15,22 @@ const prevBtn = document.getElementById("prev-btn");
 const playBtn = document.getElementById("play-btn");
 const nextBtn = document.getElementById("next-btn");
 const resetBtn = document.getElementById("reset-btn");
+const scenarioId = new URLSearchParams(window.location.search).get("scenario") || "system-ready";
 
 Promise.all([
-  fetchJson("/api/scenarios/trade-flow"),
-  fetchJson("/api/scenarios/trade-flow/runtime")
+  fetchJson(`/api/scenarios/${scenarioId}`),
+  fetchJson(`/api/scenarios/${scenarioId}/runtime`)
 ]).then(([scenario, runtime]) => {
   state.scenario = scenario;
   state.stepIndex = runtime.currentStepIndex;
+  state.activeScenarioId = scenario.id;
   title.textContent = scenario.title;
   summary.textContent = scenario.summary;
   graph.setAttribute("viewBox", `0 0 ${scenario.viewportWidth} ${scenario.viewportHeight}`);
   render();
 });
+
+window.setInterval(syncActiveRuntime, 500);
 
 graph.addEventListener("pointermove", (event) => {
   if (!state.drag || state.drag.pointerId !== event.pointerId) {
@@ -61,17 +66,17 @@ graph.addEventListener("pointercancel", (event) => {
 
 prevBtn.addEventListener("click", () => {
   stopPlayback();
-  moveRuntime("/api/scenarios/trade-flow/runtime/previous");
+  moveRuntime(`/api/scenarios/${scenarioId}/runtime/previous`);
 });
 
 nextBtn.addEventListener("click", () => {
   stopPlayback();
-  moveRuntime("/api/scenarios/trade-flow/runtime/next");
+  moveRuntime(`/api/scenarios/${scenarioId}/runtime/next`);
 });
 
 resetBtn.addEventListener("click", () => {
   stopPlayback();
-  moveRuntime("/api/scenarios/trade-flow/runtime/reset");
+  moveRuntime(`/api/scenarios/${scenarioId}/runtime/reset`);
 });
 
 playBtn.addEventListener("click", () => {
@@ -82,7 +87,7 @@ playBtn.addEventListener("click", () => {
 
   playBtn.textContent = "Pause";
   state.timerId = window.setInterval(() => {
-    moveRuntime("/api/scenarios/trade-flow/runtime/next", false);
+    moveRuntime(`/api/scenarios/${scenarioId}/runtime/next`, false);
   }, 1800);
 });
 
@@ -120,6 +125,35 @@ function render() {
   attachDragHandlers();
 }
 
+function syncActiveRuntime() {
+  fetchJson("/api/scenarios/runtime/active")
+    .then((runtime) => {
+      if (!runtime || !runtime.scenarioId) {
+        return;
+      }
+
+      if (runtime.scenarioId !== state.activeScenarioId) {
+        return fetchJson(`/api/scenarios/${runtime.scenarioId}`).then((scenario) => {
+          state.scenario = scenario;
+          state.activeScenarioId = scenario.id;
+          title.textContent = scenario.title;
+          summary.textContent = scenario.summary;
+          graph.setAttribute("viewBox", `0 0 ${scenario.viewportWidth} ${scenario.viewportHeight}`);
+          state.stepIndex = runtime.currentStepIndex;
+          render();
+        });
+      }
+
+      if (runtime.currentStepIndex !== state.stepIndex) {
+        state.stepIndex = runtime.currentStepIndex;
+        render();
+      }
+    })
+    .catch(() => {
+      // Ignore polling failures when the app is restarting.
+    });
+}
+
 function moveRuntime(url, shouldRender = true) {
   fetchJson(url, { method: "POST" }).then((runtime) => {
     state.stepIndex = runtime.currentStepIndex;
@@ -140,7 +174,11 @@ function renderEdges(edges, layout, stepView) {
   return edges.map((edge) => {
     const from = layout.get(edge.from);
     const to = layout.get(edge.to);
-    const active = stepView.activeEdgeIds.includes(edge.id) ? "active" : "";
+    const edgeState = stepView.readyEdgeIds.includes(edge.id)
+      ? "ready"
+      : stepView.activeEdgeIds.includes(edge.id)
+        ? "active"
+        : "";
     const x1 = from.centerX;
     const y1 = from.centerY;
     const x2 = to.centerX;
@@ -150,7 +188,7 @@ function renderEdges(edges, layout, stepView) {
 
     return `
       <g>
-        <line class="edge ${active}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#arrow)"></line>
+        <line class="edge ${edgeState}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#arrow)"></line>
         <text class="edge-label" x="${labelX}" y="${labelY}" text-anchor="middle">${edge.label}</text>
       </g>
     `;
@@ -163,11 +201,14 @@ function renderNodes(layout, stepView) {
     .map((entry) => {
     const { node, absoluteX, absoluteY } = entry;
     const active = stepView.activeNodeIds.includes(node.id) ? "active" : "";
+    const ready = stepView.readyNodeIds.includes(node.id) ? "ready" : "";
     const stroke = colorForType(node.type);
     const typeClass = node.type === "container" ? "node-container" : "";
+    const ringInset = node.type === "container" ? 10 : 8;
 
     return `
-      <g class="node ${typeClass} ${active}" data-node-id="${node.id}" transform="translate(${absoluteX}, ${absoluteY})">
+      <g class="node ${typeClass} ${active} ${ready}" data-node-id="${node.id}" transform="translate(${absoluteX}, ${absoluteY})">
+        <rect class="node-ready-ring" x="${ringInset}" y="${ringInset}" width="${node.width - ringInset * 2}" height="${node.height - ringInset * 2}" rx="${node.type === "container" ? 22 : 14}"></rect>
         <rect class="node-card" width="${node.width}" height="${node.height}" rx="${node.type === "container" ? 28 : 20}" stroke="${stroke}"></rect>
         <text class="node-title" x="18" y="30">${node.label}</text>
         <text class="node-copy" x="18" y="54">${node.description}</text>
@@ -211,13 +252,25 @@ function buildStepView(step, events) {
     .map((eventId) => events.find((event) => event.id === eventId))
     .filter(Boolean);
 
-  const activeNodeIds = [...new Set(selectedEvents.flatMap((event) => event.activeNodeIds || []))];
-  const activeEdgeIds = [...new Set(selectedEvents.flatMap((event) => event.activeEdgeIds || []))];
+  const readyNodeIds = [...new Set(selectedEvents
+    .filter((event) => event.type === "readiness" || event.type === "status")
+    .flatMap((event) => event.activeNodeIds || []))];
+  const readyEdgeIds = [...new Set(selectedEvents
+    .filter((event) => event.type === "readiness" || event.type === "status")
+    .flatMap((event) => event.activeEdgeIds || []))];
+  const activeNodeIds = [...new Set(selectedEvents
+    .flatMap((event) => event.activeNodeIds || [])
+    .filter((nodeId) => !readyNodeIds.includes(nodeId)))];
+  const activeEdgeIds = [...new Set(selectedEvents
+    .flatMap((event) => event.activeEdgeIds || [])
+    .filter((edgeId) => !readyEdgeIds.includes(edgeId)))];
   const primaryEvent = selectedEvents[selectedEvents.length - 1] || null;
 
   return {
     activeNodeIds,
     activeEdgeIds,
+    readyNodeIds,
+    readyEdgeIds,
     signalLabel: primaryEvent ? primaryEvent.label : null,
     signalFromId: primaryEvent ? primaryEvent.signalFromId : null,
     signalToId: primaryEvent ? primaryEvent.signalToId : null

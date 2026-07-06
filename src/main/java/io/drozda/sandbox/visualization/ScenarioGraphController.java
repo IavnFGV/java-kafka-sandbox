@@ -1,7 +1,9 @@
 package io.drozda.sandbox.visualization;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,28 +19,54 @@ public class ScenarioGraphController {
         this.scenarioRuntimeService = scenarioRuntimeService;
     }
 
-    @GetMapping("/trade-flow")
-    public ScenarioGraph tradeFlowScenario() {
-        return scenarioCatalog.tradeFlowScenario();
+    @GetMapping("/{scenarioId}")
+    public ScenarioGraph scenario(@PathVariable String scenarioId) {
+        return scenarioCatalog.scenarioById(scenarioId);
     }
 
-    @GetMapping("/trade-flow/runtime")
-    public ScenarioRuntimeState tradeFlowRuntime() {
-        return scenarioRuntimeService.getState(scenarioCatalog.tradeFlowScenario());
+    @GetMapping("/{scenarioId}/runtime")
+    public ScenarioRuntimeState scenarioRuntime(@PathVariable String scenarioId) {
+        return scenarioRuntimeService.getState(scenarioCatalog.scenarioById(scenarioId));
     }
 
-    @PostMapping("/trade-flow/runtime/next")
-    public ScenarioRuntimeState nextTradeFlowStep() {
-        return scenarioRuntimeService.next(scenarioCatalog.tradeFlowScenario());
+    @PostMapping("/{scenarioId}/runtime/next")
+    public ScenarioRuntimeState nextStep(@PathVariable String scenarioId) {
+        return scenarioRuntimeService.next(scenarioCatalog.scenarioById(scenarioId));
     }
 
-    @PostMapping("/trade-flow/runtime/previous")
-    public ScenarioRuntimeState previousTradeFlowStep() {
-        return scenarioRuntimeService.previous(scenarioCatalog.tradeFlowScenario());
+    @PostMapping("/{scenarioId}/runtime/previous")
+    public ScenarioRuntimeState previousStep(@PathVariable String scenarioId) {
+        return scenarioRuntimeService.previous(scenarioCatalog.scenarioById(scenarioId));
     }
 
-    @PostMapping("/trade-flow/runtime/reset")
-    public ScenarioRuntimeState resetTradeFlowStep() {
-        return scenarioRuntimeService.reset(scenarioCatalog.tradeFlowScenario());
+    @PostMapping("/{scenarioId}/runtime/reset")
+    public ScenarioRuntimeState resetStep(@PathVariable String scenarioId) {
+        return scenarioRuntimeService.reset(scenarioCatalog.scenarioById(scenarioId));
+    }
+
+    @GetMapping("/runtime/active")
+    public ActiveScenarioRuntimeState activeRuntime() {
+        return scenarioRuntimeService.activeRuntime();
+    }
+
+    @PostMapping("/runtime/session/start")
+    public ActiveScenarioRuntimeState startRuntimeSession(@RequestBody ActiveScenarioSessionRequest request) {
+        return scenarioRuntimeService.startActiveSession(
+                scenarioCatalog.scenarioById(request.scenarioId()),
+                request.testName()
+        );
+    }
+
+    @PostMapping("/runtime/session/step")
+    public ActiveScenarioRuntimeState updateRuntimeStep(@RequestBody ActiveScenarioStepRequest request) {
+        return scenarioRuntimeService.updateActiveStep(
+                scenarioCatalog.scenarioById(request.scenarioId()),
+                request.stepIndex()
+        );
+    }
+
+    @PostMapping("/runtime/session/complete")
+    public ActiveScenarioRuntimeState completeRuntimeSession(@RequestBody ActiveScenarioSessionRequest request) {
+        return scenarioRuntimeService.completeActiveSession(scenarioCatalog.scenarioById(request.scenarioId()));
     }
 }
