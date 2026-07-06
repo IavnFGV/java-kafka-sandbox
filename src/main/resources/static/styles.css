@@ -15,6 +15,10 @@
     --active: #dc2626;
     --ready: #16a34a;
     --ready-soft: rgba(22, 163, 74, 0.22);
+    --busy: #d97706;
+    --busy-soft: rgba(217, 119, 6, 0.18);
+    --failed: #dc2626;
+    --failed-soft: rgba(220, 38, 38, 0.18);
 }
 
 * {
@@ -218,6 +222,24 @@ button:hover {
 .node-ready-ring {
     fill: var(--ready-soft);
     opacity: 0;
+}
+
+.node.busy .node-card {
+    filter: drop-shadow(0 0 18px rgba(217, 119, 6, 0.32));
+}
+
+.node.busy .node-ready-ring {
+    fill: var(--busy-soft);
+    opacity: 1;
+}
+
+.node.failed .node-card {
+    filter: drop-shadow(0 0 18px rgba(220, 38, 38, 0.34));
+}
+
+.node.failed .node-ready-ring {
+    fill: var(--failed-soft);
+    opacity: 1;
 }
 
 .edge.active {

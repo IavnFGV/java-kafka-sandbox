@@ -33,6 +33,21 @@ public final class VisualScenarioTestClient {
                 "{\"scenarioId\":\"" + scenarioId + "\",\"stepIndex\":" + stepIndex + "}");
     }
 
+    public static void event(String scenarioId, String type, String nodeId, String edgeId, String label,
+            String fromNodeId, String toNodeId, String status) {
+        postJson("http://localhost:8080/api/scenarios/runtime/event",
+                "{"
+                        + "\"scenarioId\":\"" + scenarioId + "\","
+                        + "\"type\":\"" + escape(type) + "\","
+                        + "\"nodeId\":" + jsonString(nodeId) + ","
+                        + "\"edgeId\":" + jsonString(edgeId) + ","
+                        + "\"label\":" + jsonString(label) + ","
+                        + "\"fromNodeId\":" + jsonString(fromNodeId) + ","
+                        + "\"toNodeId\":" + jsonString(toNodeId) + ","
+                        + "\"status\":" + jsonString(status)
+                        + "}");
+    }
+
     public static void complete(String scenarioId, String testName) {
         postJson(BASE_URL + "/complete",
                 "{\"scenarioId\":\"" + scenarioId + "\",\"testName\":\"" + escape(testName) + "\"}");
@@ -60,5 +75,9 @@ public final class VisualScenarioTestClient {
 
     private static String escape(String input) {
         return input.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private static String jsonString(String value) {
+        return value == null ? "null" : "\"" + escape(value) + "\"";
     }
 }

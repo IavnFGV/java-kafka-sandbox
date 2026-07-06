@@ -3,7 +3,8 @@ const state = {
   stepIndex: 0,
   timerId: null,
   drag: null,
-  activeScenarioId: null
+  activeScenarioId: null,
+  activeRuntime: null
 };
 
 const graph = document.getElementById("graph");
@@ -24,6 +25,7 @@ Promise.all([
   state.scenario = scenario;
   state.stepIndex = runtime.currentStepIndex;
   state.activeScenarioId = scenario.id;
+  state.activeRuntime = null;
   title.textContent = scenario.title;
   summary.textContent = scenario.summary;
   graph.setAttribute("viewBox", `0 0 ${scenario.viewportWidth} ${scenario.viewportHeight}`);
@@ -106,10 +108,18 @@ function render() {
     return;
   }
 
+  const liveMode = hasLiveRuntimeForScenario();
   const step = state.scenario.steps[state.stepIndex];
-  const stepView = buildStepView(step, state.scenario.events);
-  stepTitle.textContent = step.title;
-  stepDescription.textContent = step.description;
+  const stepView = liveMode
+    ? buildLiveView(state.activeRuntime)
+    : buildStepView(step, state.scenario.events);
+
+  stepTitle.textContent = liveMode
+    ? (state.activeRuntime.lastEventLabel || "Live Runtime")
+    : step.title;
+  stepDescription.textContent = liveMode
+    ? describeLiveRuntime(state.activeRuntime)
+    : step.description;
   const layout = buildLayout(state.scenario.nodes);
 
   graph.innerHTML = `
@@ -120,7 +130,7 @@ function render() {
     </defs>
     ${renderEdges(state.scenario.edges, layout, stepView)}
     ${renderNodes(layout, stepView)}
-    ${renderSignal(layout, stepView)}
+    ${renderSignals(layout, stepView)}
   `;
   attachDragHandlers();
 }
@@ -131,6 +141,8 @@ function syncActiveRuntime() {
       if (!runtime || !runtime.scenarioId) {
         return;
       }
+
+      state.activeRuntime = runtime;
 
       if (runtime.scenarioId !== state.activeScenarioId) {
         return fetchJson(`/api/scenarios/${runtime.scenarioId}`).then((scenario) => {
@@ -144,10 +156,8 @@ function syncActiveRuntime() {
         });
       }
 
-      if (runtime.currentStepIndex !== state.stepIndex) {
-        state.stepIndex = runtime.currentStepIndex;
-        render();
-      }
+      state.stepIndex = runtime.currentStepIndex;
+      render();
     })
     .catch(() => {
       // Ignore polling failures when the app is restarting.
@@ -157,6 +167,7 @@ function syncActiveRuntime() {
 function moveRuntime(url, shouldRender = true) {
   fetchJson(url, { method: "POST" }).then((runtime) => {
     state.stepIndex = runtime.currentStepIndex;
+    state.activeRuntime = runtime;
     if (shouldRender) {
       render();
       return;
@@ -202,39 +213,52 @@ function renderNodes(layout, stepView) {
     const { node, absoluteX, absoluteY } = entry;
     const active = stepView.activeNodeIds.includes(node.id) ? "active" : "";
     const ready = stepView.readyNodeIds.includes(node.id) ? "ready" : "";
+    const failed = stepView.failedNodeIds.includes(node.id) ? "failed" : "";
+    const busy = stepView.busyNodeIds.includes(node.id) ? "busy" : "";
     const stroke = colorForType(node.type);
     const typeClass = node.type === "container" ? "node-container" : "";
     const ringInset = node.type === "container" ? 10 : 8;
+    const titleLines = wrapText(node.label, 18, node.width - 36);
+    const copyLines = wrapText(node.description, 12, node.width - 36);
+    const titleMarkup = renderTextLines(titleLines, 18, 30, 22, "node-title");
+    const copyStartY = 30 + Math.max(titleLines.length - 1, 0) * 22 + 24;
+    const copyMarkup = renderTextLines(copyLines, 18, copyStartY, 17, "node-copy");
 
     return `
-      <g class="node ${typeClass} ${active} ${ready}" data-node-id="${node.id}" transform="translate(${absoluteX}, ${absoluteY})">
+      <g class="node ${typeClass} ${active} ${ready} ${failed} ${busy}" data-node-id="${node.id}" transform="translate(${absoluteX}, ${absoluteY})">
         <rect class="node-ready-ring" x="${ringInset}" y="${ringInset}" width="${node.width - ringInset * 2}" height="${node.height - ringInset * 2}" rx="${node.type === "container" ? 22 : 14}"></rect>
         <rect class="node-card" width="${node.width}" height="${node.height}" rx="${node.type === "container" ? 28 : 20}" stroke="${stroke}"></rect>
-        <text class="node-title" x="18" y="30">${node.label}</text>
-        <text class="node-copy" x="18" y="54">${node.description}</text>
+        ${titleMarkup}
+        ${copyMarkup}
       </g>
     `;
   }).join("");
 }
 
-function renderSignal(layout, stepView) {
-  if (!stepView.signalFromId || !stepView.signalToId) {
+function renderSignals(layout, stepView) {
+  const signals = stepView.signals || [];
+  return signals.map((signal, index) => renderSignal(layout, signal, index)).join("");
+}
+
+function renderSignal(layout, signal, index) {
+  if (!signal.fromNodeId || !signal.toNodeId) {
     return "";
   }
 
-  const from = layout.get(stepView.signalFromId);
-  const to = layout.get(stepView.signalToId);
+  const from = layout.get(signal.fromNodeId);
+  const to = layout.get(signal.toNodeId);
   if (!from || !to) {
     return "";
   }
 
-  const label = stepView.signalLabel || "message";
+  const label = signal.label || "message";
   const startX = from.centerX;
   const startY = from.centerY;
   const endX = to.centerX;
   const endY = to.centerY;
+  const offset = index * 18;
   const midX = (startX + endX) / 2;
-  const midY = (startY + endY) / 2 - 18;
+  const midY = (startY + endY) / 2 - 18 - offset;
 
   return `
     <g class="signal">
@@ -271,10 +295,93 @@ function buildStepView(step, events) {
     activeEdgeIds,
     readyNodeIds,
     readyEdgeIds,
-    signalLabel: primaryEvent ? primaryEvent.label : null,
-    signalFromId: primaryEvent ? primaryEvent.signalFromId : null,
-    signalToId: primaryEvent ? primaryEvent.signalToId : null
+    failedNodeIds: [],
+    busyNodeIds: [],
+    signals: primaryEvent && primaryEvent.signalFromId && primaryEvent.signalToId
+      ? [{
+        label: primaryEvent.label,
+        fromNodeId: primaryEvent.signalFromId,
+        toNodeId: primaryEvent.signalToId
+      }]
+      : []
   };
+}
+
+function buildLiveView(runtime) {
+  const nodeStatuses = runtime.nodeStatuses || {};
+  const edgeStatuses = runtime.edgeStatuses || {};
+  const readyNodeIds = [];
+  const failedNodeIds = [];
+  const busyNodeIds = [];
+  const readyEdgeIds = [];
+  const activeEdgeIds = [];
+
+  Object.entries(nodeStatuses).forEach(([nodeId, status]) => {
+    if (status === "READY") {
+      readyNodeIds.push(nodeId);
+    } else if (status === "FAILED") {
+      failedNodeIds.push(nodeId);
+    } else if (status === "BUSY" || status === "WAITING") {
+      busyNodeIds.push(nodeId);
+    }
+  });
+
+  Object.entries(edgeStatuses).forEach(([edgeId, status]) => {
+    if (status === "READY") {
+      readyEdgeIds.push(edgeId);
+    } else if (status === "ACTIVE" || status === "BUSY") {
+      activeEdgeIds.push(edgeId);
+    }
+  });
+
+  return {
+    activeNodeIds: busyNodeIds,
+    activeEdgeIds,
+    readyNodeIds,
+    readyEdgeIds,
+    failedNodeIds,
+    busyNodeIds,
+    signals: runtime.activeSignals || []
+  };
+}
+
+function hasLiveRuntimeForScenario() {
+  return state.activeRuntime
+    && state.activeRuntime.scenarioId === state.activeScenarioId
+    && (Object.keys(state.activeRuntime.nodeStatuses || {}).length > 0
+      || Object.keys(state.activeRuntime.edgeStatuses || {}).length > 0
+      || (state.activeRuntime.activeSignals || []).length > 0
+      || state.activeRuntime.completed);
+}
+
+function describeLiveRuntime(runtime) {
+  const labels = [];
+  const nodeStatuses = runtime.nodeStatuses || {};
+  const edgeStatuses = runtime.edgeStatuses || {};
+  const ready = Object.entries(nodeStatuses).filter(([, status]) => status === "READY").map(([nodeId]) => nodeId);
+  const failed = Object.entries(nodeStatuses).filter(([, status]) => status === "FAILED").map(([nodeId]) => nodeId);
+  const busy = Object.entries(nodeStatuses).filter(([, status]) => status === "BUSY" || status === "WAITING").map(([nodeId]) => nodeId);
+  const activeEdges = Object.entries(edgeStatuses).filter(([, status]) => status === "ACTIVE" || status === "BUSY").map(([edgeId]) => edgeId);
+
+  if (ready.length > 0) {
+    labels.push(`Ready: ${ready.join(", ")}`);
+  }
+  if (busy.length > 0) {
+    labels.push(`Busy: ${busy.join(", ")}`);
+  }
+  if (failed.length > 0) {
+    labels.push(`Failed: ${failed.join(", ")}`);
+  }
+  if (activeEdges.length > 0) {
+    labels.push(`Flow: ${activeEdges.join(", ")}`);
+  }
+  if (runtime.completed) {
+    labels.push("Session completed");
+  }
+  if (labels.length === 0) {
+    return "The visualizer is waiting for runtime events.";
+  }
+  return labels.join(" | ");
 }
 
 function colorForType(type) {
@@ -294,6 +401,86 @@ function colorForType(type) {
     default:
       return "#475569";
   }
+}
+
+function renderTextLines(lines, x, startY, lineHeight, cssClass) {
+  return `
+    <text class="${cssClass}" x="${x}" y="${startY}">
+      ${lines.map((line, index) => `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`).join("")}
+    </text>
+  `;
+}
+
+function wrapText(text, fontSize, maxWidth) {
+  if (!text) {
+    return [""];
+  }
+
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines = [];
+  let currentLine = "";
+
+  words.forEach((word) => {
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+    if (estimateTextWidth(candidate, fontSize) <= maxWidth) {
+      currentLine = candidate;
+      return;
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    if (estimateTextWidth(word, fontSize) <= maxWidth) {
+      currentLine = word;
+      return;
+    }
+
+    const chunks = breakLongWord(word, fontSize, maxWidth);
+    lines.push(...chunks.slice(0, -1));
+    currentLine = chunks[chunks.length - 1];
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+}
+
+function breakLongWord(word, fontSize, maxWidth) {
+  const chunks = [];
+  let currentChunk = "";
+
+  for (const char of word) {
+    const candidate = currentChunk + char;
+    if (currentChunk && estimateTextWidth(candidate, fontSize) > maxWidth) {
+      chunks.push(currentChunk);
+      currentChunk = char;
+      continue;
+    }
+
+    currentChunk = candidate;
+  }
+
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
+}
+
+function estimateTextWidth(text, fontSize) {
+  return text.length * fontSize * 0.58;
+}
+
+function escapeXml(text) {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&apos;");
 }
 
 function buildLayout(nodes) {

@@ -69,4 +69,12 @@ public class ScenarioGraphController {
     public ActiveScenarioRuntimeState completeRuntimeSession(@RequestBody ActiveScenarioSessionRequest request) {
         return scenarioRuntimeService.completeActiveSession(scenarioCatalog.scenarioById(request.scenarioId()));
     }
+
+    @PostMapping("/runtime/event")
+    public ActiveScenarioRuntimeState applyRuntimeEvent(@RequestBody RuntimeEventRequest request) {
+        return scenarioRuntimeService.applyRuntimeEvent(
+                scenarioCatalog.scenarioById(request.scenarioId()),
+                request
+        );
+    }
 }

@@ -31,19 +31,23 @@ class AllComponentsTest {
 
     @Test
     void shouldLoadAllCoreComponents() throws InterruptedException {
-        VisualScenarioTestClient.step("system-ready", 0);
+        VisualScenarioTestClient.event("system-ready", "component-ready", "spring-app", null,
+                "Spring Context Ready", null, null, "READY");
         Thread.sleep(400);
         assertNotNull(tradeEventPublisher);
 
-        VisualScenarioTestClient.step("system-ready", 1);
+        VisualScenarioTestClient.event("system-ready", "component-ready", "publisher", "publisher-kafka",
+                "Publisher Ready", null, null, "READY");
         Thread.sleep(400);
         assertNotNull(tradeEventListener);
 
-        VisualScenarioTestClient.step("system-ready", 2);
+        VisualScenarioTestClient.event("system-ready", "component-ready", "listener", "listener-kafka",
+                "Listener Ready", null, null, "READY");
         Thread.sleep(400);
         assertNotNull(kafkaTemplate);
 
-        VisualScenarioTestClient.step("system-ready", 3);
+        VisualScenarioTestClient.event("system-ready", "component-ready", "kafka", null,
+                "Kafka Reachable", null, null, "READY");
         Thread.sleep(400);
     }
 }
