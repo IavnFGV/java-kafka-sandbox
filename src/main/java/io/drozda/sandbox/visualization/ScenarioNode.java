@@ -6,6 +6,9 @@ public record ScenarioNode(
         String type,
         int x,
         int y,
+        int width,
+        int height,
+        String parentId,
         String description
 ) {
 }

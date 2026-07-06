@@ -6,6 +6,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import io.drozda.sandbox.model.TradeEvent;
+import io.drozda.sandbox.visualization.aop.VisualAction;
 
 @Service
 public class TradeEventPublisher {
@@ -16,6 +17,7 @@ public class TradeEventPublisher {
     @Value("${app.kafka.topics.trade-events}")
     private String topic;
 
+    @VisualAction("event-publish")
     public void publishTradeEvent(TradeEvent tradeEvent) {
         kafkaTemplate.send(topic, tradeEvent.tradeId(), tradeEvent);
     }

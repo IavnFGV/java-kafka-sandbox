@@ -7,6 +7,7 @@
     --accent: #d97706;
     --accent-soft: rgba(217, 119, 6, 0.16);
     --external: #2563eb;
+    --container: #0f172a;
     --service: #0f766e;
     --broker: #b45309;
     --consumer: #7c3aed;
@@ -41,10 +42,16 @@ body {
 }
 
 .hero-copy,
-.section-copy {
+.section-copy,
+.micro-copy {
     max-width: 720px;
     color: var(--muted);
     line-height: 1.6;
+}
+
+.micro-copy {
+    margin-top: 10px;
+    font-size: 0.95rem;
 }
 
 .eyebrow,
@@ -143,6 +150,7 @@ button:hover {
 }
 
 .external { background: var(--external); }
+.container { background: var(--container); }
 .service { background: var(--service); }
 .broker { background: var(--broker); }
 .consumer { background: var(--consumer); }
@@ -163,6 +171,11 @@ button:hover {
     stroke-width: 3;
 }
 
+.node.node-container .node-card {
+    fill: rgba(255, 255, 255, 0.45);
+    stroke-dasharray: 10 8;
+}
+
 .node-title {
     font-size: 18px;
     font-weight: 700;
@@ -174,6 +187,14 @@ button:hover {
     fill: var(--muted);
 }
 
+.node {
+    cursor: grab;
+}
+
+.node.dragging {
+    cursor: grabbing;
+}
+
 .node.active .node-card {
     stroke: var(--active);
     filter: drop-shadow(0 0 14px rgba(220, 38, 38, 0.26));
@@ -182,6 +203,23 @@ button:hover {
 .edge.active {
     stroke: var(--active);
     stroke-width: 5;
+}
+
+.signal-label {
+    fill: var(--active);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.signal-body {
+    fill: #fff7ed;
+    stroke: var(--active);
+    stroke-width: 2;
+    filter: drop-shadow(0 6px 16px rgba(220, 38, 38, 0.18));
+}
+
+.signal-dot {
+    fill: var(--active);
 }
 
 @media (max-width: 900px) {
