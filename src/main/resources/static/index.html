@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandbox Integration Visualizer</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <p class="eyebrow">Integration Learning Surface</p>
+            <h1>Sandbox Integration Visualizer</h1>
+            <p class="hero-copy">
+                A small visual layer for understanding how events move through the system.
+                Today it shows a graph. Next, we can teach it retries, failures, and real monitoring signals.
+            </p>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="section-label">Scenario</p>
+                    <h2 id="scenario-title">Loading...</h2>
+                    <p id="scenario-summary" class="section-copy"></p>
+                </div>
+                <div class="controls">
+                    <button id="prev-btn" type="button">Back</button>
+                    <button id="play-btn" type="button">Play</button>
+                    <button id="next-btn" type="button">Next</button>
+                </div>
+            </div>
+
+            <div class="graph-shell">
+                <svg id="graph" viewBox="0 0 980 520" role="img" aria-label="System integration graph"></svg>
+            </div>
+        </section>
+
+        <section class="panel details">
+            <div class="step-card">
+                <p class="section-label">Current Step</p>
+                <h2 id="step-title">Loading...</h2>
+                <p id="step-description" class="section-copy"></p>
+            </div>
+
+            <div class="legend">
+                <p class="section-label">Legend</p>
+                <ul>
+                    <li><span class="legend-dot external"></span>External actor</li>
+                    <li><span class="legend-dot service"></span>Application service</li>
+                    <li><span class="legend-dot broker"></span>Kafka broker/topic</li>
+                    <li><span class="legend-dot consumer"></span>Consumer/listener</li>
+                    <li><span class="legend-dot monitor"></span>Monitoring/observability</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

@@ -16,7 +16,6 @@ public class TradeEventListener {
 
     public CountDownLatch latch = new CountDownLatch(1);
     public TradeEvent tradeEvent;
-    
 
     @KafkaListener(topics = "${app.kafka.topics.trade-events}")
     public void onTradeEvent(TradeEvent tradeEvent) {
@@ -24,5 +23,4 @@ public class TradeEventListener {
         log.info("Received trade event from Kafka: {}", this.tradeEvent);
         latch.countDown();
     }
-
 }
