@@ -32,6 +32,7 @@ class ScenarioRuntimeServiceTest {
 
         assertEquals("READY", afterReady.nodeStatuses().get("publisher"));
         assertEquals("READY", afterReady.edgeStatuses().get("publisher-kafka"));
+        assertTrue(afterReady.eventLog().stream().anyMatch(line -> line.contains("Component ready: Publisher Ready")));
 
         ActiveScenarioRuntimeState afterSignalStart = runtimeService.applyRuntimeEvent(
                 scenario,
@@ -99,5 +100,6 @@ class ScenarioRuntimeServiceTest {
 
         assertTrue(completed.completed());
         assertFalse(completed.active());
+        assertEquals("Session completed", completed.eventLog().get(completed.eventLog().size() - 1));
     }
 }

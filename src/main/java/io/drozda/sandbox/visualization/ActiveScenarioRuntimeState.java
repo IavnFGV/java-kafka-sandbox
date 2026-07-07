@@ -12,6 +12,7 @@ public record ActiveScenarioRuntimeState(
         Map<String, String> nodeStatuses,
         Map<String, String> edgeStatuses,
         List<RuntimeSignal> activeSignals,
+        List<String> eventLog,
         String lastEventType,
         String lastEventLabel
 ) {

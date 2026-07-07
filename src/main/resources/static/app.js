@@ -18,6 +18,7 @@ const title = document.getElementById("scenario-title");
 const summary = document.getElementById("scenario-summary");
 const stepTitle = document.getElementById("step-title");
 const stepDescription = document.getElementById("step-description");
+const runtimeLog = document.getElementById("runtime-log");
 const prevBtn = document.getElementById("prev-btn");
 const playBtn = document.getElementById("play-btn");
 const nextBtn = document.getElementById("next-btn");
@@ -155,6 +156,7 @@ function render() {
 
   stepTitle.textContent = currentTitle();
   stepDescription.textContent = currentDescription();
+  renderRuntimeLog();
   graph.innerHTML = `
     <defs>
       <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
@@ -166,6 +168,23 @@ function render() {
     ${renderSignals(layout, stepView)}
   `;
   attachDragHandlers();
+}
+
+function renderRuntimeLog() {
+  if (!runtimeLog) {
+    return;
+  }
+
+  const lines = currentLogLines();
+
+  if (lines.length === 0) {
+    runtimeLog.innerHTML = `<p class="runtime-log-empty">No runtime events yet.</p>`;
+    return;
+  }
+
+  runtimeLog.innerHTML = lines.map((line) => `
+    <div class="runtime-log-line">${escapeXml(line)}</div>
+  `).join("");
 }
 
 function renderScenarioList() {
@@ -234,6 +253,22 @@ function currentDescription() {
   }
 
   return state.scenario.steps[state.stepIndex].description;
+}
+
+function currentLogLines() {
+  if (hasLiveRuntimeForScenario() && Array.isArray(state.activeRuntime.eventLog) && state.activeRuntime.eventLog.length > 0) {
+    return state.activeRuntime.eventLog.slice().reverse();
+  }
+
+  const step = state.scenario.steps[state.stepIndex];
+  if (!step) {
+    return [];
+  }
+
+  return [
+    `Step ${state.stepIndex}: ${step.title}`,
+    step.description
+  ].filter(Boolean);
 }
 
 function buildStepView(step, events) {

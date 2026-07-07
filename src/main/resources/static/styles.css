@@ -215,6 +215,37 @@ button:hover {
     color: var(--muted);
 }
 
+.runtime-log-panel {
+    padding-top: 20px;
+}
+
+.runtime-log {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.runtime-log-line,
+.runtime-log-empty {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.runtime-log-line + .runtime-log-line {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(31, 41, 55, 0.08);
+}
+
+.runtime-log-empty {
+    color: rgba(95, 107, 122, 0.78);
+}
+
 .legend-dot {
     width: 14px;
     height: 14px;

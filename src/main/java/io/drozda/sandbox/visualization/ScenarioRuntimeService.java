@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ScenarioRuntimeService {
+    private static final int MAX_LOG_LINES = 24;
 
     private static final String STATUS_READY = "READY";
     private static final String STATUS_ACTIVE = "ACTIVE";
@@ -59,6 +60,11 @@ public class ScenarioRuntimeService {
 
     public ActiveScenarioRuntimeState startActiveSession(ScenarioGraph scenario, String testName) {
         currentStepByScenario.put(scenario.id(), 0);
+        List<String> eventLog = new ArrayList<>();
+        appendLog(eventLog, "Session started: " + (testName != null ? testName : scenario.title()));
+        if (!scenario.steps().isEmpty()) {
+            appendLog(eventLog, "Step 0: " + scenario.steps().get(0).title());
+        }
         activeRuntime = new ActiveScenarioRuntimeState(
                 scenario.id(),
                 0,
@@ -68,6 +74,7 @@ public class ScenarioRuntimeService {
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new ArrayList<>(),
+                eventLog,
                 "session-started",
                 testName
         );
@@ -77,6 +84,10 @@ public class ScenarioRuntimeService {
     public ActiveScenarioRuntimeState updateActiveStep(ScenarioGraph scenario, int stepIndex) {
         int clamped = clamp(stepIndex, scenario);
         currentStepByScenario.put(scenario.id(), clamped);
+        List<String> eventLog = copyLog(activeRuntime.eventLog());
+        if (!scenario.steps().isEmpty()) {
+            appendLog(eventLog, "Step " + clamped + ": " + scenario.steps().get(clamped).title());
+        }
         activeRuntime = new ActiveScenarioRuntimeState(
                 scenario.id(),
                 clamped,
@@ -86,6 +97,7 @@ public class ScenarioRuntimeService {
                 copy(activeRuntime.nodeStatuses()),
                 copy(activeRuntime.edgeStatuses()),
                 copySignals(activeRuntime.activeSignals()),
+                eventLog,
                 "step-changed",
                 "Step " + clamped
         );
@@ -94,6 +106,8 @@ public class ScenarioRuntimeService {
 
     public ActiveScenarioRuntimeState completeActiveSession(ScenarioGraph scenario) {
         int currentIndex = currentStepByScenario.getOrDefault(scenario.id(), 0);
+        List<String> eventLog = copyLog(activeRuntime.eventLog());
+        appendLog(eventLog, "Session completed");
         activeRuntime = new ActiveScenarioRuntimeState(
                 scenario.id(),
                 clamp(currentIndex, scenario),
@@ -103,6 +117,7 @@ public class ScenarioRuntimeService {
                 copy(activeRuntime.nodeStatuses()),
                 copy(activeRuntime.edgeStatuses()),
                 copySignals(activeRuntime.activeSignals()),
+                eventLog,
                 "session-completed",
                 activeRuntime.testName()
         );
@@ -114,6 +129,7 @@ public class ScenarioRuntimeService {
         Map<String, String> nodeStatuses = copy(baseRuntime.nodeStatuses());
         Map<String, String> edgeStatuses = copy(baseRuntime.edgeStatuses());
         List<RuntimeSignal> activeSignals = copySignals(baseRuntime.activeSignals());
+        List<String> eventLog = copyLog(baseRuntime.eventLog());
         String eventType = normalizeType(request.type());
         String status = normalizeStatus(request.status());
         boolean active = true;
@@ -123,6 +139,8 @@ public class ScenarioRuntimeService {
             nodeStatuses.clear();
             edgeStatuses.clear();
             activeSignals.clear();
+            eventLog.clear();
+            appendLog(eventLog, "Runtime reset");
         }
 
         switch (eventType) {
@@ -160,6 +178,10 @@ public class ScenarioRuntimeService {
             edgeStatuses.put(request.edgeId(), status);
         }
 
+        if (!EVENT_RUNTIME_RESET.equals(eventType)) {
+            appendLog(eventLog, describeEvent(request, eventType, status));
+        }
+
         activeRuntime = new ActiveScenarioRuntimeState(
                 scenario.id(),
                 currentStepByScenario.getOrDefault(scenario.id(), 0),
@@ -169,6 +191,7 @@ public class ScenarioRuntimeService {
                 nodeStatuses,
                 edgeStatuses,
                 activeSignals,
+                eventLog,
                 request.type(),
                 request.label()
         );
@@ -212,6 +235,7 @@ public class ScenarioRuntimeService {
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new ArrayList<>(),
+                new ArrayList<>(),
                 "session-started",
                 scenario.title()
         );
@@ -237,9 +261,57 @@ public class ScenarioRuntimeService {
         return source == null ? new ArrayList<>() : new ArrayList<>(source);
     }
 
+    private List<String> copyLog(List<String> source) {
+        return source == null ? new ArrayList<>() : new ArrayList<>(source);
+    }
+
+    private void appendLog(List<String> eventLog, String line) {
+        if (line == null || line.isBlank()) {
+            return;
+        }
+
+        eventLog.add(line);
+        if (eventLog.size() > MAX_LOG_LINES) {
+            eventLog.remove(0);
+        }
+    }
+
+    private String describeEvent(RuntimeEventRequest request, String eventType, String status) {
+        String label = request.label() != null && !request.label().isBlank() ? request.label() : fallbackLabel(request);
+        String suffix = status != null ? " [" + status + "]" : "";
+
+        return switch (eventType) {
+            case EVENT_COMPONENT_READY -> "Component ready: " + label + suffix;
+            case EVENT_COMPONENT_BUSY -> "Component busy: " + label + suffix;
+            case EVENT_COMPONENT_WAITING -> "Component waiting: " + label + suffix;
+            case EVENT_COMPONENT_FAILED -> "Component failed: " + label + suffix;
+            case EVENT_SIGNAL_STARTED -> "Signal started: " + label + suffix;
+            case EVENT_SIGNAL_FINISHED -> "Signal finished: " + label + suffix;
+            case EVENT_SIGNAL_DELIVERED -> "Signal delivered: " + label + suffix;
+            case EVENT_SESSION_COMPLETED -> "Session completed";
+            default -> label + suffix;
+        };
+    }
+
+    private String fallbackLabel(RuntimeEventRequest request) {
+        if (request.nodeId() != null) {
+            return request.nodeId();
+        }
+
+        if (request.edgeId() != null) {
+            return request.edgeId();
+        }
+
+        if (request.fromNodeId() != null && request.toNodeId() != null) {
+            return request.fromNodeId() + " -> " + request.toNodeId();
+        }
+
+        return "runtime event";
+    }
+
     private ActiveScenarioRuntimeState emptyRuntime() {
         return new ActiveScenarioRuntimeState(null, 0, false, false, null,
-                new LinkedHashMap<>(), new LinkedHashMap<>(), new ArrayList<>(), null, null);
+                new LinkedHashMap<>(), new LinkedHashMap<>(), new ArrayList<>(), new ArrayList<>(), null, null);
     }
 
     private int clamp(int stepIndex, ScenarioGraph scenario) {
