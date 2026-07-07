@@ -22,6 +22,7 @@ const stepDescription = document.getElementById("step-description");
 const runtimeLog = document.getElementById("runtime-log");
 const prevBtn = document.getElementById("prev-btn");
 const playBtn = document.getElementById("play-btn");
+const stopBtn = document.getElementById("stop-btn");
 const nextBtn = document.getElementById("next-btn");
 const resetBtn = document.getElementById("reset-btn");
 let scenarioId = new URLSearchParams(window.location.search).get("scenario") || DEFAULT_SCENARIO_ID;
@@ -67,6 +68,7 @@ function bindControlEvents() {
   });
 
   playBtn.addEventListener("click", runScenario);
+  stopBtn.addEventListener("click", stopScenario);
 }
 
 function runScenario() {
@@ -76,6 +78,7 @@ function runScenario() {
 
   state.runInFlight = true;
   playBtn.disabled = true;
+  stopBtn.disabled = true;
   playBtn.textContent = "Running...";
   resetPlaybackLog();
   appendPlaybackLog("Backend run started");
@@ -96,7 +99,30 @@ function runScenario() {
   }).finally(() => {
     state.runInFlight = false;
     playBtn.disabled = false;
+    stopBtn.disabled = false;
     playBtn.textContent = "Play";
+  });
+}
+
+function stopScenario() {
+  if (state.runInFlight) {
+    return;
+  }
+
+  stopBtn.disabled = true;
+  appendPlaybackLog("Backend stop requested");
+  fetchJson(`/api/scenarios/${scenarioId}/environment/stop`, {
+    method: "POST"
+  }).then(() => {
+    state.activeRuntime = null;
+    state.stepIndex = 0;
+    appendPlaybackLog("Environment stopped");
+    render();
+  }).catch(() => {
+    appendPlaybackLog("Backend stop failed");
+    renderRuntimeLog();
+  }).finally(() => {
+    stopBtn.disabled = false;
   });
 }
 
