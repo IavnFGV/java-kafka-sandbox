@@ -1,61 +1,125 @@
 package io.drozda.sandbox.mediator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.drozda.sandbox.scenario.systemready.SystemReadyProbe;
-import io.drozda.sandbox.scenario.systemready.SystemReadyScenarioStarter;
+import io.drozda.sandbox.scenario.spi.ScenarioEnvironment;
+import io.drozda.sandbox.scenario.spi.ScenarioStarter;
 import io.drozda.sandbox.visualization.ActiveScenarioRuntimeState;
-import io.drozda.sandbox.visualization.ScenarioCatalog;
-import io.drozda.sandbox.visualization.ScenarioRuntimeService;
 
 class ScenarioMediatorServiceTest {
 
-    private final ScenarioCatalog scenarioCatalog = new ScenarioCatalog();
-    private final ScenarioRuntimeService runtimeService = new ScenarioRuntimeService();
-    private final SystemReadyProbe probe = new SystemReadyProbe(
-            mock(io.drozda.sandbox.TradeEventPublisher.class),
-            mock(io.drozda.sandbox.TradeEventListener.class),
-            mock(org.springframework.kafka.core.KafkaTemplate.class)
-    );
-    private final SystemReadyScenarioStarter systemReadyStarter =
-            new SystemReadyScenarioStarter(scenarioCatalog, runtimeService, probe);
-    private final ScenarioMediatorService mediatorService = new ScenarioMediatorService(java.util.List.of(systemReadyStarter));
+    private final TestScenarioEnvironment environment = new TestScenarioEnvironment();
+    private final TestScenarioStarter starter = new TestScenarioStarter();
+    private final ScenarioMediatorService mediatorService =
+            new ScenarioMediatorService(List.of(starter), List.of(environment));
 
     @Test
-    void shouldExposeBaselineCommandForSystemReadyScenario() {
+    void shouldExposeScenarioCommands() {
         assertEquals(1, mediatorService.commandsFor("system-ready").size());
-        assertEquals(SystemReadyScenarioStarter.BASELINE_READINESS,
-                mediatorService.commandsFor("system-ready").get(0).id());
+        assertEquals("baseline-readiness", mediatorService.commandsFor("system-ready").get(0).id());
     }
 
     @Test
-    void shouldExecuteSystemReadyBaselineCommand() {
-        ActiveScenarioRuntimeState runtime = mediatorService.execute(
-                "system-ready",
-                SystemReadyScenarioStarter.BASELINE_READINESS,
-                "mediator-test"
-        );
+    void shouldStartEnvironmentBeforeExecutingCommand() {
+        mediatorService.execute("system-ready", "baseline-readiness", "mediator-test");
 
-        assertEquals("READY", runtime.nodeStatuses().get("spring-app"));
-        assertEquals("READY", runtime.nodeStatuses().get("publisher"));
-        assertEquals("READY", runtime.nodeStatuses().get("listener"));
-        assertEquals("READY", runtime.nodeStatuses().get("kafka"));
-        assertEquals("READY", runtime.edgeStatuses().get("publisher-kafka"));
-        assertEquals("READY", runtime.edgeStatuses().get("listener-kafka"));
-        assertEquals(4, runtime.currentStepIndex());
-        assertTrue(runtime.completed());
-        assertFalse(runtime.active());
+        assertEquals(1, environment.startCalls);
+        assertEquals("baseline-readiness", starter.lastCommandId);
+        assertEquals("mediator-test", starter.lastInvocationName);
     }
 
     @Test
-    void shouldRejectUnknownCommandForSystemReadyScenario() {
-        assertThrows(IllegalArgumentException.class, () ->
-                mediatorService.execute("system-ready", "unknown-command", "mediator-test"));
+    void shouldManageEnvironmentLifecycle() {
+        assertEquals("STOPPED", mediatorService.environmentStatus("system-ready").lifecycleState());
+        assertEquals("STARTED", mediatorService.startEnvironment("system-ready").lifecycleState());
+        assertEquals("RESET", mediatorService.resetEnvironment("system-ready").lifecycleState());
+        assertEquals("STOPPED", mediatorService.stopEnvironment("system-ready").lifecycleState());
+    }
+
+    @Test
+    void shouldRejectUnknownScenario() {
+        assertThrows(IllegalArgumentException.class, () -> mediatorService.commandsFor("missing-scenario"));
+        assertThrows(IllegalArgumentException.class, () -> mediatorService.startEnvironment("missing-scenario"));
+    }
+
+    private static final class TestScenarioStarter implements ScenarioStarter {
+
+        private String lastCommandId;
+        private String lastInvocationName;
+
+        @Override
+        public String scenarioId() {
+            return "system-ready";
+        }
+
+        @Override
+        public List<ScenarioCommand> commands() {
+            return List.of(new ScenarioCommand("baseline-readiness", "Run", "Run test command"));
+        }
+
+        @Override
+        public ActiveScenarioRuntimeState execute(String commandId, String invocationName) {
+            this.lastCommandId = commandId;
+            this.lastInvocationName = invocationName;
+            return new ActiveScenarioRuntimeState(
+                    "system-ready",
+                    0,
+                    false,
+                    true,
+                    invocationName,
+                    java.util.Map.of(),
+                    java.util.Map.of(),
+                    java.util.List.of(),
+                    "done",
+                    invocationName
+            );
+        }
+    }
+
+    private static final class TestScenarioEnvironment implements ScenarioEnvironment {
+
+        private int startCalls;
+        private String state = "STOPPED";
+
+        @Override
+        public String scenarioId() {
+            return "system-ready";
+        }
+
+        @Override
+        public ScenarioEnvironmentStatus start() {
+            startCalls += 1;
+            state = "STARTED";
+            return status();
+        }
+
+        @Override
+        public ScenarioEnvironmentStatus stop() {
+            state = "STOPPED";
+            return status();
+        }
+
+        @Override
+        public ScenarioEnvironmentStatus reset() {
+            state = "RESET";
+            return status();
+        }
+
+        @Override
+        public ScenarioEnvironmentStatus status() {
+            return new ScenarioEnvironmentStatus(
+                    "system-ready",
+                    state,
+                    "test-environment",
+                    "STARTED".equals(state) || "RESET".equals(state),
+                    "STARTED".equals(state) || "RESET".equals(state),
+                    "STARTED".equals(state) || "RESET".equals(state)
+            );
+        }
     }
 }

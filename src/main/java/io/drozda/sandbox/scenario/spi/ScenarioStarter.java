@@ -12,4 +12,8 @@ public interface ScenarioStarter {
     List<ScenarioCommand> commands();
 
     ActiveScenarioRuntimeState execute(String commandId, String invocationName);
+
+    default boolean supports(String commandId) {
+        return commands().stream().anyMatch(command -> command.id().equals(commandId));
+    }
 }

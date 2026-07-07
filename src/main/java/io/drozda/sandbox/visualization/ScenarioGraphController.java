@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.drozda.sandbox.mediator.ScenarioCommand;
 import io.drozda.sandbox.mediator.ScenarioCommandRequest;
+import io.drozda.sandbox.mediator.ScenarioEnvironmentStatus;
 import io.drozda.sandbox.mediator.ScenarioMediatorService;
 
 @RestController
@@ -44,6 +45,26 @@ public class ScenarioGraphController {
     @GetMapping("/{scenarioId}/commands")
     public List<ScenarioCommand> scenarioCommands(@PathVariable String scenarioId) {
         return scenarioMediatorService.commandsFor(scenarioId);
+    }
+
+    @GetMapping("/{scenarioId}/environment")
+    public ScenarioEnvironmentStatus scenarioEnvironment(@PathVariable String scenarioId) {
+        return scenarioMediatorService.environmentStatus(scenarioId);
+    }
+
+    @PostMapping("/{scenarioId}/environment/start")
+    public ScenarioEnvironmentStatus startScenarioEnvironment(@PathVariable String scenarioId) {
+        return scenarioMediatorService.startEnvironment(scenarioId);
+    }
+
+    @PostMapping("/{scenarioId}/environment/stop")
+    public ScenarioEnvironmentStatus stopScenarioEnvironment(@PathVariable String scenarioId) {
+        return scenarioMediatorService.stopEnvironment(scenarioId);
+    }
+
+    @PostMapping("/{scenarioId}/environment/reset")
+    public ScenarioEnvironmentStatus resetScenarioEnvironment(@PathVariable String scenarioId) {
+        return scenarioMediatorService.resetEnvironment(scenarioId);
     }
 
     @GetMapping("/{scenarioId}/runtime")

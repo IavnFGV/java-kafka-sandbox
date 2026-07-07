@@ -13,6 +13,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import io.drozda.sandbox.TradeEventListener;
 import io.drozda.sandbox.TradeEventPublisher;
 import io.drozda.sandbox.mediator.ScenarioMediatorService;
+import io.drozda.sandbox.mediator.ScenarioEnvironmentStatus;
 import io.drozda.sandbox.model.TradeEvent;
 import io.drozda.sandbox.scenario.systemready.SystemReadyScenarioStarter;
 import io.drozda.sandbox.visualization.ActiveScenarioRuntimeState;
@@ -37,6 +38,11 @@ class AllComponentsTest {
         assertNotNull(tradeEventPublisher);
         assertNotNull(tradeEventListener);
         assertNotNull(kafkaTemplate);
+
+        ScenarioEnvironmentStatus environmentStatus = scenarioMediatorService.startEnvironment("system-ready");
+        assertTrue(environmentStatus.publisherReady());
+        assertTrue(environmentStatus.listenerReady());
+        assertTrue(environmentStatus.kafkaTemplateReady());
 
         ActiveScenarioRuntimeState runtime = scenarioMediatorService.execute(
                 "system-ready",
