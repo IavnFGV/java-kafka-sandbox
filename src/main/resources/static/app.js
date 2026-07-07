@@ -53,17 +53,17 @@ function loadInitialScenario() {
 
 function bindControlEvents() {
   prevBtn.addEventListener("click", () => {
-    appendPlaybackLog("Manual step back");
+    appendScenarioLog("Manual step back");
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/previous`);
   });
 
   nextBtn.addEventListener("click", () => {
-    appendPlaybackLog("Manual step forward");
+    appendScenarioLog("Manual step forward");
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/next`);
   });
 
   resetBtn.addEventListener("click", () => {
-    appendPlaybackLog("Playback reset");
+    appendScenarioLog("Playback reset");
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/reset`);
   });
 
@@ -113,8 +113,7 @@ function stopScenario() {
   fetchJson(`/api/scenarios/${scenarioId}/environment/stop`, {
     method: "POST"
   }).then(() => {
-    state.activeRuntime = null;
-    state.stepIndex = 0;
+    clearClientRuntimeState(scenarioId);
     appendScenarioLog("Environment stopped");
     render();
   }).catch(() => {
@@ -129,6 +128,7 @@ function syncActiveRuntime() {
   fetchJson("/api/scenarios/runtime/active")
     .then((runtime) => {
       if (!runtime || !runtime.scenarioId) {
+        state.activeRuntime = null;
         return;
       }
 
@@ -352,6 +352,20 @@ function appendScenarioLog(line, targetScenarioId = state.activeScenarioId) {
   if (lines.length > 80) {
     lines.shift();
   }
+}
+
+function clearClientRuntimeState(targetScenarioId) {
+  if (!targetScenarioId) {
+    return;
+  }
+
+  if (state.activeScenarioId === targetScenarioId) {
+    state.activeRuntime = null;
+    state.stepIndex = 0;
+  }
+
+  state.lastPlaybackStepKeyByScenario[targetScenarioId] = null;
+  state.lastRuntimeSnapshotByScenario[targetScenarioId] = [];
 }
 
 function scenarioLog(targetScenarioId) {

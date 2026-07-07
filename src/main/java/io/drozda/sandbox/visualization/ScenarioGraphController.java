@@ -59,7 +59,11 @@ public class ScenarioGraphController {
 
     @PostMapping("/{scenarioId}/environment/stop")
     public ScenarioEnvironmentStatus stopScenarioEnvironment(@PathVariable String scenarioId) {
-        return scenarioMediatorService.stopEnvironment(scenarioId);
+        ScenarioGraph scenario = scenarioCatalog.scenarioById(scenarioId);
+        ScenarioEnvironmentStatus status = scenarioMediatorService.stopEnvironment(scenarioId);
+        scenarioRuntimeService.clearActiveSession(scenario);
+        scenarioRuntimeService.reset(scenario);
+        return status;
     }
 
     @PostMapping("/{scenarioId}/environment/reset")

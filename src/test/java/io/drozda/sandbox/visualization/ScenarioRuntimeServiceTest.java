@@ -2,6 +2,7 @@ package io.drozda.sandbox.visualization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -101,5 +102,18 @@ class ScenarioRuntimeServiceTest {
         assertTrue(completed.completed());
         assertFalse(completed.active());
         assertEquals("Session completed", completed.eventLog().get(completed.eventLog().size() - 1));
+    }
+
+    @Test
+    void shouldClearActiveSessionAndResetToBaselineStep() {
+        ScenarioGraph scenario = scenarioCatalog.systemReadyScenario();
+        runtimeService.startActiveSession(scenario, "runtime-test");
+        runtimeService.updateActiveStep(scenario, 3);
+
+        ActiveScenarioRuntimeState cleared = runtimeService.clearActiveSession(scenario);
+
+        assertEquals(0, runtimeService.getState(scenario).currentStepIndex());
+        assertFalse(cleared.active());
+        assertNull(cleared.scenarioId());
     }
 }

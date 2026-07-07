@@ -58,6 +58,16 @@ public class ScenarioRuntimeService {
         return activeRuntime;
     }
 
+    public ActiveScenarioRuntimeState clearActiveSession(ScenarioGraph scenario) {
+        currentStepByScenario.put(scenario.id(), 0);
+
+        if (scenario.id().equals(activeRuntime.scenarioId())) {
+            activeRuntime = emptyRuntime();
+        }
+
+        return activeRuntime;
+    }
+
     public ActiveScenarioRuntimeState startActiveSession(ScenarioGraph scenario, String testName) {
         currentStepByScenario.put(scenario.id(), 0);
         List<String> eventLog = new ArrayList<>();
