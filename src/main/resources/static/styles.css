@@ -119,7 +119,7 @@ body {
     width: 100%;
     border: 1px solid rgba(31, 41, 55, 0.08);
     border-radius: 18px;
-    padding: 14px 16px;
+    padding: 13px 15px;
     text-align: left;
     color: var(--ink);
     background: rgba(255, 255, 255, 0.74);
@@ -144,15 +144,16 @@ body {
 .scenario-link-copy {
     display: block;
     margin-top: 6px;
-    font-size: 0.92rem;
-    line-height: 1.5;
+    font-size: 0.88rem;
+    line-height: 1.45;
     color: var(--muted);
+    min-height: 2.8em;
 }
 
 button {
     border: 0;
     border-radius: 999px;
-    padding: 12px 18px;
+    padding: 11px 17px;
     font: inherit;
     color: #fff7ed;
     background: linear-gradient(135deg, #b45309, #d97706);
@@ -221,33 +222,36 @@ button:hover {
 
 .edge {
     stroke: rgba(31, 41, 55, 0.28);
-    stroke-width: 3;
+    stroke-width: 2.5;
+}
+
+.edge-label-pill {
+    fill: rgba(255, 251, 245, 0.92);
+    stroke: rgba(31, 41, 55, 0.08);
+    stroke-width: 1;
 }
 
 .edge-label {
-    font-size: 13px;
-    fill: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    fill: rgba(95, 107, 122, 0.92);
+    dominant-baseline: middle;
 }
 
 .node-card {
     fill: rgba(255, 255, 255, 0.95);
-    stroke-width: 3;
+    stroke-width: 2.5;
 }
 
 .node.node-container .node-card {
-    fill: rgba(255, 255, 255, 0.45);
+    fill: rgba(255, 255, 255, 0.38);
     stroke-dasharray: 10 8;
 }
 
 .node-title {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
     fill: var(--ink);
-}
-
-.node-copy {
-    font-size: 12px;
-    fill: var(--muted);
 }
 
 .node {
@@ -301,7 +305,7 @@ button:hover {
 
 .edge.active {
     stroke: var(--active);
-    stroke-width: 5;
+    stroke-width: 4.5;
 }
 
 .edge.ready {

@@ -179,7 +179,7 @@ function renderScenarioList() {
       class="scenario-link ${scenario.id === state.activeScenarioId ? "active" : ""}"
       data-scenario-id="${scenario.id}">
       <span class="scenario-link-title">${escapeXml(scenario.title)}</span>
-      <span class="scenario-link-copy">${escapeXml(scenario.summary)}</span>
+      <span class="scenario-link-copy">${escapeXml(shortScenarioSummary(scenario.summary))}</span>
     </button>
   `).join("");
 
@@ -332,12 +332,14 @@ function renderEdges(edges, layout, stepView) {
     const to = layout.get(edge.to);
     const edgeState = edgeCssState(edge.id, stepView);
     const labelX = (from.centerX + to.centerX) / 2;
-    const labelY = (from.centerY + to.centerY) / 2 - 12;
+    const labelY = (from.centerY + to.centerY) / 2 - 16;
+    const labelWidth = Math.max(estimateTextWidth(edge.label, 12) + 18, 44);
 
     return `
       <g>
         <line class="edge ${edgeState}" x1="${from.centerX}" y1="${from.centerY}" x2="${to.centerX}" y2="${to.centerY}" marker-end="url(#arrow)"></line>
-        <text class="edge-label" x="${labelX}" y="${labelY}" text-anchor="middle">${edge.label}</text>
+        <rect class="edge-label-pill" x="${labelX - labelWidth / 2}" y="${labelY - 14}" width="${labelWidth}" height="22" rx="11"></rect>
+        <text class="edge-label" x="${labelX}" y="${labelY}" text-anchor="middle">${escapeXml(edge.label)}</text>
       </g>
     `;
   }).join("");
@@ -357,17 +359,13 @@ function renderNode(entry, stepView) {
   const typeClass = node.type === "container" ? "node-container" : "";
   const ringInset = node.type === "container" ? 10 : 8;
   const titleLines = wrapText(node.label, 18, node.width - 36);
-  const copyLines = wrapText(node.description, 12, node.width - 36);
   const titleMarkup = renderTextLines(titleLines, 18, 30, 22, "node-title");
-  const copyStartY = 30 + Math.max(titleLines.length - 1, 0) * 22 + 24;
-  const copyMarkup = renderTextLines(copyLines, 18, copyStartY, 17, "node-copy");
 
   return `
     <g class="node ${typeClass} ${nodeState}" data-node-id="${node.id}" transform="translate(${absoluteX}, ${absoluteY})">
       <rect class="node-ready-ring" x="${ringInset}" y="${ringInset}" width="${node.width - ringInset * 2}" height="${node.height - ringInset * 2}" rx="${node.type === "container" ? 22 : 14}"></rect>
       <rect class="node-card" width="${node.width}" height="${node.height}" rx="${node.type === "container" ? 28 : 20}" stroke="${stroke}"></rect>
       ${titleMarkup}
-      ${copyMarkup}
     </g>
   `;
 }
@@ -561,6 +559,18 @@ function collectIdsByStatus(statusMap, acceptedStatuses) {
 
 function uniqueIds(ids) {
   return [...new Set(ids)];
+}
+
+function shortScenarioSummary(summaryText) {
+  if (!summaryText) {
+    return "";
+  }
+
+  if (summaryText.length <= 72) {
+    return summaryText;
+  }
+
+  return `${summaryText.slice(0, 69).trimEnd()}...`;
 }
 
 function updateUrl(nextScenarioId) {
