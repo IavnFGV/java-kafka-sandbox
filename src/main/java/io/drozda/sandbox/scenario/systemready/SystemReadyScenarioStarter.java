@@ -17,6 +17,7 @@ import io.drozda.sandbox.scenario.systemready.app.SystemReadyScenarioStatus;
 public class SystemReadyScenarioStarter implements ScenarioStarter {
 
     public static final String BASELINE_READINESS = "baseline-readiness";
+    private static final long STEP_DELAY_MS = 650L;
 
     private final ScenarioCatalog scenarioCatalog;
     private final ScenarioRuntimeService scenarioRuntimeService;
@@ -59,24 +60,29 @@ public class SystemReadyScenarioStarter implements ScenarioStarter {
         SystemReadyScenarioStatus status = systemReadyEnvironment.baselineReadiness(effectiveInvocationName);
 
         scenarioRuntimeService.startActiveSession(scenario, effectiveInvocationName);
+        pause();
         scenarioRuntimeService.updateActiveStep(scenario, 1);
         event(scenario, "component-ready", "spring-app", null, "Spring Context Ready", "READY");
 
         if (status.publisherReady()) {
+            pause();
             scenarioRuntimeService.updateActiveStep(scenario, 2);
             event(scenario, "component-ready", "publisher", "publisher-kafka", "Publisher Ready", "READY");
         }
 
         if (status.listenerReady()) {
+            pause();
             scenarioRuntimeService.updateActiveStep(scenario, 3);
             event(scenario, "component-ready", "listener", "listener-kafka", "Listener Ready", "READY");
         }
 
         if (status.kafkaTemplateReady()) {
+            pause();
             scenarioRuntimeService.updateActiveStep(scenario, 4);
             event(scenario, "component-ready", "kafka", null, "Kafka Reachable", "READY");
         }
 
+        pause();
         return scenarioRuntimeService.completeActiveSession(scenario);
     }
 
@@ -101,5 +107,14 @@ public class SystemReadyScenarioStarter implements ScenarioStarter {
                         status
                 )
         );
+    }
+
+    private void pause() {
+        try {
+            Thread.sleep(STEP_DELAY_MS);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Scenario playback was interrupted", exception);
+        }
     }
 }

@@ -34,6 +34,15 @@ class ScenarioMediatorServiceTest {
     }
 
     @Test
+    void shouldRunDefaultCommandForScenario() {
+        mediatorService.runDefault("system-ready", "default-run");
+
+        assertEquals(1, environment.startCalls);
+        assertEquals("baseline-readiness", starter.lastCommandId);
+        assertEquals("default-run", starter.lastInvocationName);
+    }
+
+    @Test
     void shouldManageEnvironmentLifecycle() {
         assertEquals("STOPPED", mediatorService.environmentStatus("system-ready").lifecycleState());
         assertEquals("STARTED", mediatorService.startEnvironment("system-ready").lifecycleState());

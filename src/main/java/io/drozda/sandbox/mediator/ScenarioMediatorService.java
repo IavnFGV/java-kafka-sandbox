@@ -44,6 +44,15 @@ public class ScenarioMediatorService {
         return starterFor(scenarioId).execute(commandId, invocationName);
     }
 
+    public ActiveScenarioRuntimeState runDefault(String scenarioId, String invocationName) {
+        List<ScenarioCommand> commands = commandsFor(scenarioId);
+        if (commands.isEmpty()) {
+            throw new IllegalArgumentException("No commands registered for scenario: " + scenarioId);
+        }
+
+        return execute(scenarioId, commands.get(0).id(), invocationName);
+    }
+
     private ScenarioStarter starterFor(String scenarioId) {
         return scenarioStarters.stream()
                 .filter(starter -> starter.scenarioId().equals(scenarioId))

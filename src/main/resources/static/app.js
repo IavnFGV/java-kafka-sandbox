@@ -1,17 +1,16 @@
 const POLL_INTERVAL_MS = 500;
-const PLAYBACK_INTERVAL_MS = 1800;
 const DEFAULT_SCENARIO_ID = "system-ready";
 
 const state = {
   scenarios: [],
   scenario: null,
   stepIndex: 0,
-  timerId: null,
   drag: null,
   activeScenarioId: null,
   activeRuntime: null,
   playbackLog: [],
-  lastLoggedPlaybackKey: null
+  lastLoggedPlaybackKey: null,
+  runInFlight: false
 };
 
 const graph = document.getElementById("graph");
@@ -53,48 +52,52 @@ function loadInitialScenario() {
 
 function bindControlEvents() {
   prevBtn.addEventListener("click", () => {
-    stopPlayback();
     appendPlaybackLog("Manual step back");
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/previous`);
   });
 
   nextBtn.addEventListener("click", () => {
-    stopPlayback();
     appendPlaybackLog("Manual step forward");
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/next`);
   });
 
   resetBtn.addEventListener("click", () => {
-    stopPlayback();
     appendPlaybackLog("Playback reset");
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/reset`);
   });
 
-  playBtn.addEventListener("click", togglePlayback);
+  playBtn.addEventListener("click", runScenario);
 }
 
-function togglePlayback() {
-  if (state.timerId) {
-    stopPlayback();
+function runScenario() {
+  if (state.runInFlight) {
     return;
   }
 
-  appendPlaybackLog("Playback started");
-  playBtn.textContent = "Pause";
-  state.timerId = window.setInterval(() => {
-    moveRuntime(`/api/scenarios/${scenarioId}/runtime/next`, false);
-  }, PLAYBACK_INTERVAL_MS);
-}
-
-function stopPlayback() {
-  if (!state.timerId) {
-    return;
-  }
-
-  window.clearInterval(state.timerId);
-  state.timerId = null;
-  playBtn.textContent = "Play";
-  appendPlaybackLog("Playback paused");
+  state.runInFlight = true;
+  playBtn.disabled = true;
+  playBtn.textContent = "Running...";
+  resetPlaybackLog();
+  appendPlaybackLog("Backend run started");
+  state.activeRuntime = null;
+  state.stepIndex = 0;
+  render();
+  fetchJson(`/api/scenarios/${scenarioId}/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ invocationName: `${state.scenario.title} Run` })
+  }).then((runtime) => {
+    state.activeRuntime = runtime;
+    state.stepIndex = runtime.currentStepIndex;
+    render();
+  }).catch(() => {
+    appendPlaybackLog("Backend run failed");
+    renderRuntimeLog();
+  }).finally(() => {
+    state.runInFlight = false;
+    playBtn.disabled = false;
+    playBtn.textContent = "Play";
+  });
 }
 
 function syncActiveRuntime() {
@@ -223,7 +226,6 @@ function selectScenario(nextScenarioId) {
     return;
   }
 
-  stopPlayback();
   scenarioId = nextScenarioId;
   fetchJson(`/api/scenarios/${nextScenarioId}`)
     .then((scenario) => Promise.all([

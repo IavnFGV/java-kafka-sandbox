@@ -133,4 +133,15 @@ public class ScenarioGraphController {
                 request != null ? request.invocationName() : null
         );
     }
+
+    @PostMapping("/{scenarioId}/run")
+    public ActiveScenarioRuntimeState runScenario(
+            @PathVariable String scenarioId,
+            @RequestBody(required = false) ScenarioCommandRequest request
+    ) {
+        return scenarioMediatorService.runDefault(
+                scenarioId,
+                request != null ? request.invocationName() : null
+        );
+    }
 }
