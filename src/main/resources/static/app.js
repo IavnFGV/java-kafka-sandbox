@@ -21,11 +21,8 @@ const summary = document.getElementById("scenario-summary");
 const stepTitle = document.getElementById("step-title");
 const stepDescription = document.getElementById("step-description");
 const runtimeLog = document.getElementById("runtime-log");
-const prevBtn = document.getElementById("prev-btn");
 const playBtn = document.getElementById("play-btn");
 const stopBtn = document.getElementById("stop-btn");
-const nextBtn = document.getElementById("next-btn");
-const resetBtn = document.getElementById("reset-btn");
 let scenarioId = new URLSearchParams(window.location.search).get("scenario") || DEFAULT_SCENARIO_ID;
 
 bootstrap();
@@ -52,21 +49,6 @@ function loadInitialScenario() {
 }
 
 function bindControlEvents() {
-  prevBtn.addEventListener("click", () => {
-    appendScenarioLog("Manual step back");
-    moveRuntime(`/api/scenarios/${scenarioId}/runtime/previous`);
-  });
-
-  nextBtn.addEventListener("click", () => {
-    appendScenarioLog("Manual step forward");
-    moveRuntime(`/api/scenarios/${scenarioId}/runtime/next`);
-  });
-
-  resetBtn.addEventListener("click", () => {
-    appendScenarioLog("Playback reset");
-    moveRuntime(`/api/scenarios/${scenarioId}/runtime/reset`);
-  });
-
   playBtn.addEventListener("click", runScenario);
   stopBtn.addEventListener("click", stopScenario);
 }
@@ -153,20 +135,6 @@ function syncActiveRuntime() {
     .catch(() => {
       // Ignore polling failures when the app is restarting.
     });
-}
-
-function moveRuntime(url, shouldRender = true) {
-  fetchJson(url, { method: "POST" }).then((runtime) => {
-    state.stepIndex = runtime.currentStepIndex;
-    state.activeRuntime = runtime;
-
-    if (shouldRender) {
-      render();
-      return;
-    }
-
-    render();
-  });
 }
 
 function fetchJson(url, options) {
