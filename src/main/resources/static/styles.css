@@ -232,13 +232,14 @@ button:hover {
 .runtime-log-line,
 .runtime-log-empty {
     margin: 0;
+    font-size: 0.88rem;
     color: var(--muted);
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .runtime-log-line + .runtime-log-line {
-    margin-top: 10px;
-    padding-top: 10px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid rgba(31, 41, 55, 0.08);
 }
 

@@ -8,8 +8,9 @@ const state = {
   drag: null,
   activeScenarioId: null,
   activeRuntime: null,
-  playbackLog: [],
-  lastLoggedPlaybackKey: null,
+  logsByScenario: {},
+  lastPlaybackStepKeyByScenario: {},
+  lastRuntimeSnapshotByScenario: {},
   runInFlight: false
 };
 
@@ -46,7 +47,6 @@ function loadInitialScenario() {
     applyScenario(scenario);
     state.stepIndex = runtime.currentStepIndex;
     state.activeRuntime = null;
-    resetPlaybackLog();
     render();
   });
 }
@@ -80,8 +80,7 @@ function runScenario() {
   playBtn.disabled = true;
   stopBtn.disabled = true;
   playBtn.textContent = "Running...";
-  resetPlaybackLog();
-  appendPlaybackLog("Backend run started");
+  appendScenarioLog("Backend run started");
   state.activeRuntime = null;
   state.stepIndex = 0;
   render();
@@ -94,7 +93,7 @@ function runScenario() {
     state.stepIndex = runtime.currentStepIndex;
     render();
   }).catch(() => {
-    appendPlaybackLog("Backend run failed");
+    appendScenarioLog("Backend run failed");
     renderRuntimeLog();
   }).finally(() => {
     state.runInFlight = false;
@@ -110,16 +109,16 @@ function stopScenario() {
   }
 
   stopBtn.disabled = true;
-  appendPlaybackLog("Backend stop requested");
+  appendScenarioLog("Backend stop requested");
   fetchJson(`/api/scenarios/${scenarioId}/environment/stop`, {
     method: "POST"
   }).then(() => {
     state.activeRuntime = null;
     state.stepIndex = 0;
-    appendPlaybackLog("Environment stopped");
+    appendScenarioLog("Environment stopped");
     render();
   }).catch(() => {
-    appendPlaybackLog("Backend stop failed");
+    appendScenarioLog("Backend stop failed");
     renderRuntimeLog();
   }).finally(() => {
     stopBtn.disabled = false;
@@ -189,6 +188,7 @@ function render() {
   }
 
   ensurePlaybackStepLogged();
+  syncRuntimeLogToScenarioHistory();
   const stepView = buildCurrentStepView();
   const layout = buildLayout(state.scenario.nodes);
 
@@ -261,7 +261,6 @@ function selectScenario(nextScenarioId) {
     .then(([scenario, runtime]) => {
       state.activeRuntime = null;
       state.stepIndex = runtime.currentStepIndex;
-      resetPlaybackLog();
       applyScenario(scenario);
       render();
       updateUrl(nextScenarioId);
@@ -294,11 +293,7 @@ function currentDescription() {
 }
 
 function currentLogLines() {
-  if (hasLiveRuntimeForScenario() && Array.isArray(state.activeRuntime.eventLog) && state.activeRuntime.eventLog.length > 0) {
-    return state.activeRuntime.eventLog.slice().reverse();
-  }
-
-  return state.playbackLog.slice().reverse();
+  return scenarioLog(state.activeScenarioId).slice().reverse();
 }
 
 function ensurePlaybackStepLogged() {
@@ -311,32 +306,89 @@ function ensurePlaybackStepLogged() {
     return;
   }
 
-  const stepKey = `${state.activeScenarioId}:${state.stepIndex}`;
-  if (state.lastLoggedPlaybackKey === stepKey) {
+  const stepKey = `${state.stepIndex}`;
+  if (state.lastPlaybackStepKeyByScenario[state.activeScenarioId] === stepKey) {
     return;
   }
 
-  appendPlaybackLog(`Step ${state.stepIndex}: ${step.title}`);
+  appendScenarioLog(`Step ${state.stepIndex}: ${step.title}`);
   if (step.description) {
-    appendPlaybackLog(step.description);
+    appendScenarioLog(step.description);
   }
-  state.lastLoggedPlaybackKey = stepKey;
+  state.lastPlaybackStepKeyByScenario[state.activeScenarioId] = stepKey;
 }
 
-function appendPlaybackLog(line) {
-  if (!line) {
+function syncRuntimeLogToScenarioHistory() {
+  if (!state.activeRuntime || !state.activeRuntime.scenarioId) {
     return;
   }
 
-  state.playbackLog.push(line);
-  if (state.playbackLog.length > 32) {
-    state.playbackLog.shift();
+  const scenarioRuntimeId = state.activeRuntime.scenarioId;
+  const nextSnapshot = Array.isArray(state.activeRuntime.eventLog) ? state.activeRuntime.eventLog : [];
+  const previousSnapshot = state.lastRuntimeSnapshotByScenario[scenarioRuntimeId] || [];
+
+  if (sameLines(previousSnapshot, nextSnapshot)) {
+    return;
+  }
+
+  const commonPrefixLength = sharedPrefixLength(previousSnapshot, nextSnapshot);
+  if (previousSnapshot.length > 0 && commonPrefixLength < previousSnapshot.length) {
+    appendScenarioLog("Backend session restarted", scenarioRuntimeId);
+  }
+
+  nextSnapshot.slice(commonPrefixLength).forEach((line) => {
+    appendScenarioLog(line, scenarioRuntimeId);
+  });
+  state.lastRuntimeSnapshotByScenario[scenarioRuntimeId] = nextSnapshot.slice();
+}
+
+function appendScenarioLog(line, targetScenarioId = state.activeScenarioId) {
+  if (!line || !targetScenarioId) {
+    return;
+  }
+
+  const lines = scenarioLog(targetScenarioId);
+  lines.push(line);
+  if (lines.length > 80) {
+    lines.shift();
   }
 }
 
-function resetPlaybackLog() {
-  state.playbackLog = [];
-  state.lastLoggedPlaybackKey = null;
+function scenarioLog(targetScenarioId) {
+  if (!targetScenarioId) {
+    return [];
+  }
+
+  if (!state.logsByScenario[targetScenarioId]) {
+    state.logsByScenario[targetScenarioId] = [];
+  }
+
+  return state.logsByScenario[targetScenarioId];
+}
+
+function sameLines(left, right) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function sharedPrefixLength(left, right) {
+  const maxLength = Math.min(left.length, right.length);
+  let index = 0;
+
+  while (index < maxLength && left[index] === right[index]) {
+    index += 1;
+  }
+
+  return index;
 }
 
 function buildStepView(step, events) {
