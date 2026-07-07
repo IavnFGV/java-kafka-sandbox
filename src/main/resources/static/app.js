@@ -95,7 +95,12 @@ function syncActiveRuntime() {
         return;
       }
 
+      const runtimeIsDrivingScreen = runtime.active || runtime.scenarioId === state.activeScenarioId;
       state.activeRuntime = runtime;
+
+      if (!runtimeIsDrivingScreen) {
+        return;
+      }
 
       if (runtime.scenarioId !== state.activeScenarioId) {
         return fetchJson(`/api/scenarios/${runtime.scenarioId}`).then((scenario) => {
