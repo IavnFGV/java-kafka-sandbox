@@ -9,7 +9,9 @@ const state = {
   timerId: null,
   drag: null,
   activeScenarioId: null,
-  activeRuntime: null
+  activeRuntime: null,
+  playbackLog: [],
+  lastLoggedPlaybackKey: null
 };
 
 const graph = document.getElementById("graph");
@@ -44,6 +46,7 @@ function loadInitialScenario() {
     applyScenario(scenario);
     state.stepIndex = runtime.currentStepIndex;
     state.activeRuntime = null;
+    resetPlaybackLog();
     render();
   });
 }
@@ -51,16 +54,19 @@ function loadInitialScenario() {
 function bindControlEvents() {
   prevBtn.addEventListener("click", () => {
     stopPlayback();
+    appendPlaybackLog("Manual step back");
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/previous`);
   });
 
   nextBtn.addEventListener("click", () => {
     stopPlayback();
+    appendPlaybackLog("Manual step forward");
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/next`);
   });
 
   resetBtn.addEventListener("click", () => {
     stopPlayback();
+    appendPlaybackLog("Playback reset");
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/reset`);
   });
 
@@ -73,6 +79,7 @@ function togglePlayback() {
     return;
   }
 
+  appendPlaybackLog("Playback started");
   playBtn.textContent = "Pause";
   state.timerId = window.setInterval(() => {
     moveRuntime(`/api/scenarios/${scenarioId}/runtime/next`, false);
@@ -87,6 +94,7 @@ function stopPlayback() {
   window.clearInterval(state.timerId);
   state.timerId = null;
   playBtn.textContent = "Play";
+  appendPlaybackLog("Playback paused");
 }
 
 function syncActiveRuntime() {
@@ -151,6 +159,7 @@ function render() {
     return;
   }
 
+  ensurePlaybackStepLogged();
   const stepView = buildCurrentStepView();
   const layout = buildLayout(state.scenario.nodes);
 
@@ -224,6 +233,7 @@ function selectScenario(nextScenarioId) {
     .then(([scenario, runtime]) => {
       state.activeRuntime = null;
       state.stepIndex = runtime.currentStepIndex;
+      resetPlaybackLog();
       applyScenario(scenario);
       render();
       updateUrl(nextScenarioId);
@@ -260,15 +270,45 @@ function currentLogLines() {
     return state.activeRuntime.eventLog.slice().reverse();
   }
 
-  const step = state.scenario.steps[state.stepIndex];
-  if (!step) {
-    return [];
+  return state.playbackLog.slice().reverse();
+}
+
+function ensurePlaybackStepLogged() {
+  if (hasLiveRuntimeForScenario() || !state.scenario) {
+    return;
   }
 
-  return [
-    `Step ${state.stepIndex}: ${step.title}`,
-    step.description
-  ].filter(Boolean);
+  const step = state.scenario.steps[state.stepIndex];
+  if (!step) {
+    return;
+  }
+
+  const stepKey = `${state.activeScenarioId}:${state.stepIndex}`;
+  if (state.lastLoggedPlaybackKey === stepKey) {
+    return;
+  }
+
+  appendPlaybackLog(`Step ${state.stepIndex}: ${step.title}`);
+  if (step.description) {
+    appendPlaybackLog(step.description);
+  }
+  state.lastLoggedPlaybackKey = stepKey;
+}
+
+function appendPlaybackLog(line) {
+  if (!line) {
+    return;
+  }
+
+  state.playbackLog.push(line);
+  if (state.playbackLog.length > 32) {
+    state.playbackLog.shift();
+  }
+}
+
+function resetPlaybackLog() {
+  state.playbackLog = [];
+  state.lastLoggedPlaybackKey = null;
 }
 
 function buildStepView(step, events) {
