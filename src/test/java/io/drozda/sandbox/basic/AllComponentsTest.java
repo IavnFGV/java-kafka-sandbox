@@ -1,23 +1,23 @@
 package io.drozda.sandbox.basic;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import io.drozda.sandbox.TradeEventListener;
 import io.drozda.sandbox.TradeEventPublisher;
+import io.drozda.sandbox.mediator.ScenarioMediatorService;
 import io.drozda.sandbox.model.TradeEvent;
-import io.drozda.sandbox.visualization.junit.VisualScenario;
-import io.drozda.sandbox.visualization.junit.VisualScenarioExtension;
-import io.drozda.sandbox.visualization.junit.VisualScenarioTestClient;
+import io.drozda.sandbox.scenario.systemready.SystemReadyScenarioStarter;
+import io.drozda.sandbox.visualization.ActiveScenarioRuntimeState;
 
 @SpringBootTest(properties = "spring.kafka.consumer.group-id=all-components-test-${random.uuid}")
-@ExtendWith(VisualScenarioExtension.class)
-@VisualScenario("system-ready")
 class AllComponentsTest {
 
     @Autowired
@@ -29,25 +29,28 @@ class AllComponentsTest {
     @Autowired
     KafkaTemplate<String, TradeEvent> kafkaTemplate;
 
+    @Autowired
+    ScenarioMediatorService scenarioMediatorService;
+
     @Test
-    void shouldLoadAllCoreComponents() throws InterruptedException {
-        VisualScenarioTestClient.event("system-ready", "component-ready", "spring-app", null,
-                "Spring Context Ready", null, null, "READY");
-        Thread.sleep(400);
+    void shouldLoadAllCoreComponentsAndRunBaselineReadinessScenario() {
         assertNotNull(tradeEventPublisher);
-
-        VisualScenarioTestClient.event("system-ready", "component-ready", "publisher", "publisher-kafka",
-                "Publisher Ready", null, null, "READY");
-        Thread.sleep(400);
         assertNotNull(tradeEventListener);
-
-        VisualScenarioTestClient.event("system-ready", "component-ready", "listener", "listener-kafka",
-                "Listener Ready", null, null, "READY");
-        Thread.sleep(400);
         assertNotNull(kafkaTemplate);
 
-        VisualScenarioTestClient.event("system-ready", "component-ready", "kafka", null,
-                "Kafka Reachable", null, null, "READY");
-        Thread.sleep(400);
+        ActiveScenarioRuntimeState runtime = scenarioMediatorService.execute(
+                "system-ready",
+                SystemReadyScenarioStarter.BASELINE_READINESS,
+                "AllComponentsTest"
+        );
+
+        assertEquals("READY", runtime.nodeStatuses().get("spring-app"));
+        assertEquals("READY", runtime.nodeStatuses().get("publisher"));
+        assertEquals("READY", runtime.nodeStatuses().get("listener"));
+        assertEquals("READY", runtime.nodeStatuses().get("kafka"));
+        assertEquals("READY", runtime.edgeStatuses().get("publisher-kafka"));
+        assertEquals("READY", runtime.edgeStatuses().get("listener-kafka"));
+        assertTrue(runtime.completed());
+        assertFalse(runtime.active());
     }
 }

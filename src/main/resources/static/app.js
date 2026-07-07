@@ -359,7 +359,9 @@ function renderNode(entry, stepView) {
   const typeClass = node.type === "container" ? "node-container" : "";
   const ringInset = node.type === "container" ? 10 : 8;
   const titleLines = wrapText(node.label, 18, node.width - 36);
-  const titleMarkup = renderTextLines(titleLines, 18, 30, 22, "node-title");
+  const blockHeight = titleLines.length * 22;
+  const titleStartY = Math.round((node.height - blockHeight) / 2) + 16;
+  const titleMarkup = renderTextLines(titleLines, node.width / 2, titleStartY, 22, "node-title", "middle");
 
   return `
     <g class="node ${typeClass} ${nodeState}" data-node-id="${node.id}" transform="translate(${absoluteX}, ${absoluteY})">
@@ -593,9 +595,9 @@ function colorForType(type) {
   }
 }
 
-function renderTextLines(lines, x, startY, lineHeight, cssClass) {
+function renderTextLines(lines, x, startY, lineHeight, cssClass, textAnchor = "start") {
   return `
-    <text class="${cssClass}" x="${x}" y="${startY}">
+    <text class="${cssClass}" x="${x}" y="${startY}" text-anchor="${textAnchor}">
       ${lines.map((line, index) => `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`).join("")}
     </text>
   `;

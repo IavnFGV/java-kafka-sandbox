@@ -9,16 +9,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.drozda.sandbox.mediator.ScenarioCommand;
+import io.drozda.sandbox.mediator.ScenarioCommandRequest;
+import io.drozda.sandbox.mediator.ScenarioMediatorService;
+
 @RestController
 @RequestMapping("/api/scenarios")
 public class ScenarioGraphController {
 
     private final ScenarioCatalog scenarioCatalog;
     private final ScenarioRuntimeService scenarioRuntimeService;
+    private final ScenarioMediatorService scenarioMediatorService;
 
-    public ScenarioGraphController(ScenarioCatalog scenarioCatalog, ScenarioRuntimeService scenarioRuntimeService) {
+    public ScenarioGraphController(
+            ScenarioCatalog scenarioCatalog,
+            ScenarioRuntimeService scenarioRuntimeService,
+            ScenarioMediatorService scenarioMediatorService
+    ) {
         this.scenarioCatalog = scenarioCatalog;
         this.scenarioRuntimeService = scenarioRuntimeService;
+        this.scenarioMediatorService = scenarioMediatorService;
     }
 
     @GetMapping
@@ -29,6 +39,11 @@ public class ScenarioGraphController {
     @GetMapping("/{scenarioId}")
     public ScenarioGraph scenario(@PathVariable String scenarioId) {
         return scenarioCatalog.scenarioById(scenarioId);
+    }
+
+    @GetMapping("/{scenarioId}/commands")
+    public List<ScenarioCommand> scenarioCommands(@PathVariable String scenarioId) {
+        return scenarioMediatorService.commandsFor(scenarioId);
     }
 
     @GetMapping("/{scenarioId}/runtime")
@@ -82,6 +97,19 @@ public class ScenarioGraphController {
         return scenarioRuntimeService.applyRuntimeEvent(
                 scenarioCatalog.scenarioById(request.scenarioId()),
                 request
+        );
+    }
+
+    @PostMapping("/{scenarioId}/commands/{commandId}")
+    public ActiveScenarioRuntimeState executeScenarioCommand(
+            @PathVariable String scenarioId,
+            @PathVariable String commandId,
+            @RequestBody(required = false) ScenarioCommandRequest request
+    ) {
+        return scenarioMediatorService.execute(
+                scenarioId,
+                commandId,
+                request != null ? request.invocationName() : null
         );
     }
 }

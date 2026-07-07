@@ -476,16 +476,16 @@ public class ScenarioCatalog {
                 1,
                 "System Ready",
                 "A basic readiness walkthrough: the Spring Boot app starts, Kafka-facing components are injected, and the sandbox is ready.",
-                1100,
+                1180,
                 640,
                 List.of(
-                        new ScenarioNode("spring-app", "Spring Boot Application", "container", 250, 120, 420, 320, null,
+                        new ScenarioNode("spring-app", "Spring Boot Application", "container", 170, 120, 560, 320, null,
                                 "The application context starts and wires the sandbox components."),
-                        new ScenarioNode("publisher", "TradeEventPublisher", "service", 36, 86, 170, 96, "spring-app",
+                        new ScenarioNode("publisher", "TradeEventPublisher", "service", 44, 92, 246, 88, "spring-app",
                                 "The publisher bean is created and ready to send events."),
-                        new ScenarioNode("listener", "TradeEventListener", "consumer", 212, 86, 170, 96, "spring-app",
+                        new ScenarioNode("listener", "TradeEventListener", "consumer", 44, 204, 232, 88, "spring-app",
                                 "The Kafka listener bean is created and ready to receive events."),
-                        new ScenarioNode("kafka", "Kafka Broker", "broker", 760, 250, 190, 96, null,
+                        new ScenarioNode("kafka", "Kafka Broker", "broker", 860, 246, 220, 96, null,
                                 "Kafka is reachable from the sandbox application.")
                 ),
                 List.of(
