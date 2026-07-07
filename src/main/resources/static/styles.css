@@ -41,6 +41,13 @@ body {
     padding: 40px 0 56px;
 }
 
+.workspace {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
 .hero h1,
 .panel h2 {
     margin: 0;
@@ -90,6 +97,56 @@ body {
 .controls {
     display: flex;
     gap: 12px;
+}
+
+.visualizer-column {
+    min-width: 0;
+}
+
+.scenario-list-panel {
+    position: sticky;
+    top: 24px;
+}
+
+.scenario-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.scenario-link {
+    width: 100%;
+    border: 1px solid rgba(31, 41, 55, 0.08);
+    border-radius: 18px;
+    padding: 14px 16px;
+    text-align: left;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.74);
+    box-shadow: none;
+}
+
+.scenario-link:hover {
+    transform: translateY(-1px);
+}
+
+.scenario-link.active {
+    border-color: rgba(217, 119, 6, 0.34);
+    background: linear-gradient(135deg, rgba(255, 247, 237, 0.98), rgba(255, 251, 235, 0.94));
+    box-shadow: 0 10px 24px rgba(180, 83, 9, 0.12);
+}
+
+.scenario-link-title {
+    display: block;
+    font-weight: 700;
+}
+
+.scenario-link-copy {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--muted);
 }
 
 button {
@@ -275,6 +332,10 @@ button:hover {
 }
 
 @media (max-width: 900px) {
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+
     .panel-header,
     .details {
         flex-direction: column;
@@ -283,5 +344,9 @@ button:hover {
     .controls {
         width: 100%;
         flex-wrap: wrap;
+    }
+
+    .scenario-list-panel {
+        position: static;
     }
 }

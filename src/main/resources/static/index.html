@@ -17,44 +17,56 @@
             </p>
         </section>
 
-        <section class="panel">
-            <div class="panel-header">
-                <div>
-                    <p class="section-label">Scenario</p>
-                    <h2 id="scenario-title">Loading...</h2>
-                    <p id="scenario-summary" class="section-copy"></p>
-                    <p class="micro-copy">Drag nodes to move them. Container nodes carry their children with them.</p>
+        <section class="workspace">
+            <aside class="panel scenario-list-panel">
+                <p class="section-label">Scenarios</p>
+                <h2>Choose a scenario</h2>
+                <p class="micro-copy">Start simple: pick a built-in scenario and step through its initial state and transitions.</p>
+                <div id="scenario-list" class="scenario-list" aria-label="Scenario list"></div>
+            </aside>
+
+            <div class="visualizer-column">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="section-label">Scenario</p>
+                            <h2 id="scenario-title">Loading...</h2>
+                            <p id="scenario-summary" class="section-copy"></p>
+                            <p class="micro-copy">Drag nodes to move them. Container nodes carry their children with them.</p>
+                        </div>
+                        <div class="controls">
+                            <button id="prev-btn" type="button">Back</button>
+                            <button id="play-btn" type="button">Play</button>
+                            <button id="next-btn" type="button">Next</button>
+                            <button id="reset-btn" type="button">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="graph-shell">
+                        <svg id="graph" viewBox="0 0 980 520" role="img" aria-label="System integration graph"></svg>
+                    </div>
+                </section>
+
+                <section class="panel details">
+                    <div class="step-card">
+                        <p class="section-label">Current Step</p>
+                        <h2 id="step-title">Loading...</h2>
+                        <p id="step-description" class="section-copy"></p>
+                    </div>
+
+                    <div class="legend">
+                        <p class="section-label">Legend</p>
+                        <ul>
+                            <li><span class="legend-dot external"></span>External actor</li>
+                            <li><span class="legend-dot container"></span>Application/container</li>
+                            <li><span class="legend-dot service"></span>Application service</li>
+                            <li><span class="legend-dot broker"></span>Kafka broker/topic</li>
+                            <li><span class="legend-dot consumer"></span>Consumer/listener</li>
+                            <li><span class="legend-dot monitor"></span>Monitoring/observability</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="controls">
-                    <button id="prev-btn" type="button">Back</button>
-                    <button id="play-btn" type="button">Play</button>
-                    <button id="next-btn" type="button">Next</button>
-                    <button id="reset-btn" type="button">Reset</button>
-                </div>
-            </div>
-
-            <div class="graph-shell">
-                <svg id="graph" viewBox="0 0 980 520" role="img" aria-label="System integration graph"></svg>
-            </div>
-        </section>
-
-        <section class="panel details">
-            <div class="step-card">
-                <p class="section-label">Current Step</p>
-                <h2 id="step-title">Loading...</h2>
-                <p id="step-description" class="section-copy"></p>
-            </div>
-
-            <div class="legend">
-                <p class="section-label">Legend</p>
-                <ul>
-                    <li><span class="legend-dot external"></span>External actor</li>
-                    <li><span class="legend-dot container"></span>Application/container</li>
-                    <li><span class="legend-dot service"></span>Application service</li>
-                    <li><span class="legend-dot broker"></span>Kafka broker/topic</li>
-                    <li><span class="legend-dot consumer"></span>Consumer/listener</li>
-                    <li><span class="legend-dot monitor"></span>Monitoring/observability</li>
-                </ul>
+                </section>
             </div>
         </section>
     </main>

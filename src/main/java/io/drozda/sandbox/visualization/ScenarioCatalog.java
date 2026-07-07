@@ -7,12 +7,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class ScenarioCatalog {
 
+    public List<ScenarioGraph> scenarios() {
+        return List.of(
+                tradeFlowScenario(),
+                systemReadyScenario()
+        );
+    }
+
     public ScenarioGraph scenarioById(String scenarioId) {
-        return switch (scenarioId) {
-            case "trade-flow" -> tradeFlowScenario();
-            case "system-ready" -> systemReadyScenario();
-            default -> throw new IllegalArgumentException("Unknown scenario id: " + scenarioId);
-        };
+        return scenarios().stream()
+                .filter(scenario -> scenario.id().equals(scenarioId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown scenario id: " + scenarioId));
     }
 
     public ScenarioGraph tradeFlowScenario() {
@@ -44,19 +50,22 @@ public class ScenarioCatalog {
                         new ScenarioEdge("inspect-listener", "listener", "observer", "listener metrics")
                 ),
                 List.of(
-                        new ScenarioStep("step-1", "Client triggers action",
+                        new ScenarioStep("step-1", "Initial topology",
+                                "The client, application components, Kafka topic, and observer already exist. We start by seeing the system shape before any message moves.",
+                                List.of()),
+                        new ScenarioStep("step-2", "Client triggers action",
                                 "An external caller starts a business action that creates a trade event.",
                                 List.of("event-client-request")),
-                        new ScenarioStep("step-2", "Publisher sends event",
+                        new ScenarioStep("step-3", "Publisher sends event",
                                 "TradeEventPublisher serializes the payload and sends it to the trade-events topic.",
                                 List.of("event-publish")),
-                        new ScenarioStep("step-3", "Kafka stores and routes",
+                        new ScenarioStep("step-4", "Kafka stores and routes",
                                 "Kafka persists the message to the topic partition and makes it available to consumers.",
                                 List.of("event-kafka-route", "event-kafka-telemetry")),
-                        new ScenarioStep("step-4", "Listener receives event",
+                        new ScenarioStep("step-5", "Listener receives event",
                                 "TradeEventListener consumes the event and begins application-side processing.",
                                 List.of("event-listener-receive")),
-                        new ScenarioStep("step-5", "Monitoring layer observes flow",
+                        new ScenarioStep("step-6", "Monitoring layer observes flow",
                                 "The visualization reminds us where metrics, tracing, retries, and DLT monitoring will live.",
                                 List.of("event-kafka-telemetry", "event-listener-telemetry"))
                 ),
@@ -147,16 +156,19 @@ public class ScenarioCatalog {
                         new ScenarioEdge("listener-kafka", "listener", "kafka", "listener subscribed")
                 ),
                 List.of(
-                        new ScenarioStep("step-1", "Spring context started",
+                        new ScenarioStep("step-1", "Initial topology",
+                                "The application, Kafka broker, publisher, and listener are visible before readiness signals start appearing.",
+                                List.of()),
+                        new ScenarioStep("step-2", "Spring context started",
                                 "The application context boots and the Spring Boot container becomes available.",
                                 List.of("event-spring-started")),
-                        new ScenarioStep("step-2", "Publisher bean ready",
+                        new ScenarioStep("step-3", "Publisher bean ready",
                                 "TradeEventPublisher is injected and ready to send messages to Kafka.",
                                 List.of("event-publisher-ready")),
-                        new ScenarioStep("step-3", "Listener bean ready",
+                        new ScenarioStep("step-4", "Listener bean ready",
                                 "TradeEventListener is injected and can subscribe to Kafka records.",
                                 List.of("event-listener-ready")),
-                        new ScenarioStep("step-4", "System ready",
+                        new ScenarioStep("step-5", "System ready",
                                 "All key components are alive, wired, and ready for scenario execution.",
                                 List.of("event-system-ready"))
                 ),

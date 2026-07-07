@@ -3,6 +3,7 @@ const PLAYBACK_INTERVAL_MS = 1800;
 const DEFAULT_SCENARIO_ID = "system-ready";
 
 const state = {
+  scenarios: [],
   scenario: null,
   stepIndex: 0,
   timerId: null,
@@ -12,6 +13,7 @@ const state = {
 };
 
 const graph = document.getElementById("graph");
+const scenarioList = document.getElementById("scenario-list");
 const title = document.getElementById("scenario-title");
 const summary = document.getElementById("scenario-summary");
 const stepTitle = document.getElementById("step-title");
@@ -20,7 +22,7 @@ const prevBtn = document.getElementById("prev-btn");
 const playBtn = document.getElementById("play-btn");
 const nextBtn = document.getElementById("next-btn");
 const resetBtn = document.getElementById("reset-btn");
-const scenarioId = new URLSearchParams(window.location.search).get("scenario") || DEFAULT_SCENARIO_ID;
+let scenarioId = new URLSearchParams(window.location.search).get("scenario") || DEFAULT_SCENARIO_ID;
 
 bootstrap();
 
@@ -33,9 +35,11 @@ function bootstrap() {
 
 function loadInitialScenario() {
   Promise.all([
+    fetchJson("/api/scenarios"),
     fetchJson(`/api/scenarios/${scenarioId}`),
     fetchJson(`/api/scenarios/${scenarioId}/runtime`)
-  ]).then(([scenario, runtime]) => {
+  ]).then(([scenarios, scenario, runtime]) => {
+    state.scenarios = scenarios;
     applyScenario(scenario);
     state.stepIndex = runtime.currentStepIndex;
     state.activeRuntime = null;
@@ -133,6 +137,7 @@ function applyScenario(scenario) {
   title.textContent = scenario.title;
   summary.textContent = scenario.summary;
   graph.setAttribute("viewBox", `0 0 ${scenario.viewportWidth} ${scenario.viewportHeight}`);
+  renderScenarioList();
 }
 
 function render() {
@@ -156,6 +161,49 @@ function render() {
     ${renderSignals(layout, stepView)}
   `;
   attachDragHandlers();
+}
+
+function renderScenarioList() {
+  if (!scenarioList) {
+    return;
+  }
+
+  scenarioList.innerHTML = state.scenarios.map((scenario) => `
+    <button
+      type="button"
+      class="scenario-link ${scenario.id === state.activeScenarioId ? "active" : ""}"
+      data-scenario-id="${scenario.id}">
+      <span class="scenario-link-title">${escapeXml(scenario.title)}</span>
+      <span class="scenario-link-copy">${escapeXml(scenario.summary)}</span>
+    </button>
+  `).join("");
+
+  scenarioList.querySelectorAll("[data-scenario-id]").forEach((element) => {
+    element.addEventListener("click", () => {
+      selectScenario(element.dataset.scenarioId);
+    });
+  });
+}
+
+function selectScenario(nextScenarioId) {
+  if (!nextScenarioId || nextScenarioId === state.activeScenarioId) {
+    return;
+  }
+
+  stopPlayback();
+  scenarioId = nextScenarioId;
+  fetchJson(`/api/scenarios/${nextScenarioId}`)
+    .then((scenario) => Promise.all([
+      Promise.resolve(scenario),
+      fetchJson(`/api/scenarios/${nextScenarioId}/runtime`)
+    ]))
+    .then(([scenario, runtime]) => {
+      state.activeRuntime = null;
+      state.stepIndex = runtime.currentStepIndex;
+      applyScenario(scenario);
+      render();
+      updateUrl(nextScenarioId);
+    });
 }
 
 function buildCurrentStepView() {
@@ -508,6 +556,12 @@ function collectIdsByStatus(statusMap, acceptedStatuses) {
 
 function uniqueIds(ids) {
   return [...new Set(ids)];
+}
+
+function updateUrl(nextScenarioId) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("scenario", nextScenarioId);
+  window.history.replaceState({}, "", url);
 }
 
 function colorForType(type) {

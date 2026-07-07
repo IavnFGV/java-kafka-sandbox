@@ -1,5 +1,7 @@
 package io.drozda.sandbox.visualization;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +19,11 @@ public class ScenarioGraphController {
     public ScenarioGraphController(ScenarioCatalog scenarioCatalog, ScenarioRuntimeService scenarioRuntimeService) {
         this.scenarioCatalog = scenarioCatalog;
         this.scenarioRuntimeService = scenarioRuntimeService;
+    }
+
+    @GetMapping
+    public List<ScenarioGraph> scenarios() {
+        return scenarioCatalog.scenarios();
     }
 
     @GetMapping("/{scenarioId}")
