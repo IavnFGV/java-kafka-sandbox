@@ -16,7 +16,9 @@ public class ScenarioCatalog {
                 consumerGroupConsumerFailureScenario(),
                 tradeFlowScenario(),
                 systemReadyScenario()
-        );
+        ).stream()
+                .sorted((left, right) -> Integer.compare(left.order(), right.order()))
+                .toList();
     }
 
     public ScenarioGraph scenarioById(String scenarioId) {
@@ -29,6 +31,7 @@ public class ScenarioCatalog {
     public ScenarioGraph tradeFlowScenario() {
         return new ScenarioGraph(
                 "trade-flow",
+                2,
                 "Trade Event Flow",
                 "A visual walkthrough of how a trade event moves through the sandbox application. Drag nodes to refine the layout.",
                 1200,
@@ -142,6 +145,7 @@ public class ScenarioCatalog {
     public ScenarioGraph topicPartitionOffsetsScenario() {
         return new ScenarioGraph(
                 "topic-partition-offsets",
+                3,
                 "Topic, Partition, Offset Basics",
                 "A first Kafka mental model: a topic is split into partitions, and offsets are positions inside each partition rather than global numbers.",
                 1320,
@@ -205,6 +209,7 @@ public class ScenarioCatalog {
     public ScenarioGraph consumerGroupSinglePartitionScenario() {
         return new ScenarioGraph(
                 "consumer-group-single-partition",
+                4,
                 "One Partition, Two Consumers, One Group",
                 "A classic interview trap: with only one partition, one consumer works and the second consumer in the same group stays idle.",
                 1360,
@@ -265,6 +270,7 @@ public class ScenarioCatalog {
     public ScenarioGraph consumerGroupTwoPartitionsScenario() {
         return new ScenarioGraph(
                 "consumer-group-two-partitions",
+                5,
                 "Two Partitions, Two Consumers, One Group",
                 "The happy path for scaling: when partitions exist, consumers in the same group can split the work.",
                 1400,
@@ -328,6 +334,7 @@ public class ScenarioCatalog {
     public ScenarioGraph consumerGroupRebalanceOnJoinScenario() {
         return new ScenarioGraph(
                 "consumer-group-rebalance-join",
+                6,
                 "Rebalance When a Second Consumer Joins",
                 "A second consumer can trigger rebalance so partition ownership changes while the group is alive.",
                 1420,
@@ -395,6 +402,7 @@ public class ScenarioCatalog {
     public ScenarioGraph consumerGroupConsumerFailureScenario() {
         return new ScenarioGraph(
                 "consumer-group-consumer-failure",
+                7,
                 "Consumer Failure and Partition Takeover",
                 "When one consumer dies, its partition is not lost forever. The group rebalances and a surviving consumer takes over.",
                 1450,
@@ -465,6 +473,7 @@ public class ScenarioCatalog {
     public ScenarioGraph systemReadyScenario() {
         return new ScenarioGraph(
                 "system-ready",
+                1,
                 "System Ready",
                 "A basic readiness walkthrough: the Spring Boot app starts, Kafka-facing components are injected, and the sandbox is ready.",
                 1100,

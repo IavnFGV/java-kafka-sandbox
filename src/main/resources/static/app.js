@@ -178,8 +178,8 @@ function renderScenarioList() {
       type="button"
       class="scenario-link ${scenario.id === state.activeScenarioId ? "active" : ""}"
       data-scenario-id="${scenario.id}">
+      <span class="scenario-link-order">${escapeXml(formatScenarioOrder(scenario))}</span>
       <span class="scenario-link-title">${escapeXml(scenario.title)}</span>
-      <span class="scenario-link-copy">${escapeXml(shortScenarioSummary(scenario.summary))}</span>
     </button>
   `).join("");
 
@@ -561,17 +561,12 @@ function uniqueIds(ids) {
   return [...new Set(ids)];
 }
 
-function shortScenarioSummary(summaryText) {
-  if (!summaryText) {
-    return "";
-  }
-
-  if (summaryText.length <= 72) {
-    return summaryText;
-  }
-
-  return `${summaryText.slice(0, 69).trimEnd()}...`;
+function formatScenarioOrder(scenario) {
+  return typeof scenario.order === "number"
+    ? String(scenario.order).padStart(3, "0")
+    : "---";
 }
+
 
 function updateUrl(nextScenarioId) {
   const url = new URL(window.location.href);

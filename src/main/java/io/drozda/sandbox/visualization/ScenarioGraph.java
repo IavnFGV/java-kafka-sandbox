@@ -4,6 +4,7 @@ import java.util.List;
 
 public record ScenarioGraph(
         String id,
+        int order,
         String title,
         String summary,
         int viewportWidth,
