@@ -547,14 +547,15 @@ function renderEdges(edges, layout, stepView) {
   return edges.map((edge) => {
     const from = layout.get(edge.from);
     const to = layout.get(edge.to);
+    const endpoints = connectionEndpoints(from, to);
     const edgeState = edgeCssState(edge.id, stepView);
-    const labelX = (from.centerX + to.centerX) / 2;
-    const labelY = (from.centerY + to.centerY) / 2 - 16;
+    const labelX = (endpoints.from.x + endpoints.to.x) / 2;
+    const labelY = (endpoints.from.y + endpoints.to.y) / 2 - 16;
     const labelWidth = Math.max(estimateTextWidth(edge.label, 12) + 18, 44);
 
     return `
       <g>
-        <line class="edge ${edgeState}" x1="${from.centerX}" y1="${from.centerY}" x2="${to.centerX}" y2="${to.centerY}" marker-end="url(#arrow)"></line>
+        <line class="edge ${edgeState}" x1="${endpoints.from.x}" y1="${endpoints.from.y}" x2="${endpoints.to.x}" y2="${endpoints.to.y}" marker-end="url(#arrow)"></line>
         <rect class="edge-label-pill" x="${labelX - labelWidth / 2}" y="${labelY - 14}" width="${labelWidth}" height="22" rx="11"></rect>
         <text class="edge-label" x="${labelX}" y="${labelY}" text-anchor="middle">${escapeXml(edge.label)}</text>
       </g>
@@ -623,15 +624,16 @@ function renderSignal(layout, signal, index) {
   }
 
   const label = signal.label || "message";
+  const endpoints = connectionEndpoints(from, to);
   const offset = index * 18;
-  const midX = (from.centerX + to.centerX) / 2;
-  const midY = (from.centerY + to.centerY) / 2 - 18 - offset;
+  const midX = (endpoints.from.x + endpoints.to.x) / 2;
+  const midY = (endpoints.from.y + endpoints.to.y) / 2 - 18 - offset;
 
   if (signal.state === "READY") {
     return `
       <g class="assignment-link">
-        <line x1="${from.centerX}" y1="${from.centerY}" x2="${to.centerX}" y2="${to.centerY}" marker-end="url(#arrow)"></line>
-        <text x="${midX}" y="${(from.centerY + to.centerY) / 2 - 10}" text-anchor="middle">${escapeXml(label)}</text>
+        <line x1="${endpoints.from.x}" y1="${endpoints.from.y}" x2="${endpoints.to.x}" y2="${endpoints.to.y}" marker-end="url(#arrow)"></line>
+        <text x="${midX}" y="${(endpoints.from.y + endpoints.to.y) / 2 - 10}" text-anchor="middle">${escapeXml(label)}</text>
       </g>
     `;
   }
@@ -640,11 +642,34 @@ function renderSignal(layout, signal, index) {
     <g class="signal">
       <text class="signal-label" x="${midX}" y="${midY}" text-anchor="middle">${escapeXml(label)}</text>
       <circle class="signal-dot" r="8">
-        <animate attributeName="cx" from="${from.centerX}" to="${to.centerX}" dur="1.4s" repeatCount="indefinite"></animate>
-        <animate attributeName="cy" from="${from.centerY}" to="${to.centerY}" dur="1.4s" repeatCount="indefinite"></animate>
+        <animate attributeName="cx" from="${endpoints.from.x}" to="${endpoints.to.x}" dur="1.4s" repeatCount="indefinite"></animate>
+        <animate attributeName="cy" from="${endpoints.from.y}" to="${endpoints.to.y}" dur="1.4s" repeatCount="indefinite"></animate>
       </circle>
     </g>
   `;
+}
+
+function connectionEndpoints(from, to) {
+  return {
+    from: rectangleBoundaryPoint(from, to.centerX, to.centerY),
+    to: rectangleBoundaryPoint(to, from.centerX, from.centerY)
+  };
+}
+
+function rectangleBoundaryPoint(entry, targetX, targetY) {
+  const deltaX = targetX - entry.centerX;
+  const deltaY = targetY - entry.centerY;
+  if (deltaX === 0 && deltaY === 0) {
+    return { x: entry.centerX, y: entry.centerY };
+  }
+
+  const halfWidth = entry.node.width / 2;
+  const halfHeight = entry.node.height / 2;
+  const scale = 1 / Math.max(Math.abs(deltaX) / halfWidth, Math.abs(deltaY) / halfHeight);
+  return {
+    x: entry.centerX + deltaX * scale,
+    y: entry.centerY + deltaY * scale
+  };
 }
 
 function buildLayout(nodes) {
