@@ -21,6 +21,7 @@ Each completed scenario should:
 6. Explain why Kafka behaved that way.
 7. Include a failure or edge-case variant where it adds value.
 8. Finish with a concise interview-ready takeaway.
+9. Reference the before and after commits so the implementation change is easy to demonstrate.
 
 The UI is not intended to become a general Kafka administration console. Actions
 remain constrained by the selected scenario so that every interaction teaches a
