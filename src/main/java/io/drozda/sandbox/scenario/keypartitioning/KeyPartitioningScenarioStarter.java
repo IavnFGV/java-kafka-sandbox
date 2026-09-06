@@ -69,16 +69,16 @@ public class KeyPartitioningScenarioStarter implements ScenarioStarter {
                         "p" + partition + " assigned")));
 
         runtime.updateActiveStep(scenario, 1);
-        Map<Integer, String> partitionDetails = new java.util.LinkedHashMap<>();
+        Map<Integer, List<KeyedRecordObservation>> recordsByPartition = new java.util.LinkedHashMap<>();
         for (KeyedRecordObservation record : result.observations()) {
             String partitionNode = "partition-" + record.partition();
             String recordLabel = record.orderId() + " " + record.status();
             signal(scenario, null, "publisher", partitionNode,
                     recordLabel + " → p" + record.partition());
-            String detail = appendDetail(partitionDetails.get(record.partition()),
-                    recordLabel + " @" + record.offset());
-            partitionDetails.put(record.partition(), detail);
-            runtime.updateNodeDetail(scenario, partitionNode, detail);
+            List<KeyedRecordObservation> partitionRecords = recordsByPartition.computeIfAbsent(
+                    record.partition(), ignored -> new java.util.ArrayList<>());
+            partitionRecords.add(record);
+            runtime.updateNodeDetail(scenario, partitionNode, compactDetail(partitionRecords));
             ready(scenario, partitionNode, recordLabel + " appended at offset " + record.offset());
             String consumerNode = nodeId(record.consumerId());
             signal(scenario, null, partitionNode, consumerNode,
@@ -112,8 +112,11 @@ public class KeyPartitioningScenarioStarter implements ScenarioStarter {
         return runtime.completeActiveSession(scenario);
     }
 
-    private String appendDetail(String existing, String record) {
-        return existing == null || existing.isBlank() ? record : existing + " | " + record;
+    private String compactDetail(List<KeyedRecordObservation> records) {
+        KeyedRecordObservation first = records.get(0);
+        KeyedRecordObservation last = records.get(records.size() - 1);
+        return records.size() + " records | offsets " + first.offset() + ".." + last.offset()
+                + " | last: " + last.status();
     }
 
     private String nodeId(String consumerId) {

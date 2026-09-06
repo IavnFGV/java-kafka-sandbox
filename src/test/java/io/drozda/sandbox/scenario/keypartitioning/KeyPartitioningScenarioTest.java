@@ -45,6 +45,9 @@ class KeyPartitioningScenarioTest {
             assertEquals(3, runtime.activeSignals().stream()
                     .filter(signal -> "READY".equals(signal.state()))
                     .count());
+            assertTrue(runtime.nodeDetails().values().stream()
+                    .filter(detail -> detail.contains("records | offsets"))
+                    .allMatch(detail -> detail.length() < 80));
             assertTrue(runtime.eventLog().stream()
                     .anyMatch(line -> line.contains("consumed order-42 SHIPPED")));
             assertTrue(runtime.completed());
