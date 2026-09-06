@@ -20,6 +20,10 @@ import io.drozda.sandbox.mediator.ScenarioMediatorService;
 @RequestMapping("/api/scenarios")
 public class ScenarioGraphController {
 
+    private static final long DEFAULT_RUNTIME_UPDATE_TIMEOUT_MS = 120_000L;
+    private static final long MIN_RUNTIME_UPDATE_TIMEOUT_MS = 1_000L;
+    private static final long MAX_RUNTIME_UPDATE_TIMEOUT_MS = 120_000L;
+
     private final ScenarioCatalog scenarioCatalog;
     private final ScenarioRuntimeService scenarioRuntimeService;
     private final ScenarioMediatorService scenarioMediatorService;
@@ -101,9 +105,13 @@ public class ScenarioGraphController {
     @GetMapping("/runtime/updates")
     public DeferredResult<ScenarioRuntimeUpdate> runtimeUpdates(
             @RequestParam(defaultValue = "-1") long after,
-            @RequestParam(defaultValue = "25000") long timeoutMs
+            @RequestParam(defaultValue = "120000") long timeoutMs
     ) {
-        long boundedTimeout = Math.max(1_000L, Math.min(timeoutMs, 30_000L));
+        long requestedTimeout = timeoutMs > 0 ? timeoutMs : DEFAULT_RUNTIME_UPDATE_TIMEOUT_MS;
+        long boundedTimeout = Math.max(
+                MIN_RUNTIME_UPDATE_TIMEOUT_MS,
+                Math.min(requestedTimeout, MAX_RUNTIME_UPDATE_TIMEOUT_MS)
+        );
         return scenarioRuntimeService.awaitRuntimeUpdate(after, boundedTimeout);
     }
 
