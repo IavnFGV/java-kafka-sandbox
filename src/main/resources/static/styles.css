@@ -250,6 +250,7 @@ button:hover {
 }
 
 .graph-shell {
+    position: relative;
     margin-top: 20px;
     border-radius: 20px;
     overflow: hidden;
@@ -259,6 +260,19 @@ button:hover {
         linear-gradient(90deg, rgba(31, 41, 55, 0.03) 1px, transparent 1px),
         linear-gradient(rgba(31, 41, 55, 0.03) 1px, transparent 1px);
     background-size: auto, 32px 32px, 32px 32px;
+}
+
+.graph-controls {
+    position: absolute;
+    z-index: 5;
+    top: 16px;
+    right: 16px;
+    padding: 8px;
+    border: 1px solid rgba(217, 119, 6, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 253, 248, 0.9);
+    box-shadow: 0 8px 24px rgba(31, 41, 55, 0.08);
+    backdrop-filter: blur(8px);
 }
 
 #graph {
@@ -503,8 +517,18 @@ button:hover {
     }
 
     .controls {
-        width: 100%;
         flex-wrap: wrap;
+    }
+
+    .graph-controls {
+        top: 10px;
+        right: 10px;
+        gap: 8px;
+        padding: 6px;
+    }
+
+    .graph-controls button {
+        padding: 9px 13px;
     }
 
     .scenario-inputs {
