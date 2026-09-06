@@ -1,4 +1,4 @@
-const POLL_INTERVAL_MS = 500;
+const LONG_POLL_RETRY_MS = 1000;
 const DEFAULT_SCENARIO_ID = "system-ready";
 const CONTAINER_PADDING = 20;
 const MIN_CONTAINER_WIDTH = 180;
@@ -14,6 +14,7 @@ const state = {
   logsByScenario: {},
   lastPlaybackStepKeyByScenario: {},
   lastRuntimeSnapshotByScenario: {},
+  runtimeRevision: -1,
   runInFlight: false
 };
 
@@ -34,7 +35,7 @@ function bootstrap() {
   bindControlEvents();
   bindDragEvents();
   loadInitialScenario();
-  window.setInterval(syncActiveRuntime, POLL_INTERVAL_MS);
+  pollRuntimeUpdates();
 }
 
 function loadInitialScenario() {
@@ -109,35 +110,53 @@ function stopScenario() {
   });
 }
 
-function syncActiveRuntime() {
-  fetchJson("/api/scenarios/runtime/active")
-    .then((runtime) => {
-      if (!runtime || !runtime.scenarioId) {
-        state.activeRuntime = null;
+function pollRuntimeUpdates() {
+  fetchJson(`/api/scenarios/runtime/updates?after=${state.runtimeRevision}`)
+    .then((update) => {
+      if (!update || typeof update.revision !== "number") {
         return;
       }
 
-      const runtimeIsDrivingScreen = runtime.active || runtime.scenarioId === state.activeScenarioId;
-      state.activeRuntime = runtime;
-
-      if (!runtimeIsDrivingScreen) {
+      if (update.revision === state.runtimeRevision) {
         return;
       }
 
-      if (runtime.scenarioId !== state.activeScenarioId) {
-        return fetchJson(`/api/scenarios/${runtime.scenarioId}`).then((scenario) => {
-          applyScenario(scenario);
-          state.stepIndex = runtime.currentStepIndex;
-          render();
-        });
-      }
+      state.runtimeRevision = update.revision;
+      return applyRuntimeUpdate(update.runtime);
+    })
+    .then(pollRuntimeUpdates)
+    .catch(() => {
+      window.setTimeout(pollRuntimeUpdates, LONG_POLL_RETRY_MS);
+    });
+}
 
+function applyRuntimeUpdate(runtime) {
+  if (!runtime || !runtime.scenarioId) {
+    const hadRuntime = state.activeRuntime !== null;
+    state.activeRuntime = null;
+    if (hadRuntime) {
+      render();
+    }
+    return;
+  }
+
+  const runtimeIsDrivingScreen = runtime.active || runtime.scenarioId === state.activeScenarioId;
+  state.activeRuntime = runtime;
+
+  if (!runtimeIsDrivingScreen) {
+    return;
+  }
+
+  if (runtime.scenarioId !== state.activeScenarioId) {
+    return fetchJson(`/api/scenarios/${runtime.scenarioId}`).then((scenario) => {
+      applyScenario(scenario);
       state.stepIndex = runtime.currentStepIndex;
       render();
-    })
-    .catch(() => {
-      // Ignore polling failures when the app is restarting.
     });
+  }
+
+  state.stepIndex = runtime.currentStepIndex;
+  render();
 }
 
 function fetchJson(url, options) {

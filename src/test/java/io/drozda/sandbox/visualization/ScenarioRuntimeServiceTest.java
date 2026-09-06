@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.web.context.request.async.DeferredResult;
 
 class ScenarioRuntimeServiceTest {
 
@@ -115,5 +116,21 @@ class ScenarioRuntimeServiceTest {
         assertEquals(0, runtimeService.getState(scenario).currentStepIndex());
         assertFalse(cleared.active());
         assertNull(cleared.scenarioId());
+    }
+
+    @Test
+    void shouldCompleteLongPollWhenRuntimeChanges() {
+        ScenarioGraph scenario = scenarioCatalog.systemReadyScenario();
+        long currentRevision = runtimeService.currentRuntimeUpdate().revision();
+        DeferredResult<ScenarioRuntimeUpdate> pending = runtimeService.awaitRuntimeUpdate(currentRevision, 5_000);
+
+        assertFalse(pending.hasResult());
+
+        runtimeService.startActiveSession(scenario, "long-poll-test");
+
+        assertTrue(pending.hasResult());
+        ScenarioRuntimeUpdate update = (ScenarioRuntimeUpdate) pending.getResult();
+        assertEquals(currentRevision + 1, update.revision());
+        assertEquals("system-ready", update.runtime().scenarioId());
     }
 }

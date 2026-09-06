@@ -149,6 +149,7 @@ Step navigation:
 
 Live runtime:
 - `GET /api/scenarios/runtime/active`
+- `GET /api/scenarios/runtime/updates?after={revision}`
 - `POST /api/scenarios/runtime/session/start`
 - `POST /api/scenarios/runtime/session/step`
 - `POST /api/scenarios/runtime/session/complete`
@@ -174,7 +175,7 @@ Current major sections:
 
 Main frontend behavior:
 - load initial scenario and runtime
-- poll `/api/scenarios/runtime/active`
+- keep one long-poll request open until the runtime revision changes or times out
 - if an active runtime exists, render live mode
 - otherwise render step mode
 - expose Play and Stop controls
@@ -242,7 +243,7 @@ What will likely need refactoring later:
 - only one active runtime session is effectively tracked at a time
 - layout is manual and not auto-arranged
 - `system-ready` currently checks bean creation, not real broker health
-- runtime updates use browser polling rather than server push
+- runtime updates use long polling rather than a server-push stream such as SSE
 
 ## 11. Good next refactoring directions
 

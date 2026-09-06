@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import io.drozda.sandbox.mediator.ScenarioCommand;
 import io.drozda.sandbox.mediator.ScenarioCommandRequest;
@@ -94,6 +96,15 @@ public class ScenarioGraphController {
     @GetMapping("/runtime/active")
     public ActiveScenarioRuntimeState activeRuntime() {
         return scenarioRuntimeService.activeRuntime();
+    }
+
+    @GetMapping("/runtime/updates")
+    public DeferredResult<ScenarioRuntimeUpdate> runtimeUpdates(
+            @RequestParam(defaultValue = "-1") long after,
+            @RequestParam(defaultValue = "25000") long timeoutMs
+    ) {
+        long boundedTimeout = Math.max(1_000L, Math.min(timeoutMs, 30_000L));
+        return scenarioRuntimeService.awaitRuntimeUpdate(after, boundedTimeout);
     }
 
     @PostMapping("/runtime/session/start")

@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.async.DeferredResult;
 
 @Service
 public class ScenarioRuntimeService {
@@ -28,6 +31,8 @@ public class ScenarioRuntimeService {
     private static final String EVENT_SESSION_COMPLETED = "SESSION-COMPLETED";
 
     private final Map<String, Integer> currentStepByScenario = new ConcurrentHashMap<>();
+    private final AtomicLong runtimeRevision = new AtomicLong();
+    private final List<DeferredResult<ScenarioRuntimeUpdate>> runtimeWaiters = new CopyOnWriteArrayList<>();
     private volatile ActiveScenarioRuntimeState activeRuntime = emptyRuntime();
 
     public ScenarioRuntimeState getState(ScenarioGraph scenario) {
@@ -58,11 +63,29 @@ public class ScenarioRuntimeService {
         return activeRuntime;
     }
 
+    public ScenarioRuntimeUpdate currentRuntimeUpdate() {
+        return new ScenarioRuntimeUpdate(runtimeRevision.get(), activeRuntime);
+    }
+
+    public DeferredResult<ScenarioRuntimeUpdate> awaitRuntimeUpdate(long afterRevision, long timeoutMillis) {
+        DeferredResult<ScenarioRuntimeUpdate> result = new DeferredResult<>(timeoutMillis);
+        runtimeWaiters.add(result);
+        result.onCompletion(() -> runtimeWaiters.remove(result));
+        result.onTimeout(() -> result.setResult(currentRuntimeUpdate()));
+
+        ScenarioRuntimeUpdate current = currentRuntimeUpdate();
+        if (current.revision() > afterRevision) {
+            result.setResult(current);
+        }
+
+        return result;
+    }
+
     public ActiveScenarioRuntimeState clearActiveSession(ScenarioGraph scenario) {
         currentStepByScenario.put(scenario.id(), 0);
 
         if (scenario.id().equals(activeRuntime.scenarioId())) {
-            activeRuntime = emptyRuntime();
+            publishRuntime(emptyRuntime());
         }
 
         return activeRuntime;
@@ -75,7 +98,7 @@ public class ScenarioRuntimeService {
         if (!scenario.steps().isEmpty()) {
             appendLog(eventLog, "Step 0: " + scenario.steps().get(0).title());
         }
-        activeRuntime = new ActiveScenarioRuntimeState(
+        return publishRuntime(new ActiveScenarioRuntimeState(
                 scenario.id(),
                 0,
                 true,
@@ -87,8 +110,7 @@ public class ScenarioRuntimeService {
                 eventLog,
                 "session-started",
                 testName
-        );
-        return activeRuntime;
+        ));
     }
 
     public ActiveScenarioRuntimeState updateActiveStep(ScenarioGraph scenario, int stepIndex) {
@@ -98,7 +120,7 @@ public class ScenarioRuntimeService {
         if (!scenario.steps().isEmpty()) {
             appendLog(eventLog, "Step " + clamped + ": " + scenario.steps().get(clamped).title());
         }
-        activeRuntime = new ActiveScenarioRuntimeState(
+        return publishRuntime(new ActiveScenarioRuntimeState(
                 scenario.id(),
                 clamped,
                 true,
@@ -110,15 +132,14 @@ public class ScenarioRuntimeService {
                 eventLog,
                 "step-changed",
                 "Step " + clamped
-        );
-        return activeRuntime;
+        ));
     }
 
     public ActiveScenarioRuntimeState completeActiveSession(ScenarioGraph scenario) {
         int currentIndex = currentStepByScenario.getOrDefault(scenario.id(), 0);
         List<String> eventLog = copyLog(activeRuntime.eventLog());
         appendLog(eventLog, "Session completed");
-        activeRuntime = new ActiveScenarioRuntimeState(
+        return publishRuntime(new ActiveScenarioRuntimeState(
                 scenario.id(),
                 clamp(currentIndex, scenario),
                 false,
@@ -130,8 +151,7 @@ public class ScenarioRuntimeService {
                 eventLog,
                 "session-completed",
                 activeRuntime.testName()
-        );
-        return activeRuntime;
+        ));
     }
 
     public ActiveScenarioRuntimeState applyRuntimeEvent(ScenarioGraph scenario, RuntimeEventRequest request) {
@@ -192,7 +212,7 @@ public class ScenarioRuntimeService {
             appendLog(eventLog, describeEvent(request, eventType, status));
         }
 
-        activeRuntime = new ActiveScenarioRuntimeState(
+        return publishRuntime(new ActiveScenarioRuntimeState(
                 scenario.id(),
                 currentStepByScenario.getOrDefault(scenario.id(), 0),
                 active,
@@ -204,8 +224,14 @@ public class ScenarioRuntimeService {
                 eventLog,
                 request.type(),
                 request.label()
-        );
-        return activeRuntime;
+        ));
+    }
+
+    private ActiveScenarioRuntimeState publishRuntime(ActiveScenarioRuntimeState runtime) {
+        activeRuntime = runtime;
+        ScenarioRuntimeUpdate update = new ScenarioRuntimeUpdate(runtimeRevision.incrementAndGet(), runtime);
+        runtimeWaiters.removeIf(waiter -> waiter.setResult(update));
+        return runtime;
     }
 
     private String signalId(RuntimeEventRequest request) {

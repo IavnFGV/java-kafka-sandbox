@@ -32,6 +32,7 @@ What works now:
 - UI Play runs the default backend command
 - UI Stop closes the scenario environment and restores baseline topology
 - runtime events are retained in a per-scenario browser log until reload
+- runtime changes reach the browser through versioned long polling
 - container nodes can be resized and keep child nodes inside their bounds
 
 What is still intentionally missing:
