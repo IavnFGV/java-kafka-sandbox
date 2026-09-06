@@ -4,6 +4,7 @@
 
 - Было: `0fef6ba` — схема объясняла partitions заранее заданной анимацией.
 - Стало: `50e363a` — отдельное приложение отправляет и читает реальные Kafka records.
+- Нагляднее: `1a370be` — фактические records, offsets и assignment отображаются прямо внутри узлов.
 
 ## Ментальная модель
 
@@ -69,7 +70,9 @@ Producer возвращает `SendResult` с координатами сохр�
 
 `TopicPartitionOffsetsScenarioStarter` переводит этот результат в события UI.
 В runtime log появляются фактические значения, а broker, topic, partitions,
-producer и consumer подсвечиваются только после подтверждения.
+producer и consumer подсвечиваются только после подтверждения. В самих узлах
+partitions остаётся содержимое текущего запуска: `A @ offset N`, `B @ offset M`
+и `C @ offset N'`. На consumer отображаются назначенные ему partitions `0, 1`.
 
 ## Архитектурная граница
 
