@@ -11,6 +11,7 @@ public class ScenarioCatalog {
         return List.of(
                 topicPartitionOffsetsScenario(),
                 keyPartitioningScenario(),
+                partitionOrderingScenario(),
                 consumerGroupSinglePartitionScenario(),
                 consumerGroupTwoPartitionsScenario(),
                 consumerGroupRebalanceOnJoinScenario(),
@@ -223,6 +224,48 @@ public class ScenarioCatalog {
                                 "CREATED, PAID, and SHIPPED for order-42 all receive the same partition number.", List.of()),
                         new ScenarioStep("step-3", "Consumer verifies the route",
                                 "Three listener instances share the partitions; each record is animated toward the consumer that actually received it.", List.of())
+                ),
+                List.of()
+        );
+    }
+
+    public ScenarioGraph partitionOrderingScenario() {
+        return new ScenarioGraph(
+                "partition-ordering",
+                5,
+                "Ordering Within One Partition",
+                "Scenario 005 verifies what happens after scenario 004 routed related records together: Kafka offsets and listener callbacks preserve their append order inside one partition.",
+                "Protect state transitions for one entity from being consumed out of order, while recognizing that the guarantee ends at the partition and listener boundary.",
+                List.of(11),
+                1400,
+                800,
+                List.of(
+                        new ScenarioNode("publisher", "OrderedEventPublisher", "service", 35, 335, 245, 100, null,
+                                "Sends sequence 0..5 using one orderId key."),
+                        new ScenarioNode("kafka-broker", "Kafka Broker", "broker-container", 430, 65, 470, 650, null,
+                                "Each partition is an independent ordered append-only log."),
+                        new ScenarioNode("topic", "scenario-005-partition-ordering Topic", "topic-container",
+                                40, 80, 390, 490, "kafka-broker", "Three partitions; one receives this order's complete sequence."),
+                        new ScenarioNode("partition-0", "Partition 0", "broker", 75, 90, 240, 100, "topic", "Ordered shard 0."),
+                        new ScenarioNode("partition-1", "Partition 1", "broker", 75, 220, 240, 100, "topic", "Ordered shard 1."),
+                        new ScenarioNode("partition-2", "Partition 2", "broker", 75, 350, 240, 100, "topic", "Ordered shard 2."),
+                        new ScenarioNode("consumer-a", "Consumer A", "consumer", 1060, 145, 220, 90, null,
+                                "One concurrent consumer in the scenario group."),
+                        new ScenarioNode("consumer-b", "Consumer B", "consumer", 1060, 285, 220, 90, null,
+                                "One concurrent consumer in the scenario group."),
+                        new ScenarioNode("consumer-c", "Consumer C", "consumer", 1060, 425, 220, 90, null,
+                                "One concurrent consumer in the scenario group."),
+                        new ScenarioNode("order-check", "Order Verification", "monitor", 1035, 610, 270, 110, null,
+                                "Compares business sequence, Kafka offsets, and listener callback order.")
+                ),
+                List.of(new ScenarioEdge("publish", "publisher", "topic", "send with orderId key")),
+                List.of(
+                        new ScenarioStep("step-1", "Initial topology",
+                                "Three consumers own three partitions before the ordered sequence is published.", List.of()),
+                        new ScenarioStep("step-2", "Append and consume in order",
+                                "Records sequence 0..5 receive increasing offsets in one partition and reach its assigned consumer.", List.of()),
+                        new ScenarioStep("step-3", "Compare the three orders",
+                                "The experiment compares producer sequence, partition offsets, and actual listener callback order.", List.of())
                 ),
                 List.of()
         );
