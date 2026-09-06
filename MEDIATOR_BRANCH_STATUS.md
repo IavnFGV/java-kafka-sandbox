@@ -50,6 +50,7 @@ What is still intentionally missing:
 
 Most likely next step:
 
-- implement one partition/two consumers/one group as the next real experiment
-- observe assignment and the idle second consumer
+- implement `004 Message Key and Partition Selection` for backlog item #10
+- prove that records sharing a key reach the same partition without explicit partition selection
+- keep consumer-group scenarios for `007` and later
 - only after that introduce external process/container orchestration

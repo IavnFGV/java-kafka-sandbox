@@ -15,17 +15,22 @@ How to use this list:
   - optional visualizer support
   - notes about failure modes and tradeoffs
 
-## Implemented Scenario Mapping
+## Scenario Learning Roadmap
 
-| Scenario | Practical focus | Backlog items |
-|---|---|---|
-| `001 System Ready` | Distinguish Spring wiring failures from Kafka runtime failures | Foundation |
-| `002 Trade Event Flow` | Decouple a producer from asynchronous consumers through a durable event log | #1 |
-| `003 Topic, Partition, Offset` | Scale a stream into ordered shards and address consumer progress precisely | #2, #11, #12 |
-| `004 One Partition, Two Consumers` | Detect why adding consumers may not increase throughput | #13, #14 |
-| `005 Two Partitions, Two Consumers` | Scale one service by distributing partitions across its instances | #13, #14 |
-| `006 Rebalance on Join` | Understand ownership changes during deploys and autoscaling | #41, #94 |
-| `007 Consumer Failure` | Recover partition processing after an instance disappears | #13, #41, #97 |
+| Scenario | Status | Practical focus | Backlog items |
+|---|---|---|---|
+| `001 System Ready` | Implemented | Distinguish Spring wiring failures from Kafka runtime failures | Foundation |
+| `002 Trade Event Flow` | Implemented | Decouple a producer from asynchronous consumers through a durable event log | #1 |
+| `003 Topic, Partition, Offset` | Implemented | Scale a stream into ordered shards and address consumer progress precisely | #2; introduces #11, #12 |
+| `004 Message Key and Partition Selection` | Next | Keep related entity events in the same ordered shard | #10 |
+| `005 Ordering Within One Partition` | Planned | Preserve the order of related events | #11 |
+| `006 No Global Ordering Across Partitions` | Planned | Avoid assuming one timeline for a parallel stream | #12 |
+| `007 One Partition, Two Consumers` | Static UI | Detect why adding consumers may not increase throughput | #13, #14 |
+| `008 Two Partitions, Two Consumers` | Static UI | Scale one service by distributing partitions across its instances | #13, #14 |
+| `009 Multiple Consumer Groups` | Planned | Let independent services process the same event stream | #15 |
+| `010 Earliest vs Latest` | Planned | Control where a new group begins reading | #16 |
+| `011 Rebalance on Join` | Static UI | Understand ownership changes during deploys and autoscaling | #41, #94 |
+| `012 Consumer Failure` | Static UI | Recover partition processing after an instance disappears | #13, #41, #97 |
 
 The mapping is many-to-many: one scenario may cover several backlog questions,
 and one question may require several scenarios. Keep `ScenarioGraph.backlogItems`

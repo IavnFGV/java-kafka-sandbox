@@ -71,5 +71,6 @@ and offset metadata, and confirms that its listener receives the matching event.
 `003 Topic, Partition, Offset` appends records to two explicit partitions and
 verifies their partition-local offsets on both producer and consumer sides.
 
-The next milestone is `004 One Partition, Two Consumers, One Group`: observe
-that only one consumer can own the single partition while the other stays idle.
+The next milestone is `004 Message Key and Partition Selection`: send several
+events for the same business entity without specifying a partition and verify
+that Kafka's key-based partitioning keeps them in the same ordered shard.

@@ -33,7 +33,7 @@ Important context:
 - Do not forget to suggest or make small meaningful commits as progress is completed.
 
 Session goals:
-1. Pick the next best Kafka scenario from KAFKA_100_PROBLEMS_AND_PATTERNS.md
+1. Continue with `004 Message Key and Partition Selection` (backlog #10); do not return to the old consumer-group-first ordering
 2. Explain why it matters in practical systems and interviews
 3. For Kafka/Java code, guide me through implementing it in the repository with tests first or test-driven enough
 4. If useful, extend the visualizer so the scenario can be seen, not just asserted
@@ -64,4 +64,15 @@ When suggesting the next task, prefer one of these early topics unless I redirec
 - rebalance
 
 Before coding, briefly summarize the current visualizer architecture from VISUALIZER_CONTEXT.md so we stay grounded in the existing design.
+
+Current agreed learning route:
+- `004` message key and partition selection (#10)
+- `005` ordering within one partition (#11)
+- `006` no global ordering across partitions (#12)
+- `007` one partition, two consumers, one group (#13, #14)
+- `008` two partitions, two consumers, one group (#13, #14)
+- `009` multiple independent consumer groups (#15)
+- `010` earliest vs latest (#16)
+- `011` rebalance when a consumer joins (#41, #94)
+- `012` consumer failure and takeover (#13, #41, #97)
 ```

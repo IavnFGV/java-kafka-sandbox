@@ -188,7 +188,7 @@ public class ScenarioCatalog {
     public ScenarioGraph consumerGroupSinglePartitionScenario() {
         return new ScenarioGraph(
                 "consumer-group-single-partition",
-                4,
+                7,
                 "One Partition, Two Consumers, One Group",
                 "A classic interview trap: with only one partition, one consumer works and the second consumer in the same group stays idle.",
                 "Avoid paying for consumer instances that cannot increase throughput because the topic has fewer partitions than consumers in the group.",
@@ -251,7 +251,7 @@ public class ScenarioCatalog {
     public ScenarioGraph consumerGroupTwoPartitionsScenario() {
         return new ScenarioGraph(
                 "consumer-group-two-partitions",
-                5,
+                8,
                 "Two Partitions, Two Consumers, One Group",
                 "The happy path for scaling: when partitions exist, consumers in the same group can split the work.",
                 "Scale one logical service horizontally by giving its instances separate partitions while processing every record only once per group.",
@@ -317,7 +317,7 @@ public class ScenarioCatalog {
     public ScenarioGraph consumerGroupRebalanceOnJoinScenario() {
         return new ScenarioGraph(
                 "consumer-group-rebalance-join",
-                6,
+                11,
                 "Rebalance When a Second Consumer Joins",
                 "A second consumer can trigger rebalance so partition ownership changes while the group is alive.",
                 "Understand temporary processing pauses and ownership changes that happen during deployments, autoscaling, and rolling restarts.",
@@ -387,7 +387,7 @@ public class ScenarioCatalog {
     public ScenarioGraph consumerGroupConsumerFailureScenario() {
         return new ScenarioGraph(
                 "consumer-group-consumer-failure",
-                7,
+                12,
                 "Consumer Failure and Partition Takeover",
                 "When one consumer dies, its partition is not lost forever. The group rebalances and a surviving consumer takes over.",
                 "Keep processing after an instance crashes by reassigning its partitions, while accounting for delay and possible repeated processing.",

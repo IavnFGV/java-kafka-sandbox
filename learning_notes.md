@@ -42,6 +42,15 @@
 - Practical takeaway: offsets are local to a partition; `topic + partition + offset` identifies a record
 - Interview takeaway: a consumer normally subscribes to a topic, then its group receives partition assignments
 
+#### 2026-09-06 — Learning Route Decision
+
+- Problem found: the original visual scenario order jumped from partition basics directly to consumer-group failures while earlier P1 producer concepts were still missing
+- Decision: finish the producer/partition mental model before consumer groups
+- Next scenario: `004 Message Key and Partition Selection`, covering backlog #10
+- Planned sequence: `005` ordering inside one partition; `006` no global ordering; `007–010` consumer groups and offset reset; `011–012` rebalance and failure
+- Existing static consumer-group scenarios were renumbered but kept their stable scenario IDs
+- Rule: every implementation must state its practical purpose and maintain explicit many-to-many backlog mapping in the backend, UI, article, and roadmap
+
 ## ETL Mapping
 
 ## AWS Basics
