@@ -66,6 +66,14 @@
 - Next 004 enhancement: quantify the chance of accidentally observing one partition with an unsafe strategy; do not use Student's t-test for this categorical routing experiment
 - Probability check implemented: with 10 independently hashed event IDs and 3 partitions, accidental same-partition placement is `(1/3)^9`, about `0.0051%`; no-key sticky partitioning is not modeled by this formula
 
+#### 2026-09-06 — Scenario 005
+
+- Topic: ordering guarantees within one partition
+- Behavior reproduced: sequence `0..5` used one business key, one partition, increasing offsets, and the same listener callback order
+- Technical detail: one shared future completes with records appended in callback order; per-event futures would hide the observed order
+- Boundary: Kafka preserves partition/poll order, not completion order after application-level parallel dispatch
+- Files to revisit: `PartitionOrderingExperiment`, `OrderedEventTracker`, `OrderedEventListener`, `PartitionOrderingScenarioStarter`
+
 ## ETL Mapping
 
 ## AWS Basics

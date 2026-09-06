@@ -43,6 +43,7 @@ What works now:
 - mediator commands accept scenario-specific string parameters without coupling the mediator to a concrete scenario
 - `key-partitioning` lets the learner choose no key, a unique event key, or stable order ID; only order ID satisfies the ordering-affinity goal
 - `key-partitioning` runs three concurrent consumers in one group, captures real rebalance assignments, and animates each record through its partition to the consumer that received it
+- `partition-ordering` compares business sequence, Kafka offsets, and actual listener callback order for six records in one partition
 
 What is still intentionally missing:
 
@@ -50,11 +51,10 @@ What is still intentionally missing:
 - starting/stopping Kafka containers
 - scenario-owned Kafka cleanup (`Clean`: delete and recreate topics via Admin API)
 - full Kafka container/volume reset as a separate destructive maintenance action
-- starter/environment implementations for scenarios `005` and later
+- starter/environment implementations for scenarios `006` and later
 
 Most likely next steps:
 
-- add the probability/sample-size explanation to scenario `004`
-- implement `005 Ordering Within One Partition` for backlog item #11
+- implement `006 No Global Ordering Across Partitions` for backlog item #12
 - prove the observed order of related records after key-based routing
 - only after that introduce external process/container orchestration
