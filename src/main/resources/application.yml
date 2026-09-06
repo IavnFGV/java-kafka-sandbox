@@ -1,4 +1,9 @@
 spring:
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          no-store: true
   kafka:
     bootstrap-servers: host.docker.internal:9092
     consumer:
