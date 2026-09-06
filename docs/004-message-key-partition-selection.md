@@ -24,15 +24,13 @@ Kafka message key позволяет связать маршрутизацию �
 kafkaTemplate.send(topic, event.orderId(), event);
 ```
 
-В отличие от сценария `003`, producer не передаёт номер partition. Стандартный
-partitioner вычисляет partition по сериализованному key. Пока количество
-partitions не меняется, одинаковый key маршрутизируется в одну partition.
+Producer не передаёт номер partition: стандартный partitioner вычисляет его по
+сериализованному key. Пока число partitions неизменно, одинаковый key
+маршрутизируется в одну partition.
 
-Смысл не в том, чтобы события обязательно обработал один и тот же физический
-consumer. Главное — поместить изменения одной сущности в один упорядоченный log.
-Даже если consumers только обновляют общую базу, параллельная обработка разных
-partitions может записать `SHIPPED`, затем запоздавшие `CREATED` или `PAID` и
-оставить неверное итоговое состояние.
+Главное не постоянный физический consumer, а один упорядоченный log для сущности.
+Параллельная обработка разных partitions может записать в общую базу `SHIPPED`,
+затем запоздавший `PAID` и оставить неверное состояние.
 
 ## Чем `004` отличается от `005`
 
@@ -45,11 +43,9 @@ partitions может записать `SHIPPED`, затем запоздавш�
 offsets и порядок получения listener. Коротко: `004` проверяет маршрутизацию и
 совместное размещение, а `005` проверит порядок внутри partition log.
 
-В UI стратегия выбирается перед Play. `No key` выбран по умолчанию, также
-доступны `Unique eventId` и `Order ID`. Все варианты реально отправляются в
-Kafka. Однако зелёная учебная цель достигается только с `Order ID`; остальные
-варианты завершаются оранжевым состоянием, потому что доставка успешна, но
-гарантии совместной маршрутизации событий заказа нет.
+В UI доступны `No key`, `Unique eventId` и `Order ID`. Все варианты реально
+отправляются в Kafka, но только `Order ID` даёт зелёную гарантию совместной
+маршрутизации событий заказа.
 
 ## Эксперимент
 
@@ -82,9 +78,8 @@ key. Даже редкое совпадение не окрашивает сце
 одну partition. Это ещё один пример того, почему наблюдаемое совпадение не равно
 контракту маршрутизации.
 
-Мы намеренно не требуем отдельную partition для `order-73`. Разные keys могут
-дать одинаковый результат хеширования по ограниченному числу partitions. Key
-создаёт стабильную группу маршрутизации, а не персональную partition.
+Разные keys могут столкнуться в одной partition: key создаёт стабильную группу
+маршрутизации, а не персональную partition.
 
 В визуализаторе каждая partition показывает сводку записей текущего запуска.
 Пустая partition тоже отображается: это помогает увидеть, что
@@ -116,11 +111,40 @@ public void onEvent(ConsumerRecord<String, KeyedOrderEvent> record) {
 ```
 
 Spring создаёт три listener container и, соответственно, три Kafka consumer в
-одной group. Класс `KeyedOrderEventListener` реализует `ConsumerSeekAware`:
+одной group. Точнее, внешний `ConcurrentMessageListenerContainer` управляет
+тремя дочерними `KafkaMessageListenerContainer`. У каждого дочернего container
+есть собственный `KafkaConsumer` и долгоживущий poll-thread:
+
+```text
+ConcurrentMessageListenerContainer
+├── container-0 → KafkaConsumer → poll-thread-0
+├── container-1 → KafkaConsumer → poll-thread-1
+└── container-2 → KafkaConsumer → poll-thread-2
+```
+
+Все три потока вызывают один метод `onEvent`, поэтому по сигнатуре callback не
+видно, какой consumer доставил запись. Для учебной телеметрии tracker читает имя
+текущего listener thread:
+
+```java
+String consumerId = consumerId(Thread.currentThread().getName());
+```
+
+Один и тот же thread участвует и в callback назначения, и в обработке records.
+Так `KeyedEventTracker` связывает условный `Consumer A` с его partitions, а затем
+помечает им полученный `ConsumerRecord`. Это позволяет визуализатору провести
+record к фактическому consumer, хотя все consumers используют один Java-метод.
+
+Класс `KeyedOrderEventListener` реализует `ConsumerSeekAware`:
 `onPartitionsAssigned` передаёт назначения в `KeyedEventTracker`, а
 `onPartitionsRevoked` удаляет отозванные partitions. Затем
 `KeyPartitioningScenarioStarter` преобразует карту assignments в динамические
 связи `partition → consumer` на экране.
+
+Имя thread здесь является инструментом наблюдения учебного стенда, а не частью
+бизнес-контракта. Production-обработчику обычно достаточно `topic`, `partition`,
+`offset`, key и payload; после restart или rebalance имя consumer/thread может
+измениться.
 
 При старте consumer group первый успевший подключиться consumer временно может
 получить все partitions. Это промежуточная фаза, а не итоговый assignment.
