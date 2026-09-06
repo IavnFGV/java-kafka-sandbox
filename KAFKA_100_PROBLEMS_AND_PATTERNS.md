@@ -61,8 +61,8 @@ Reference sources used to curate this list:
 7. `P1` Producer retries
 8. `P1` Batching and linger
 9. `P1` Compression basics
-10. `P1` Message key and partition selection
-11. `P1` Ordering guarantees within a partition
+10. `P1` Message key and partition selection - route related entity events into one partition (`004`)
+11. `P1` Ordering guarantees within a partition - verify send order, offsets, and consume order (`005`)
 12. `P1` Why global ordering does not exist across partitions
 13. `P1` Consumer group mechanics
 14. `P1` One partition assigned to one consumer in a group

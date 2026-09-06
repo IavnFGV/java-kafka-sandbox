@@ -33,6 +33,17 @@ consumer. Главное — поместить изменения одной с
 partitions может записать `SHIPPED`, затем запоздавшие `CREATED` или `PAID` и
 оставить неверное итоговое состояние.
 
+## Чем `004` отличается от `005`
+
+`004` отвечает на вопрос **куда попадут связанные records**. Мы выбираем key и
+доказываем, что события одного заказа находятся в одной partition. Этот сценарий
+создаёт необходимое условие для порядка.
+
+`005` ответит на вопрос **в каком порядке records будут прочитаны** после
+попадания в одну partition. Там мы сопоставим порядок отправки, возрастающие
+offsets и порядок получения listener. Коротко: `004` проверяет маршрутизацию и
+совместное размещение, а `005` проверит порядок внутри partition log.
+
 В UI стратегия выбирается перед Play. `No key` выбран по умолчанию, также
 доступны `Unique eventId` и `Order ID`. Все варианты реально отправляются в
 Kafka. Однако зелёная учебная цель достигается только с `Order ID`; остальные
@@ -90,6 +101,25 @@ container, а не предполагает его заранее. Поэтом�
 key идут не только в одну partition, но в текущем assignment попадают одному
 consumer. Важно: гарантию порядка создаёт общая partition, а конкретный consumer
 может смениться после rebalance.
+
+Три consumers создаются не тремя listener-классами, а параметром Spring Kafka:
+
+```java
+@KafkaListener(
+    topics = "${app.kafka.topics.key-partitioning}",
+    concurrency = "3"
+)
+public void onEvent(ConsumerRecord<String, KeyedOrderEvent> record) {
+    tracker.received(record);
+}
+```
+
+Spring создаёт три listener container и, соответственно, три Kafka consumer в
+одной group. Класс `KeyedOrderEventListener` реализует `ConsumerSeekAware`:
+`onPartitionsAssigned` передаёт назначения в `KeyedEventTracker`, а
+`onPartitionsRevoked` удаляет отозванные partitions. Затем
+`KeyPartitioningScenarioStarter` преобразует карту assignments в динамические
+связи `partition → consumer` на экране.
 
 При старте consumer group первый успевший подключиться consumer временно может
 получить все partitions. Это промежуточная фаза, а не итоговый assignment.
