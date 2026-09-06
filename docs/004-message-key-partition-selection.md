@@ -9,6 +9,7 @@
 - Routing confidence: `52cbacf` — десять событий снижают вероятность случайного совпадения, а assignment-связи перестраиваются из runtime.
 - Compact topology: `198c903` — partition-ноды показывают сводку, а полная последовательность остаётся в runtime log.
 - Stable assignment: `f7a4c55` — experiment учитывает revoke и ждёт завершения стартового rebalance.
+- Learning boundary: `6023ab9` - описание отделяет routing из `004` от ordering из будущего `005` и показывает создание трёх consumers.
 
 ## Зачем это нужно
 
