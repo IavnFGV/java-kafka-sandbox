@@ -70,7 +70,8 @@ isolated Spring Boot context, publishes a real record, captures Kafka partition
 and offset metadata, and confirms that its listener receives the matching event.
 `003 Topic, Partition, Offset` appends records to two explicit partitions and
 verifies their partition-local offsets on both producer and consumer sides.
+`004 Message Key and Partition Selection` sends related order events with the
+same key and verifies that Kafka routes them to one partition.
 
-The next milestone is `004 Message Key and Partition Selection`: send several
-events for the same business entity without specifying a partition and verify
-that Kafka's key-based partitioning keeps them in the same ordered shard.
+The next milestone is `005 Ordering Within One Partition`: verify the ordering
+guarantee for related records after key-based routing.

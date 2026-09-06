@@ -33,7 +33,7 @@ Important context:
 - Do not forget to suggest or make small meaningful commits as progress is completed.
 
 Session goals:
-1. Continue with `004 Message Key and Partition Selection` (backlog #10); do not return to the old consumer-group-first ordering
+1. Continue with `005 Ordering Within One Partition` (backlog #11); do not return to the old consumer-group-first ordering
 2. Explain why it matters in practical systems and interviews
 3. For Kafka/Java code, guide me through implementing it in the repository with tests first or test-driven enough
 4. If useful, extend the visualizer so the scenario can be seen, not just asserted

@@ -65,7 +65,7 @@ Current built-in scenarios:
 The implemented scenarios are followed by gaps reserved for the agreed learning
 route. Existing static consumer-group scenarios now use orders `007`, `008`,
 `011`, and `012`; orders `004–006`, `009`, and `010` will be added incrementally.
-`system-ready`, `trade-flow`, and `topic-partition-offsets` have backend scenario
+`system-ready`, `trade-flow`, `topic-partition-offsets`, and `key-partitioning` have backend scenario
 starters. The remaining scenarios are scripted visual explanations waiting for
 real Kafka experiments.
 

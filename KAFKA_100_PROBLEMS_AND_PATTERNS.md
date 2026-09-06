@@ -22,8 +22,8 @@ How to use this list:
 | `001 System Ready` | Implemented | Distinguish Spring wiring failures from Kafka runtime failures | Foundation |
 | `002 Trade Event Flow` | Implemented | Decouple a producer from asynchronous consumers through a durable event log | #1 |
 | `003 Topic, Partition, Offset` | Implemented | Scale a stream into ordered shards and address consumer progress precisely | #2; introduces #11, #12 |
-| `004 Message Key and Partition Selection` | Next | Keep related entity events in the same ordered shard | #10 |
-| `005 Ordering Within One Partition` | Planned | Preserve the order of related events | #11 |
+| `004 Message Key and Partition Selection` | Implemented | Keep related entity events in the same ordered shard | #10 |
+| `005 Ordering Within One Partition` | Next | Preserve the order of related events | #11 |
 | `006 No Global Ordering Across Partitions` | Planned | Avoid assuming one timeline for a parallel stream | #12 |
 | `007 One Partition, Two Consumers` | Static UI | Detect why adding consumers may not increase throughput | #13, #14 |
 | `008 Two Partitions, Two Consumers` | Static UI | Scale one service by distributing partitions across its instances | #13, #14 |

@@ -51,6 +51,14 @@
 - Existing static consumer-group scenarios were renumbered but kept their stable scenario IDs
 - Rule: every implementation must state its practical purpose and maintain explicit many-to-many backlog mapping in the backend, UI, article, and roadmap
 
+#### 2026-09-06 — Scenario 004
+
+- Topic: message key and automatic partition selection
+- Behavior reproduced: CREATED, PAID, and SHIPPED for `order-42` reached one partition without an explicit partition argument
+- Important boundary: a different key may still collide in the same partition; Kafka does not promise one partition per key
+- Practical takeaway: use a stable business key when related events need one ordered shard
+- Files to revisit: `KeyedOrderEventPublisher`, `KeyPartitioningExperiment`, `KeyPartitioningScenarioStarter`
+
 ## ETL Mapping
 
 ## AWS Basics

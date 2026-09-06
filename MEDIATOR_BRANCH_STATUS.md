@@ -39,6 +39,7 @@ What works now:
 - Kafka broker containers can hold topic nodes and later partition nodes
 - `topic-partition-offsets` appends records to two explicit partitions
 - one scenario consumer receives both partitions and verifies their local offsets
+- `key-partitioning` verifies that one business key maps to one partition without explicit partition selection
 
 What is still intentionally missing:
 
@@ -50,7 +51,6 @@ What is still intentionally missing:
 
 Most likely next step:
 
-- implement `004 Message Key and Partition Selection` for backlog item #10
-- prove that records sharing a key reach the same partition without explicit partition selection
-- keep consumer-group scenarios for `007` and later
+- implement `005 Ordering Within One Partition` for backlog item #11
+- prove the observed order of related records after key-based routing
 - only after that introduce external process/container orchestration
