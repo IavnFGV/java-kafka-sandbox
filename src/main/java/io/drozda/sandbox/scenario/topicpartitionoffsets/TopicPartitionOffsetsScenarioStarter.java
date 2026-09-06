@@ -59,6 +59,7 @@ public class TopicPartitionOffsetsScenarioStarter implements ScenarioStarter {
                 : invocationName.trim();
         runtimeService.startActiveSession(scenario, runName);
         ready(scenario, "producer", "Producer is ready");
+        runtimeService.updateNodeDetail(scenario, "producer", "explicit route: p0 → p1 → p0");
         ready(scenario, "kafka-broker", "Kafka broker and two-partition topic are ready");
         ready(scenario, "orders-topic-box", "Topic has partitions 0 and 1");
 
@@ -70,20 +71,25 @@ public class TopicPartitionOffsetsScenarioStarter implements ScenarioStarter {
 
         append(scenario, 1, "producer-p0", "producer", "partition-0",
                 "A → p" + result.firstPartition() + " offset " + result.firstOffset());
+        runtimeService.updateNodeDetail(scenario, "partition-0", "A @ offset " + result.firstOffset());
         ready(scenario, "partition-0", "Partition 0 stored A at offset " + result.firstOffset());
 
         append(scenario, 2, "producer-p1", "producer", "partition-1",
                 "B → p" + result.secondPartition() + " offset " + result.secondOffset());
+        runtimeService.updateNodeDetail(scenario, "partition-1", "B @ offset " + result.secondOffset());
         ready(scenario, "partition-1", "Partition 1 stored B at offset " + result.secondOffset());
 
         append(scenario, 3, "producer-p0", "producer", "partition-0",
                 "C → p" + result.thirdPartition() + " offset " + result.thirdOffset());
+        runtimeService.updateNodeDetail(scenario, "partition-0",
+                "A @ offset " + result.firstOffset() + " | C @ offset " + result.thirdOffset());
         ready(scenario, "partition-0", "Partition 0 advanced to offset " + result.thirdOffset());
 
         runtimeService.updateActiveStep(scenario, 4);
         if (result.received()) {
             signal(scenario, "p0-consumer", "partition-0", "consumer", "Read partition 0 records");
             signal(scenario, "p1-consumer", "partition-1", "consumer", "Read partition 1 record");
+            runtimeService.updateNodeDetail(scenario, "consumer", "assigned partitions: 0, 1");
             ready(scenario, "consumer", "Consumer verified topic + partition + offset coordinates");
         } else {
             failed(scenario, "consumer", result.error());

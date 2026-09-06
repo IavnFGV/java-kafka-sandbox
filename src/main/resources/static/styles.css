@@ -295,6 +295,12 @@ button:hover {
     fill: var(--ink);
 }
 
+.node-detail {
+    font-size: 13px;
+    font-weight: 600;
+    fill: var(--muted);
+}
+
 .node {
     cursor: grab;
 }

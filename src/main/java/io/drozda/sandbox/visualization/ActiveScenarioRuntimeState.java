@@ -10,6 +10,7 @@ public record ActiveScenarioRuntimeState(
         boolean completed,
         String testName,
         Map<String, String> nodeStatuses,
+        Map<String, String> nodeDetails,
         Map<String, String> edgeStatuses,
         List<RuntimeSignal> activeSignals,
         List<String> eventLog,

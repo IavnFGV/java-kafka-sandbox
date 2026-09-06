@@ -133,4 +133,18 @@ class ScenarioRuntimeServiceTest {
         assertEquals(currentRevision + 1, update.revision());
         assertEquals("system-ready", update.runtime().scenarioId());
     }
+
+    @Test
+    void shouldExposeRuntimeDetailsForIndividualNodes() {
+        ScenarioGraph scenario = scenarioCatalog.topicPartitionOffsetsScenario();
+        runtimeService.startActiveSession(scenario, "node-detail-test");
+
+        ActiveScenarioRuntimeState updated = runtimeService.updateNodeDetail(
+                scenario,
+                "partition-0",
+                "A @ offset 12 | C @ offset 13"
+        );
+
+        assertEquals("A @ offset 12 | C @ offset 13", updated.nodeDetails().get("partition-0"));
+    }
 }

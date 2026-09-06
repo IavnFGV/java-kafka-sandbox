@@ -106,6 +106,7 @@ public class ScenarioRuntimeService {
                 testName,
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
                 new ArrayList<>(),
                 eventLog,
                 "session-started",
@@ -127,6 +128,7 @@ public class ScenarioRuntimeService {
                 false,
                 activeRuntime.testName(),
                 copy(activeRuntime.nodeStatuses()),
+                copy(activeRuntime.nodeDetails()),
                 copy(activeRuntime.edgeStatuses()),
                 copySignals(activeRuntime.activeSignals()),
                 eventLog,
@@ -146,6 +148,7 @@ public class ScenarioRuntimeService {
                 true,
                 activeRuntime.testName(),
                 copy(activeRuntime.nodeStatuses()),
+                copy(activeRuntime.nodeDetails()),
                 copy(activeRuntime.edgeStatuses()),
                 copySignals(activeRuntime.activeSignals()),
                 eventLog,
@@ -157,6 +160,7 @@ public class ScenarioRuntimeService {
     public ActiveScenarioRuntimeState applyRuntimeEvent(ScenarioGraph scenario, RuntimeEventRequest request) {
         ActiveScenarioRuntimeState baseRuntime = runtimeForScenario(scenario);
         Map<String, String> nodeStatuses = copy(baseRuntime.nodeStatuses());
+        Map<String, String> nodeDetails = copy(baseRuntime.nodeDetails());
         Map<String, String> edgeStatuses = copy(baseRuntime.edgeStatuses());
         List<RuntimeSignal> activeSignals = copySignals(baseRuntime.activeSignals());
         List<String> eventLog = copyLog(baseRuntime.eventLog());
@@ -167,6 +171,7 @@ public class ScenarioRuntimeService {
 
         if (EVENT_RUNTIME_RESET.equals(eventType)) {
             nodeStatuses.clear();
+            nodeDetails.clear();
             edgeStatuses.clear();
             activeSignals.clear();
             eventLog.clear();
@@ -219,11 +224,37 @@ public class ScenarioRuntimeService {
                 completed,
                 baseRuntime.testName(),
                 nodeStatuses,
+                nodeDetails,
                 edgeStatuses,
                 activeSignals,
                 eventLog,
                 request.type(),
                 request.label()
+        ));
+    }
+
+    public ActiveScenarioRuntimeState updateNodeDetail(ScenarioGraph scenario, String nodeId, String detail) {
+        ActiveScenarioRuntimeState baseRuntime = runtimeForScenario(scenario);
+        Map<String, String> nodeDetails = copy(baseRuntime.nodeDetails());
+        if (detail == null || detail.isBlank()) {
+            nodeDetails.remove(nodeId);
+        } else {
+            nodeDetails.put(nodeId, detail);
+        }
+
+        return publishRuntime(new ActiveScenarioRuntimeState(
+                scenario.id(),
+                currentStepByScenario.getOrDefault(scenario.id(), 0),
+                true,
+                false,
+                baseRuntime.testName(),
+                copy(baseRuntime.nodeStatuses()),
+                nodeDetails,
+                copy(baseRuntime.edgeStatuses()),
+                copySignals(baseRuntime.activeSignals()),
+                copyLog(baseRuntime.eventLog()),
+                "node-detail-updated",
+                detail
         ));
     }
 
@@ -268,6 +299,7 @@ public class ScenarioRuntimeService {
                 true,
                 false,
                 activeRuntime.testName(),
+                new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new ArrayList<>(),
@@ -347,7 +379,8 @@ public class ScenarioRuntimeService {
 
     private ActiveScenarioRuntimeState emptyRuntime() {
         return new ActiveScenarioRuntimeState(null, 0, false, false, null,
-                new LinkedHashMap<>(), new LinkedHashMap<>(), new ArrayList<>(), new ArrayList<>(), null, null);
+                new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(),
+                new ArrayList<>(), new ArrayList<>(), null, null);
     }
 
     private int clamp(int stepIndex, ScenarioGraph scenario) {

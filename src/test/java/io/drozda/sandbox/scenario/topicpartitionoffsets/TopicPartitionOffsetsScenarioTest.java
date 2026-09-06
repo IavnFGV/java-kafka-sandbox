@@ -36,6 +36,10 @@ class TopicPartitionOffsetsScenarioTest {
             assertEquals("READY", runtime.edgeStatuses().get("producer-p1"));
             assertEquals("READY", runtime.edgeStatuses().get("p0-consumer"));
             assertEquals("READY", runtime.edgeStatuses().get("p1-consumer"));
+            assertTrue(runtime.nodeDetails().get("partition-0").contains("A @ offset"));
+            assertTrue(runtime.nodeDetails().get("partition-0").contains("C @ offset"));
+            assertTrue(runtime.nodeDetails().get("partition-1").contains("B @ offset"));
+            assertEquals("assigned partitions: 0, 1", runtime.nodeDetails().get("consumer"));
             assertTrue(runtime.eventLog().stream().anyMatch(line -> line.contains("Partition 0 advanced")));
             assertTrue(runtime.completed());
             assertFalse(runtime.active());

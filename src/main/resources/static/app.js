@@ -420,6 +420,7 @@ function buildStepView(step, events) {
     readyEdgeIds,
     failedNodeIds: [],
     busyNodeIds: [],
+    nodeDetails: {},
     signals: primaryEvent && primaryEvent.signalFromId && primaryEvent.signalToId
       ? [{
         label: primaryEvent.label,
@@ -441,6 +442,7 @@ function buildLiveView(runtime) {
     readyEdgeIds: collectIdsByStatus(edgeStatuses, ["READY"]),
     failedNodeIds: collectIdsByStatus(nodeStatuses, ["FAILED"]),
     busyNodeIds: collectIdsByStatus(nodeStatuses, ["BUSY", "WAITING"]),
+    nodeDetails: runtime.nodeDetails || {},
     signals: runtime.activeSignals || []
   };
 }
@@ -518,12 +520,18 @@ function renderNode(entry, stepView) {
   const stroke = colorForType(node.type);
   const typeClass = containerNode ? "node-container" : "";
   const ringInset = containerNode ? 10 : 8;
+  const detail = stepView.nodeDetails ? stepView.nodeDetails[node.id] : null;
   const titleLines = wrapText(node.label, 18, node.width - 36);
-  const blockHeight = titleLines.length * 22;
+  const detailLines = detail ? wrapText(detail, 13, node.width - 30) : [];
+  const blockHeight = titleLines.length * 22 + (detailLines.length > 0 ? 10 + detailLines.length * 17 : 0);
   const titleStartY = containerNode
     ? 34
     : Math.round((node.height - blockHeight) / 2) + 16;
   const titleMarkup = renderTextLines(titleLines, node.width / 2, titleStartY, 22, "node-title", "middle");
+  const detailStartY = titleStartY + titleLines.length * 22 + 3;
+  const detailMarkup = detailLines.length > 0
+    ? renderTextLines(detailLines, node.width / 2, detailStartY, 17, "node-detail", "middle")
+    : "";
   const resizeHandle = containerNode ? `
     <g class="resize-handle" data-resize-node-id="${node.id}" aria-label="Resize ${escapeXml(node.label)}">
       <rect x="${node.width - 30}" y="${node.height - 30}" width="30" height="30" rx="8"></rect>
@@ -536,6 +544,7 @@ function renderNode(entry, stepView) {
       <rect class="node-ready-ring" x="${ringInset}" y="${ringInset}" width="${node.width - ringInset * 2}" height="${node.height - ringInset * 2}" rx="${containerNode ? 22 : 14}"></rect>
       <rect class="node-card" width="${node.width}" height="${node.height}" rx="${containerNode ? 28 : 20}" stroke="${stroke}"></rect>
       ${titleMarkup}
+      ${detailMarkup}
       ${resizeHandle}
     </g>
   `;

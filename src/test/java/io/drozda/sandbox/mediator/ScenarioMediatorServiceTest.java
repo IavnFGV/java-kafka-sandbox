@@ -83,6 +83,7 @@ class ScenarioMediatorServiceTest {
                     invocationName,
                     java.util.Map.of(),
                     java.util.Map.of(),
+                    java.util.Map.of(),
                     java.util.List.of(),
                     java.util.List.of("done"),
                     "done",
