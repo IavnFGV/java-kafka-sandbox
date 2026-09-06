@@ -10,6 +10,7 @@ public class ScenarioCatalog {
     public List<ScenarioGraph> scenarios() {
         return List.of(
                 topicPartitionOffsetsScenario(),
+                keyPartitioningScenario(),
                 consumerGroupSinglePartitionScenario(),
                 consumerGroupTwoPartitionsScenario(),
                 consumerGroupRebalanceOnJoinScenario(),
@@ -182,6 +183,45 @@ public class ScenarioCatalog {
                                 List.of("partition-0", "partition-1", "consumer"),
                                 List.of("p0-consumer", "p1-consumer"), "partition-0", "consumer")
                 )
+        );
+    }
+
+    public ScenarioGraph keyPartitioningScenario() {
+        return new ScenarioGraph(
+                "key-partitioning",
+                4,
+                "Message Key and Partition Selection",
+                "Related records use a business key so Kafka's partitioner routes them to the same partition without an explicit partition number.",
+                "Keep events for one order in the same ordered shard while still distributing many orders across the topic.",
+                List.of(10),
+                1380,
+                780,
+                List.of(
+                        new ScenarioNode("publisher", "KeyedOrderEventPublisher", "service", 35, 340, 240, 100, null,
+                                "Sends orderId as the Kafka record key and does not choose a partition."),
+                        new ScenarioNode("kafka-broker", "Kafka Broker", "broker-container", 325, 70, 710, 640, null,
+                                "Kafka applies its partitioner to the serialized record key."),
+                        new ScenarioNode("topic", "scenario-004-key-partitioning Topic", "topic-container",
+                                40, 80, 630, 480, "kafka-broker", "A topic with three partitions."),
+                        new ScenarioNode("partition-0", "Partition 0", "broker", 30, 125, 180, 210, "topic", "One ordered shard."),
+                        new ScenarioNode("partition-1", "Partition 1", "broker", 225, 125, 180, 210, "topic", "One ordered shard."),
+                        new ScenarioNode("partition-2", "Partition 2", "broker", 420, 125, 180, 210, "topic", "One ordered shard."),
+                        new ScenarioNode("consumer", "KeyedOrderEventListener", "consumer", 1090, 340, 250, 100, null,
+                                "Verifies the key, partition, offset, and payload of every current-run record.")
+                ),
+                List.of(
+                        new ScenarioEdge("publish", "publisher", "topic", "send with orderId key"),
+                        new ScenarioEdge("consume", "topic", "consumer", "read keyed records")
+                ),
+                List.of(
+                        new ScenarioStep("step-1", "Initial topology",
+                                "The producer knows only the topic and orderId key; the topic already has three partitions.", List.of()),
+                        new ScenarioStep("step-2", "Kafka selects a partition",
+                                "CREATED, PAID, and SHIPPED for order-42 all receive the same partition number.", List.of()),
+                        new ScenarioStep("step-3", "Consumer verifies the route",
+                                "The listener observes the same key and record coordinates returned to the producer.", List.of())
+                ),
+                List.of()
         );
     }
 
