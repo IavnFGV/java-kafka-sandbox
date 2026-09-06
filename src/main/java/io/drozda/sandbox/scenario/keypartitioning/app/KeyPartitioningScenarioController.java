@@ -50,7 +50,7 @@ public class KeyPartitioningScenarioController {
     private KeyPartitioningScenarioStatus ready(String name) {
         return new KeyPartitioningScenarioStatus(
                 "key-partitioning", name, true, true, true, false, false,
-                KeyStrategy.NO_KEY, false, topic, List.of(), null
+                KeyStrategy.NO_KEY, false, topic, List.of(), tracker.assignments(), null
         );
     }
 }

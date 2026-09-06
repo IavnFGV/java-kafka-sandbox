@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.support.SendResult;
 
 import io.drozda.sandbox.scenario.keypartitioning.model.KeyedOrderEvent;
@@ -33,7 +32,7 @@ public class KeyPartitioningExperiment {
                 event("order-42", "SHIPPED"),
                 event("order-73", "CREATED")
         );
-        List<CompletableFuture<ConsumerRecord<String, KeyedOrderEvent>>> receives =
+        List<CompletableFuture<TrackedKeyedRecord>> receives =
                 events.stream().map(event -> tracker.expect(event.eventId())).toList();
         List<SendResult<String, KeyedOrderEvent>> sends = new ArrayList<>();
 
@@ -41,15 +40,15 @@ public class KeyPartitioningExperiment {
             for (KeyedOrderEvent event : events) {
                 sends.add(publisher.publish(strategy, event).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
             }
-            List<ConsumerRecord<String, KeyedOrderEvent>> consumed = new ArrayList<>();
-            for (CompletableFuture<ConsumerRecord<String, KeyedOrderEvent>> receive : receives) {
+            List<TrackedKeyedRecord> consumed = new ArrayList<>();
+            for (CompletableFuture<TrackedKeyedRecord> receive : receives) {
                 consumed.add(receive.get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
             }
             verify(events, sends, consumed, strategy);
-            return status(invocationName, true, true, strategy, observations(events, sends), null);
+            return status(invocationName, true, true, strategy, observations(consumed), null);
         } catch (Exception exception) {
             return status(invocationName, sends.size() == events.size(), false, strategy,
-                    observations(events, sends), rootMessage(exception));
+                    List.of(), rootMessage(exception));
         } finally {
             events.forEach(event -> tracker.discard(event.eventId()));
         }
@@ -58,14 +57,15 @@ public class KeyPartitioningExperiment {
     private void verify(
             List<KeyedOrderEvent> events,
             List<SendResult<String, KeyedOrderEvent>> sends,
-            List<ConsumerRecord<String, KeyedOrderEvent>> consumed,
+            List<TrackedKeyedRecord> consumed,
             KeyStrategy strategy
     ) {
         for (int index = 0; index < events.size(); index++) {
             String expectedKey = keyFor(strategy, events.get(index));
-            if (!Objects.equals(expectedKey, consumed.get(index).key())
-                    || sends.get(index).getRecordMetadata().partition() != consumed.get(index).partition()
-                    || sends.get(index).getRecordMetadata().offset() != consumed.get(index).offset()) {
+            var consumedRecord = consumed.get(index).record();
+            if (!Objects.equals(expectedKey, consumedRecord.key())
+                    || sends.get(index).getRecordMetadata().partition() != consumedRecord.partition()
+                    || sends.get(index).getRecordMetadata().offset() != consumedRecord.offset()) {
                 throw new IllegalStateException("Producer and consumer coordinates or key differ");
             }
         }
@@ -79,18 +79,11 @@ public class KeyPartitioningExperiment {
         };
     }
 
-    private List<KeyedRecordObservation> observations(
-            List<KeyedOrderEvent> events,
-            List<SendResult<String, KeyedOrderEvent>> sends
-    ) {
-        List<KeyedRecordObservation> result = new ArrayList<>();
-        for (int index = 0; index < sends.size(); index++) {
-            result.add(new KeyedRecordObservation(
-                    events.get(index).orderId(), events.get(index).status(),
-                    sends.get(index).getRecordMetadata().partition(), sends.get(index).getRecordMetadata().offset()
-            ));
-        }
-        return result;
+    private List<KeyedRecordObservation> observations(List<TrackedKeyedRecord> consumed) {
+        return consumed.stream().map(tracked -> new KeyedRecordObservation(
+                tracked.record().value().orderId(), tracked.record().value().status(),
+                tracked.record().partition(), tracked.record().offset(), tracked.consumerId()
+        )).toList();
     }
 
     private KeyedOrderEvent event(String orderId, String status) {
@@ -104,7 +97,7 @@ public class KeyPartitioningExperiment {
         return new KeyPartitioningScenarioStatus(
                 "key-partitioning", invocationName, true, true, true,
                 published, received, strategy, strategy == KeyStrategy.ORDER_ID,
-                topic, observations, error
+                topic, observations, tracker.assignments(), error
         );
     }
 

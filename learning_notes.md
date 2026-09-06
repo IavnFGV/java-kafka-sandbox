@@ -59,6 +59,7 @@
 - Practical takeaway: use a stable business key when related events need one ordered shard
 - Files to revisit: `KeyedOrderEventPublisher`, `KeyPartitioningExperiment`, `KeyPartitioningScenarioStarter`
 - Interactive check: the UI now asks for `No key`, `Unique eventId`, or `Order ID`; only the stable business key completes the learning goal
+- Consumer view: three concurrent consumers form one group, and the UI shows their actual partition assignments and each record's delivery path
 - Ordering insight: a shared database does not remove the problem because consumers from different partitions may finish updates out of order
 - Next 004 enhancement: quantify the chance of accidentally observing one partition with an unsafe strategy; do not use Student's t-test for this categorical routing experiment
 

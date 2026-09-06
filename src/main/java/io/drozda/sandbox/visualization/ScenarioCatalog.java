@@ -206,12 +206,18 @@ public class ScenarioCatalog {
                         new ScenarioNode("partition-0", "Partition 0", "broker", 75, 90, 240, 100, "topic", "One ordered shard."),
                         new ScenarioNode("partition-1", "Partition 1", "broker", 75, 215, 240, 100, "topic", "One ordered shard."),
                         new ScenarioNode("partition-2", "Partition 2", "broker", 75, 340, 240, 100, "topic", "One ordered shard."),
-                        new ScenarioNode("consumer", "KeyedOrderEventListener", "consumer", 1090, 340, 250, 100, null,
-                                "Verifies the key, partition, offset, and payload of every current-run record.")
+                        new ScenarioNode("consumer-a", "Consumer A", "consumer", 1090, 185, 220, 90, null,
+                                "One of three concurrent consumers in the same group."),
+                        new ScenarioNode("consumer-b", "Consumer B", "consumer", 1090, 345, 220, 90, null,
+                                "One of three concurrent consumers in the same group."),
+                        new ScenarioNode("consumer-c", "Consumer C", "consumer", 1090, 505, 220, 90, null,
+                                "One of three concurrent consumers in the same group.")
                 ),
                 List.of(
                         new ScenarioEdge("publish", "publisher", "topic", "send with orderId key"),
-                        new ScenarioEdge("consume", "topic", "consumer", "read keyed records")
+                        new ScenarioEdge("consume-a", "topic", "consumer-a", "group assignment"),
+                        new ScenarioEdge("consume-b", "topic", "consumer-b", "group assignment"),
+                        new ScenarioEdge("consume-c", "topic", "consumer-c", "group assignment")
                 ),
                 List.of(
                         new ScenarioStep("step-1", "Initial topology",
@@ -219,7 +225,7 @@ public class ScenarioCatalog {
                         new ScenarioStep("step-2", "Kafka selects a partition",
                                 "CREATED, PAID, and SHIPPED for order-42 all receive the same partition number.", List.of()),
                         new ScenarioStep("step-3", "Consumer verifies the route",
-                                "The listener observes the same key and record coordinates returned to the producer.", List.of())
+                                "Three listener instances share the partitions; each record is animated toward the consumer that actually received it.", List.of())
                 ),
                 List.of()
         );

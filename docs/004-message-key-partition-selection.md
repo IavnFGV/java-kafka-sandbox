@@ -58,6 +58,16 @@ Experiment получает producer metadata, а listener — полные `Con
 status и offset. Пустая partition тоже отображается: это помогает увидеть, что
 четыре записи не обязаны равномерно заполнить три partitions.
 
+Анимация воспроизводит каждую запись отдельно: `publisher → partition N`, затем
+`partition N → consumer`. Поэтому видно, куда Kafka направила конкретные
+`CREATED`, `PAID` и `SHIPPED`, и какой listener их прочитал. В одной consumer
+group работают три реальных consumer instance. После rebalance каждый получает
+одну из трёх partitions; визуализатор читает фактическое назначение из listener
+container, а не предполагает его заранее. Поэтому связанные события с правильным
+key идут не только в одну partition, но в текущем assignment попадают одному
+consumer. Важно: гарантию порядка создаёт общая partition, а конкретный consumer
+может смениться после rebalance.
+
 ## Практический вывод
 
 Выбирайте key из идентификатора сущности, порядок событий которой важен:

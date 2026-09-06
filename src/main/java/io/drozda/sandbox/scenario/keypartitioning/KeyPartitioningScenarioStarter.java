@@ -2,7 +2,6 @@ package io.drozda.sandbox.scenario.keypartitioning;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -63,37 +62,50 @@ public class KeyPartitioningScenarioStarter implements ScenarioStarter {
             return runtime.completeActiveSession(scenario);
         }
 
-        Map<Integer, List<KeyedRecordObservation>> byPartition = result.observations().stream()
-                .collect(Collectors.groupingBy(KeyedRecordObservation::partition));
-        for (int partition = 0; partition < 3; partition++) {
-            String nodeId = "partition-" + partition;
-            List<KeyedRecordObservation> records = byPartition.getOrDefault(partition, List.of());
-            String detail = records.isEmpty() ? "no records in this run" : records.stream()
-                    .map(record -> record.orderId() + " " + record.status() + " @" + record.offset())
-                    .collect(Collectors.joining(" | "));
-            runtime.updateNodeDetail(scenario, nodeId, detail);
-            if (!records.isEmpty()) ready(scenario, nodeId, "Partition " + partition + " received keyed records");
+        result.consumerAssignments().forEach((consumerId, partitions) ->
+                runtime.updateNodeDetail(scenario, nodeId(consumerId), "assigned partitions: " + partitions));
+
+        runtime.updateActiveStep(scenario, 1);
+        Map<Integer, String> partitionDetails = new java.util.LinkedHashMap<>();
+        for (KeyedRecordObservation record : result.observations()) {
+            String partitionNode = "partition-" + record.partition();
+            String recordLabel = record.orderId() + " " + record.status();
+            signal(scenario, null, "publisher", partitionNode,
+                    recordLabel + " → p" + record.partition());
+            String detail = appendDetail(partitionDetails.get(record.partition()),
+                    recordLabel + " @" + record.offset());
+            partitionDetails.put(record.partition(), detail);
+            runtime.updateNodeDetail(scenario, partitionNode, detail);
+            ready(scenario, partitionNode, recordLabel + " appended at offset " + record.offset());
+            String consumerNode = nodeId(record.consumerId());
+            signal(scenario, null, partitionNode, consumerNode,
+                    record.consumerId() + " consumed " + recordLabel + " from p" + record.partition());
         }
         int orderPartition = result.observations().get(0).partition();
-        runtime.updateActiveStep(scenario, 1);
-        signal(scenario, "publish", "publisher", "partition-" + orderPartition,
-                strategy + " → observed partition " + orderPartition);
         runtime.updateActiveStep(scenario, 2);
         if (result.learningGoalMet()) {
             ready(scenario, "publisher", "orderId selected as stable business key");
-            ready(scenario, "consumer", "Consumer verified one ordered shard for order-42");
-            runtime.updateNodeDetail(scenario, "consumer", "GUARANTEED: order-42 → partition " + orderPartition);
+            result.consumerAssignments().keySet().forEach(consumerId ->
+                    ready(scenario, nodeId(consumerId), consumerId + " assignment active"));
             ready(scenario, "kafka-broker", "Kafka partitioner routed all records");
             ready(scenario, "topic", "Related events share one partition log");
         } else {
             waiting(scenario, "publisher", "Strategy does not preserve order-42 affinity");
-            waiting(scenario, "consumer", "Observed distribution is not a routing guarantee");
-            runtime.updateNodeDetail(scenario, "consumer", "LEARNING GOAL NOT MET: choose ORDER_ID");
+            result.consumerAssignments().keySet().forEach(consumerId ->
+                    waiting(scenario, nodeId(consumerId), consumerId + " cannot restore cross-partition order"));
             waiting(scenario, "kafka-broker", "Kafka worked, but the business key is unsafe");
             waiting(scenario, "topic", "Technical run completed without an ordering guarantee");
         }
         pause();
         return runtime.completeActiveSession(scenario);
+    }
+
+    private String appendDetail(String existing, String record) {
+        return existing == null || existing.isBlank() ? record : existing + " | " + record;
+    }
+
+    private String nodeId(String consumerId) {
+        return consumerId.toLowerCase().replace(' ', '-');
     }
 
     private void signal(ScenarioGraph scenario, String edge, String from, String to, String label) {

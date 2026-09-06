@@ -33,12 +33,17 @@ class KeyPartitioningScenarioTest {
             assertEquals(3, result.observations().stream()
                     .filter(record -> "order-42".equals(record.orderId())).count());
             assertEquals(1, order42Partitions);
+            assertEquals(3, result.consumerAssignments().size());
+            assertTrue(result.consumerAssignments().values().stream()
+                    .allMatch(partitions -> partitions.size() == 1));
 
             ActiveScenarioRuntimeState runtime = mediator.execute(
                     "key-partitioning", KeyPartitioningScenarioStarter.ROUTE_BY_KEY,
                     "visual-key-routing-test", java.util.Map.of("keyStrategy", "ORDER_ID"));
-            assertEquals("READY", runtime.nodeStatuses().get("consumer"));
-            assertTrue(runtime.nodeDetails().get("consumer").contains("GUARANTEED: order-42"));
+            assertEquals("READY", runtime.nodeStatuses().get("consumer-a"));
+            assertTrue(runtime.nodeDetails().get("consumer-a").contains("assigned partitions"));
+            assertTrue(runtime.eventLog().stream()
+                    .anyMatch(line -> line.contains("consumed order-42 SHIPPED")));
             assertTrue(runtime.completed());
         } finally {
             environment.stop();
@@ -52,8 +57,8 @@ class KeyPartitioningScenarioTest {
                     "key-partitioning", KeyPartitioningScenarioStarter.ROUTE_BY_KEY,
                     "no-key-test", java.util.Map.of("keyStrategy", "NO_KEY"));
 
-            assertEquals("WAITING", runtime.nodeStatuses().get("consumer"));
-            assertTrue(runtime.nodeDetails().get("consumer").contains("LEARNING GOAL NOT MET"));
+            assertEquals("WAITING", runtime.nodeStatuses().get("consumer-a"));
+            assertTrue(runtime.nodeDetails().get("consumer-a").contains("assigned partitions"));
             assertTrue(runtime.completed());
         } finally {
             environment.stop();

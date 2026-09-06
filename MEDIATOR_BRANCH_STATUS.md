@@ -42,6 +42,7 @@ What works now:
 - `key-partitioning` verifies that one business key maps to one partition without explicit partition selection
 - mediator commands accept scenario-specific string parameters without coupling the mediator to a concrete scenario
 - `key-partitioning` lets the learner choose no key, a unique event key, or stable order ID; only order ID satisfies the ordering-affinity goal
+- `key-partitioning` runs three concurrent consumers in one group, captures real rebalance assignments, and animates each record through its partition to the consumer that received it
 
 What is still intentionally missing:
 
