@@ -44,7 +44,8 @@ What is still intentionally missing:
 
 - starting external Spring Boot scenario apps
 - starting/stopping Kafka containers
-- cleaning external resources between scenarios
+- scenario-owned Kafka cleanup (`Clean`: delete and recreate topics via Admin API)
+- full Kafka container/volume reset as a separate destructive maintenance action
 - starter/environment implementations for scenarios `004` and later
 
 Most likely next step:

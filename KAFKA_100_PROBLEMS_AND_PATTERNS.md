@@ -192,6 +192,16 @@ The visualizer should eventually be able to show:
 - rebalance happening
 - partition ownership changing
 
+## Playground Infrastructure Backlog
+
+- Add an explicit `Clean` action separate from `Stop`.
+- `Stop` must only close the scenario Spring context and keep Kafka data intact.
+- `Clean` should stop the scenario, delete its owned topics through Kafka Admin API,
+  wait for deletion to complete, and recreate the declared topology.
+- Keep full Kafka container/volume reset as a separate destructive maintenance action.
+- Show the cleanup lifecycle and failures in the runtime log.
+- Add integration tests proving that a cleaned topic starts again with empty partition logs.
+
 ## Build Order Recommendation
 
 Phase 1:
