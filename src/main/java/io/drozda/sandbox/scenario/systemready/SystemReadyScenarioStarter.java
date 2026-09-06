@@ -67,19 +67,19 @@ public class SystemReadyScenarioStarter implements ScenarioStarter {
         if (status.publisherReady()) {
             pause();
             scenarioRuntimeService.updateActiveStep(scenario, 2);
-            event(scenario, "component-ready", "publisher", "publisher-kafka", "Publisher Ready", "READY");
+            event(scenario, "component-ready", "publisher", null, "Publisher Bean Ready", "READY");
         }
 
         if (status.listenerReady()) {
             pause();
             scenarioRuntimeService.updateActiveStep(scenario, 3);
-            event(scenario, "component-ready", "listener", "listener-kafka", "Listener Ready", "READY");
+            event(scenario, "component-ready", "listener", null, "Listener Bean Ready", "READY");
         }
 
         if (status.kafkaTemplateReady()) {
             pause();
             scenarioRuntimeService.updateActiveStep(scenario, 4);
-            event(scenario, "component-ready", "kafka", null, "Kafka Reachable", "READY");
+            event(scenario, "component-ready", null, null, "KafkaTemplate Bean Ready", "READY");
         }
 
         pause();

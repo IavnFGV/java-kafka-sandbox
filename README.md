@@ -7,6 +7,10 @@ theory, a Java developer can run focused experiments, observe Kafka behavior, an
 refresh interview-ready mental models. See `PRODUCT_VISION.md` for the intended
 learning experience and `KAFKA_100_PROBLEMS_AND_PATTERNS.md` for the scenario backlog.
 
+Scenario notes:
+
+- `docs/001-system-ready.md`
+
 This sandbox is for:
 
 - Practicing Kafka concepts with small Spring Boot exercises.

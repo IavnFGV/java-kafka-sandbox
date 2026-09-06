@@ -475,22 +475,22 @@ public class ScenarioCatalog {
                 "system-ready",
                 1,
                 "System Ready",
-                "A basic readiness walkthrough: the Spring Boot app starts, Kafka-facing components are injected, and the sandbox is ready.",
+                "A Spring wiring check: the application starts and creates its Kafka-facing beans before any real message is sent.",
                 1180,
                 640,
                 List.of(
                         new ScenarioNode("spring-app", "Spring Boot Application", "container", 170, 120, 560, 320, null,
                                 "The application context starts and wires the sandbox components."),
                         new ScenarioNode("publisher", "TradeEventPublisher", "service", 44, 92, 246, 88, "spring-app",
-                                "The publisher bean is created and ready to send events."),
+                                "The publisher bean exists and can use KafkaTemplate; broker delivery is not tested here."),
                         new ScenarioNode("listener", "TradeEventListener", "consumer", 44, 204, 232, 88, "spring-app",
-                                "The Kafka listener bean is created and ready to receive events."),
+                                "The listener bean exists; broker connection and partition assignment are not tested here."),
                         new ScenarioNode("kafka", "Kafka Broker", "broker", 860, 246, 220, 96, null,
-                                "Kafka is reachable from the sandbox application.")
+                                "The external dependency required by later scenarios. Its health is not checked in scenario 001.")
                 ),
                 List.of(
-                        new ScenarioEdge("publisher-kafka", "publisher", "kafka", "publisher ready"),
-                        new ScenarioEdge("listener-kafka", "listener", "kafka", "listener subscribed")
+                        new ScenarioEdge("publisher-kafka", "publisher", "kafka", "configured publish path"),
+                        new ScenarioEdge("listener-kafka", "listener", "kafka", "configured consume path")
                 ),
                 List.of(
                         new ScenarioStep("step-1", "Initial topology",
@@ -500,13 +500,13 @@ public class ScenarioCatalog {
                                 "The application context boots and the Spring Boot container becomes available.",
                                 List.of("event-spring-started")),
                         new ScenarioStep("step-3", "Publisher bean ready",
-                                "TradeEventPublisher is injected and ready to send messages to Kafka.",
+                                "TradeEventPublisher and KafkaTemplate are injected. No broker acknowledgement has been requested yet.",
                                 List.of("event-publisher-ready")),
                         new ScenarioStep("step-4", "Listener bean ready",
-                                "TradeEventListener is injected and can subscribe to Kafka records.",
+                                "TradeEventListener is injected. This does not yet prove a broker connection or partition assignment.",
                                 List.of("event-listener-ready")),
-                        new ScenarioStep("step-5", "System ready",
-                                "All key components are alive, wired, and ready for scenario execution.",
+                        new ScenarioStep("step-5", "Spring wiring ready",
+                                "The application context and Kafka-facing beans are ready for a real Kafka experiment.",
                                 List.of("event-system-ready"))
                 ),
                 List.of(
@@ -524,29 +524,29 @@ public class ScenarioCatalog {
                                 "event-publisher-ready",
                                 "readiness",
                                 "Publisher Ready",
-                                "TradeEventPublisher has been injected and is ready to publish.",
-                                List.of("spring-app", "publisher", "kafka"),
-                                List.of("publisher-kafka"),
-                                "publisher",
-                                "kafka"
+                                "TradeEventPublisher has been injected; message delivery is not tested in this scenario.",
+                                List.of("spring-app", "publisher"),
+                                List.of(),
+                                null,
+                                null
                         ),
                         new VisualizationEvent(
                                 "event-listener-ready",
                                 "readiness",
                                 "Listener Ready",
-                                "TradeEventListener has been injected and is ready to consume from Kafka.",
-                                List.of("spring-app", "listener", "kafka"),
-                                List.of("listener-kafka"),
-                                "listener",
-                                "kafka"
+                                "TradeEventListener has been injected; subscription and assignment are not tested here.",
+                                List.of("spring-app", "listener"),
+                                List.of(),
+                                null,
+                                null
                         ),
                         new VisualizationEvent(
                                 "event-system-ready",
                                 "status",
-                                "System Ready",
-                                "The sandbox is healthy and can start scenario execution.",
-                                List.of("spring-app", "publisher", "listener", "kafka"),
-                                List.of("publisher-kafka", "listener-kafka"),
+                                "Spring Wiring Ready",
+                                "The application context contains the Kafka-facing beans needed for the next experiment.",
+                                List.of("spring-app", "publisher", "listener"),
+                                List.of(),
                                 null,
                                 null
                         )

@@ -53,9 +53,9 @@ class AllComponentsTest {
         assertEquals("READY", runtime.nodeStatuses().get("spring-app"));
         assertEquals("READY", runtime.nodeStatuses().get("publisher"));
         assertEquals("READY", runtime.nodeStatuses().get("listener"));
-        assertEquals("READY", runtime.nodeStatuses().get("kafka"));
-        assertEquals("READY", runtime.edgeStatuses().get("publisher-kafka"));
-        assertEquals("READY", runtime.edgeStatuses().get("listener-kafka"));
+        assertFalse(runtime.nodeStatuses().containsKey("kafka"));
+        assertFalse(runtime.edgeStatuses().containsKey("publisher-kafka"));
+        assertFalse(runtime.edgeStatuses().containsKey("listener-kafka"));
         assertTrue(runtime.completed());
         assertFalse(runtime.active());
     }
