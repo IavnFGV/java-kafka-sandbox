@@ -5,6 +5,7 @@
   },
   "remoteUser": "vscode",
   "workspaceFolder": "/workspace",
+  "initializeCommand": "mkdir -p \"${localEnv:HOME}/.cache/java-kafka-sandbox/gradle-9.1.0\"",
   "forwardPorts": [8080],
   "portsAttributes": {
     "8080": {
@@ -14,7 +15,8 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
   "mounts": [
     "source=${localEnv:HOME}/.codex,target=/home/vscode/.codex,type=bind",
-    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,readonly"
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,readonly",
+    "source=${localEnv:HOME}/.cache/java-kafka-sandbox/gradle-9.1.0,target=/home/vscode/.gradle,type=bind"
   ],
   "customizations": {
     "vscode": {
