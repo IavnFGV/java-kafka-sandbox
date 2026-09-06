@@ -37,16 +37,18 @@ What works now:
 - `trade-flow` starts an isolated Spring context with scenario-owned Kafka components
 - `trade-flow` publishes a unique event and confirms matching listener receipt
 - Kafka broker containers can hold topic nodes and later partition nodes
+- `topic-partition-offsets` appends records to two explicit partitions
+- one scenario consumer receives both partitions and verifies their local offsets
 
 What is still intentionally missing:
 
 - starting external Spring Boot scenario apps
 - starting/stopping Kafka containers
 - cleaning external resources between scenarios
-- multi-scenario starter/environment implementations beyond `system-ready`
+- starter/environment implementations for scenarios `004` and later
 
 Most likely next step:
 
-- implement topic/partition/offset as the next real Kafka experiment
-- preserve the broker -> topic -> partition visual hierarchy
+- implement one partition/two consumers/one group as the next real experiment
+- observe assignment and the idle second consumer
 - only after that introduce external process/container orchestration

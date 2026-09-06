@@ -61,8 +61,9 @@ Current built-in scenarios:
 - `consumer-group-consumer-failure`
 
 They are ordered from introductory topology to consumer-group failure behavior.
-`system-ready` and `trade-flow` have backend scenario starters. The remaining
-scenarios are scripted visual explanations waiting for real Kafka experiments.
+`system-ready`, `trade-flow`, and `topic-partition-offsets` have backend scenario
+starters. The remaining scenarios are scripted visual explanations waiting for
+real Kafka experiments.
 
 ## 3. Runtime state
 

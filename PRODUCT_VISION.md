@@ -63,7 +63,8 @@ The repository currently has seven ordered visual scenarios. `001 System Ready`
 checks the Kafka-facing Spring wiring. `002 Trade Event Flow` starts its own
 isolated Spring Boot context, publishes a real record, captures Kafka partition
 and offset metadata, and confirms that its listener receives the matching event.
+`003 Topic, Partition, Offset` appends records to two explicit partitions and
+verifies their partition-local offsets on both producer and consumer sides.
 
-The next milestone is `003 Topic, Partition, Offset`: expose the internal Kafka
-shape introduced by the broker and topic containers and turn the existing static
-explanation into a real experiment.
+The next milestone is `004 One Partition, Two Consumers, One Group`: observe
+that only one consumer can own the single partition while the other stays idle.

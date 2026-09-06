@@ -170,7 +170,7 @@ public class ScenarioCatalog {
                         new VisualizationEvent("event-p1-offset-0", "append", "p1 offset M",
                                 "Partition 1 has its own independent offset sequence.", List.of("producer", "partition-1"),
                                 List.of("producer-p1"), "producer", "partition-1"),
-                        new VisualizationEvent("event-p0-offset-1", "append", "p0 offset N+1",
+                        new VisualizationEvent("event-p0-offset-1", "append", "p0 offset N' > N",
                                 "Partition 0 now contains another record at a greater offset.", List.of("producer", "partition-0"),
                                 List.of("producer-p0"), "producer", "partition-0"),
                         new VisualizationEvent("event-consumer-read", "consume", "read by partition",

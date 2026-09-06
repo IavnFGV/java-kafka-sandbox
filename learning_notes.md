@@ -33,6 +33,15 @@
 - Practical takeaway: a successful producer send confirms Kafka acceptance, not consumer processing
 - Visual model: Kafka broker is a container; topics and later partitions live inside the Kafka side of the topology
 
+#### 2026-09-06 — Scenario 003
+
+- Topic: topic, partition, and offset coordinates
+- Behavior reproduced: records A and C were appended to partition 0, while B was appended to partition 1
+- Consumer behavior: one listener subscribed to the topic and was assigned both partitions
+- Verification: producer `SendResult` coordinates matched listener `ConsumerRecord` coordinates
+- Practical takeaway: offsets are local to a partition; `topic + partition + offset` identifies a record
+- Interview takeaway: a consumer normally subscribes to a topic, then its group receives partition assignments
+
 ## ETL Mapping
 
 ## AWS Basics
