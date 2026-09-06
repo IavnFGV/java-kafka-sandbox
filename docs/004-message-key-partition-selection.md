@@ -7,6 +7,7 @@
 - Интерактивность: `b4120bd` — пользователь выбирает key strategy, а backend выполняет соответствующий Kafka-эксперимент.
 - Consumer assignment: `1da60af` — три реальных consumers показывают назначения partitions и полный путь каждой записи.
 - Routing confidence: `52cbacf` — десять событий снижают вероятность случайного совпадения, а assignment-связи перестраиваются из runtime.
+- Compact topology: `198c903` — partition-ноды показывают сводку, а полная последовательность остаётся в runtime log.
 - Stable assignment: `f7a4c55` — experiment учитывает revoke и ждёт завершения стартового rebalance.
 
 ## Зачем это нужно
