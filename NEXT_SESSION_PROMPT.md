@@ -29,6 +29,8 @@ Important context:
 - Every scenario must explain which practical engineering problem it solves; do not introduce Kafka primitives without their motivation.
 - Keep explicit many-to-many links from each scenario to the covered item numbers in `KAFKA_100_PROBLEMS_AND_PATTERNS.md`.
 - Show the practical purpose and covered backlog numbers in the UI and scenario article.
+- In every scenario article, document useful Spring/Java implementation techniques as well as Kafka theory.
+- Add clickable repository links with concrete line numbers after implementation stabilizes, so each article works as a code-guided refresher.
 - Keep a short learning diary in `learning_notes.md` so I can quickly refresh what we learned, what we implemented, and what practical lesson it showed.
 - Do not forget to suggest or make small meaningful commits as progress is completed.
 
