@@ -513,17 +513,18 @@ function renderNodes(layout, stepView) {
 
 function renderNode(entry, stepView) {
   const { node, absoluteX, absoluteY } = entry;
+  const containerNode = isContainerNode(node);
   const nodeState = nodeCssState(node.id, stepView);
   const stroke = colorForType(node.type);
-  const typeClass = node.type === "container" ? "node-container" : "";
-  const ringInset = node.type === "container" ? 10 : 8;
+  const typeClass = containerNode ? "node-container" : "";
+  const ringInset = containerNode ? 10 : 8;
   const titleLines = wrapText(node.label, 18, node.width - 36);
   const blockHeight = titleLines.length * 22;
-  const titleStartY = node.type === "container"
+  const titleStartY = containerNode
     ? 34
     : Math.round((node.height - blockHeight) / 2) + 16;
   const titleMarkup = renderTextLines(titleLines, node.width / 2, titleStartY, 22, "node-title", "middle");
-  const resizeHandle = node.type === "container" ? `
+  const resizeHandle = containerNode ? `
     <g class="resize-handle" data-resize-node-id="${node.id}" aria-label="Resize ${escapeXml(node.label)}">
       <rect x="${node.width - 30}" y="${node.height - 30}" width="30" height="30" rx="8"></rect>
       <path d="M${node.width - 20},${node.height - 8} L${node.width - 8},${node.height - 20} M${node.width - 12},${node.height - 8} L${node.width - 8},${node.height - 12}"></path>
@@ -532,8 +533,8 @@ function renderNode(entry, stepView) {
 
   return `
     <g class="node ${typeClass} ${nodeState}" data-node-id="${node.id}" transform="translate(${absoluteX}, ${absoluteY})">
-      <rect class="node-ready-ring" x="${ringInset}" y="${ringInset}" width="${node.width - ringInset * 2}" height="${node.height - ringInset * 2}" rx="${node.type === "container" ? 22 : 14}"></rect>
-      <rect class="node-card" width="${node.width}" height="${node.height}" rx="${node.type === "container" ? 28 : 20}" stroke="${stroke}"></rect>
+      <rect class="node-ready-ring" x="${ringInset}" y="${ringInset}" width="${node.width - ringInset * 2}" height="${node.height - ringInset * 2}" rx="${containerNode ? 22 : 14}"></rect>
+      <rect class="node-card" width="${node.width}" height="${node.height}" rx="${containerNode ? 28 : 20}" stroke="${stroke}"></rect>
       ${titleMarkup}
       ${resizeHandle}
     </g>
@@ -819,6 +820,8 @@ function colorForType(type) {
       return "#0f172a";
     case "service":
       return "#0f766e";
+    case "broker-container":
+    case "topic-container":
     case "broker":
       return "#b45309";
     case "consumer":
@@ -828,6 +831,10 @@ function colorForType(type) {
     default:
       return "#475569";
   }
+}
+
+function isContainerNode(node) {
+  return node.type === "container" || node.type.endsWith("-container");
 }
 
 function renderTextLines(lines, x, startY, lineHeight, cssClass, textAnchor = "start") {
