@@ -1,5 +1,8 @@
 const POLL_INTERVAL_MS = 500;
 const DEFAULT_SCENARIO_ID = "system-ready";
+const CONTAINER_PADDING = 20;
+const MIN_CONTAINER_WIDTH = 180;
+const MIN_CONTAINER_HEIGHT = 140;
 
 const state = {
   scenarios: [],
@@ -499,12 +502,19 @@ function renderNode(entry, stepView) {
   const blockHeight = titleLines.length * 22;
   const titleStartY = Math.round((node.height - blockHeight) / 2) + 16;
   const titleMarkup = renderTextLines(titleLines, node.width / 2, titleStartY, 22, "node-title", "middle");
+  const resizeHandle = node.type === "container" ? `
+    <g class="resize-handle" data-resize-node-id="${node.id}" aria-label="Resize ${escapeXml(node.label)}">
+      <rect x="${node.width - 30}" y="${node.height - 30}" width="30" height="30" rx="8"></rect>
+      <path d="M${node.width - 20},${node.height - 8} L${node.width - 8},${node.height - 20} M${node.width - 12},${node.height - 8} L${node.width - 8},${node.height - 12}"></path>
+    </g>
+  ` : "";
 
   return `
     <g class="node ${typeClass} ${nodeState}" data-node-id="${node.id}" transform="translate(${absoluteX}, ${absoluteY})">
       <rect class="node-ready-ring" x="${ringInset}" y="${ringInset}" width="${node.width - ringInset * 2}" height="${node.height - ringInset * 2}" rx="${node.type === "container" ? 22 : 14}"></rect>
       <rect class="node-card" width="${node.width}" height="${node.height}" rx="${node.type === "container" ? 28 : 20}" stroke="${stroke}"></rect>
       ${titleMarkup}
+      ${resizeHandle}
     </g>
   `;
 }
@@ -605,11 +615,13 @@ function bindDragEvents() {
     }
 
     const currentPoint = toSvgPoint(event);
-    const deltaX = currentPoint.x - state.drag.lastPoint.x;
-    const deltaY = currentPoint.y - state.drag.lastPoint.y;
 
-    node.x += Math.round(deltaX);
-    node.y += Math.round(deltaY);
+    if (state.drag.mode === "resize") {
+      resizeContainer(node, currentPoint);
+    } else {
+      moveNode(node, currentPoint);
+    }
+
     state.drag.lastPoint = currentPoint;
     render();
   });
@@ -628,6 +640,27 @@ function bindDragEvents() {
 }
 
 function attachDragHandlers() {
+  graph.querySelectorAll(".resize-handle").forEach((handleElement) => {
+    handleElement.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+      const node = state.scenario.nodes.find((candidate) => candidate.id === handleElement.dataset.resizeNodeId);
+      if (!node) {
+        return;
+      }
+
+      graph.setPointerCapture(event.pointerId);
+      state.drag = {
+        mode: "resize",
+        nodeId: node.id,
+        pointerId: event.pointerId,
+        lastPoint: toSvgPoint(event),
+        startPoint: toSvgPoint(event),
+        startWidth: node.width,
+        startHeight: node.height
+      };
+    });
+  });
+
   graph.querySelectorAll(".node").forEach((nodeElement) => {
     nodeElement.addEventListener("pointerdown", (event) => {
       const nodeId = nodeElement.dataset.nodeId;
@@ -636,15 +669,59 @@ function attachDragHandlers() {
         return;
       }
 
-      nodeElement.setPointerCapture(event.pointerId);
+      graph.setPointerCapture(event.pointerId);
       nodeElement.classList.add("dragging");
       state.drag = {
+        mode: "move",
         nodeId,
         pointerId: event.pointerId,
         lastPoint: toSvgPoint(event)
       };
     });
   });
+}
+
+function moveNode(node, currentPoint) {
+  const deltaX = Math.round(currentPoint.x - state.drag.lastPoint.x);
+  const deltaY = Math.round(currentPoint.y - state.drag.lastPoint.y);
+  let nextX = node.x + deltaX;
+  let nextY = node.y + deltaY;
+
+  if (node.parentId) {
+    const parent = state.scenario.nodes.find((candidate) => candidate.id === node.parentId);
+    if (parent) {
+      const maxX = Math.max(CONTAINER_PADDING, parent.width - node.width - CONTAINER_PADDING);
+      const maxY = Math.max(CONTAINER_PADDING, parent.height - node.height - CONTAINER_PADDING);
+      nextX = clamp(nextX, CONTAINER_PADDING, maxX);
+      nextY = clamp(nextY, CONTAINER_PADDING, maxY);
+    }
+  }
+
+  node.x = nextX;
+  node.y = nextY;
+}
+
+function resizeContainer(node, currentPoint) {
+  const children = state.scenario.nodes.filter((candidate) => candidate.parentId === node.id);
+  const childrenWidth = children.reduce(
+    (requiredWidth, child) => Math.max(requiredWidth, child.x + child.width + CONTAINER_PADDING),
+    0
+  );
+  const childrenHeight = children.reduce(
+    (requiredHeight, child) => Math.max(requiredHeight, child.y + child.height + CONTAINER_PADDING),
+    0
+  );
+  const minWidth = Math.max(MIN_CONTAINER_WIDTH, childrenWidth);
+  const minHeight = Math.max(MIN_CONTAINER_HEIGHT, childrenHeight);
+  const deltaX = currentPoint.x - state.drag.startPoint.x;
+  const deltaY = currentPoint.y - state.drag.startPoint.y;
+
+  node.width = Math.max(minWidth, Math.round(state.drag.startWidth + deltaX));
+  node.height = Math.max(minHeight, Math.round(state.drag.startHeight + deltaY));
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function finishDrag() {
