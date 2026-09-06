@@ -25,6 +25,14 @@
 - Ordering is preserved per partition, not across the whole topic
 - Rebalance happens when consumers join, leave, or partitions change
 
+#### 2026-09-06
+
+- Topic: producer acknowledgement versus end-to-end delivery
+- Behavior reproduced: an isolated scenario app published a unique event, Kafka returned partition and offset, and a listener received the matching `eventId`
+- Files to revisit: `TradeFlowEnvironment`, `TradeFlowExperiment`, `TradeFlowPublisher`, `TradeFlowListener`
+- Practical takeaway: a successful producer send confirms Kafka acceptance, not consumer processing
+- Visual model: Kafka broker is a container; topics and later partitions live inside the Kafka side of the topology
+
 ## ETL Mapping
 
 ## AWS Basics

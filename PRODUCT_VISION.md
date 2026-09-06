@@ -60,9 +60,10 @@ The detailed backlog lives in `KAFKA_100_PROBLEMS_AND_PATTERNS.md`.
 ## Current Milestone
 
 The repository currently has seven ordered visual scenarios. `001 System Ready`
-is the first backend-driven scenario: the mediator starts a dedicated Spring Boot
-context, checks its Kafka-facing beans, and sends runtime state to the UI.
+checks the Kafka-facing Spring wiring. `002 Trade Event Flow` starts its own
+isolated Spring Boot context, publishes a real record, captures Kafka partition
+and offset metadata, and confirms that its listener receives the matching event.
 
-The next milestone is an end-to-end scenario that publishes a real record to
-Kafka and confirms that a listener receives it. That will establish the reusable
-path for later experiments.
+The next milestone is `003 Topic, Partition, Offset`: expose the internal Kafka
+shape introduced by the broker and topic containers and turn the existing static
+explanation into a real experiment.

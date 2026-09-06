@@ -11,6 +11,7 @@ Scenario notes:
 
 - `docs/001-system-ready.md`
 - `docs/001-a-from-polling-to-long-polling.md`
+- `docs/002-trade-event-flow.md`
 
 This sandbox is for:
 

@@ -61,8 +61,8 @@ Current built-in scenarios:
 - `consumer-group-consumer-failure`
 
 They are ordered from introductory topology to consumer-group failure behavior.
-Only `system-ready` currently has a backend scenario starter; the others are
-scripted visual explanations waiting for real Kafka experiments.
+`system-ready` and `trade-flow` have backend scenario starters. The remaining
+scenarios are scripted visual explanations waiting for real Kafka experiments.
 
 ## 3. Runtime state
 
@@ -213,6 +213,8 @@ Files:
 - `src/main/java/io/drozda/sandbox/scenario/spi/ScenarioEnvironment.java`
 - `src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyEnvironment.java`
 - `src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyScenarioStarter.java`
+- `src/main/java/io/drozda/sandbox/scenario/tradeflow/TradeFlowEnvironment.java`
+- `src/main/java/io/drozda/sandbox/scenario/tradeflow/TradeFlowScenarioStarter.java`
 
 How it works:
 - Play calls the mediator's default command for the selected scenario
@@ -221,6 +223,8 @@ How it works:
 - the mediator communicates with that scenario application over HTTP
 - the starter translates the result into visual runtime events
 - Stop closes the environment and resets the visual topology
+- `trade-flow` owns a separate topic, publisher, listener, tracker, and Spring context
+- Kafka can be rendered as a resizable broker container with a topic inside it
 
 Tests cover mediator behavior and runtime state, but tests are no longer intended
 to be the user-facing mechanism for running scenarios.
@@ -253,7 +257,7 @@ Reasonable next steps:
 - replace string statuses with typed values
 - support richer visual events like retry, DLQ, rebalance, lag
 - support multiple runtime sessions or history playback
-- add a real publish-to-consume scenario before expanding orchestration
+- turn topic/partition/offset into the next real scenario before expanding orchestration
 
 ## 12. Good next learning scenarios
 

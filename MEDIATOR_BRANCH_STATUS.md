@@ -34,6 +34,9 @@ What works now:
 - runtime events are retained in a per-scenario browser log until reload
 - runtime changes reach the browser through versioned long polling
 - container nodes can be resized and keep child nodes inside their bounds
+- `trade-flow` starts an isolated Spring context with scenario-owned Kafka components
+- `trade-flow` publishes a unique event and confirms matching listener receipt
+- Kafka broker containers can hold topic nodes and later partition nodes
 
 What is still intentionally missing:
 
@@ -44,6 +47,6 @@ What is still intentionally missing:
 
 Most likely next step:
 
-- make the next scenario publish a real Kafka record and verify listener receipt
-- use that experiment to establish honest broker/topic/listener readiness events
+- implement topic/partition/offset as the next real Kafka experiment
+- preserve the broker -> topic -> partition visual hierarchy
 - only after that introduce external process/container orchestration
