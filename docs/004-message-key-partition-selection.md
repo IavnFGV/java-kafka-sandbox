@@ -6,6 +6,7 @@
 - Стало: `6618e4c` — отдельное приложение проверяет маршрутизацию реальными Kafka records.
 - Интерактивность: `b4120bd` — пользователь выбирает key strategy, а backend выполняет соответствующий Kafka-эксперимент.
 - Consumer assignment: `1da60af` — три реальных consumers показывают назначения partitions и полный путь каждой записи.
+- Stable assignment: `f7a4c55` — experiment учитывает revoke и ждёт завершения стартового rebalance.
 
 ## Зачем это нужно
 
