@@ -30,7 +30,7 @@ class KeyPartitioningScenarioTest {
             assertTrue(result.published());
             assertTrue(result.received());
             assertTrue(result.learningGoalMet());
-            assertEquals(3, result.observations().stream()
+            assertEquals(10, result.observations().stream()
                     .filter(record -> "order-42".equals(record.orderId())).count());
             assertEquals(1, order42Partitions);
             assertEquals(3, result.consumerAssignments().size());
@@ -42,6 +42,9 @@ class KeyPartitioningScenarioTest {
                     "visual-key-routing-test", java.util.Map.of("keyStrategy", "ORDER_ID"));
             assertEquals("READY", runtime.nodeStatuses().get("consumer-a"));
             assertTrue(runtime.nodeDetails().get("consumer-a").contains("assigned partitions"));
+            assertEquals(3, runtime.activeSignals().stream()
+                    .filter(signal -> "READY".equals(signal.state()))
+                    .count());
             assertTrue(runtime.eventLog().stream()
                     .anyMatch(line -> line.contains("consumed order-42 SHIPPED")));
             assertTrue(runtime.completed());

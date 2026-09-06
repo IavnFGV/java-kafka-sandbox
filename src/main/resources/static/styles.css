@@ -477,6 +477,21 @@ button:hover {
     fill: var(--active);
 }
 
+.assignment-link line {
+  stroke: rgba(15, 118, 110, 0.52);
+  stroke-width: 2.5;
+  stroke-dasharray: 8 6;
+}
+
+.assignment-link text {
+  fill: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: rgba(255, 253, 248, 0.94);
+  stroke-width: 5px;
+}
+
 @media (max-width: 900px) {
     .workspace {
         grid-template-columns: 1fr;

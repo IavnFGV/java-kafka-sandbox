@@ -29,8 +29,15 @@ public class KeyPartitioningExperiment {
     public KeyPartitioningScenarioStatus run(String invocationName, KeyStrategy strategy) {
         List<KeyedOrderEvent> events = List.of(
                 event("order-42", "CREATED"),
+                event("order-42", "VALIDATED"),
+                event("order-42", "RESERVED"),
                 event("order-42", "PAID"),
+                event("order-42", "PACKING"),
+                event("order-42", "PACKED"),
+                event("order-42", "SHIPPING"),
                 event("order-42", "SHIPPED"),
+                event("order-42", "DELIVERING"),
+                event("order-42", "DELIVERED"),
                 event("order-73", "CREATED")
         );
         List<CompletableFuture<TrackedKeyedRecord>> receives =

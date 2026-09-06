@@ -19,7 +19,7 @@ import io.drozda.sandbox.visualization.ScenarioRuntimeService;
 @Component
 public class KeyPartitioningScenarioStarter implements ScenarioStarter {
     public static final String ROUTE_BY_KEY = "route-by-key";
-    private static final long STEP_DELAY_MS = 550L;
+    private static final long STEP_DELAY_MS = 250L;
 
     private final ScenarioCatalog catalog;
     private final ScenarioRuntimeService runtime;
@@ -64,6 +64,9 @@ public class KeyPartitioningScenarioStarter implements ScenarioStarter {
 
         result.consumerAssignments().forEach((consumerId, partitions) ->
                 runtime.updateNodeDetail(scenario, nodeId(consumerId), "assigned partitions: " + partitions));
+        result.consumerAssignments().forEach((consumerId, partitions) -> partitions.forEach(partition ->
+                assignment(scenario, "partition-" + partition, nodeId(consumerId),
+                        "p" + partition + " assigned")));
 
         runtime.updateActiveStep(scenario, 1);
         Map<Integer, String> partitionDetails = new java.util.LinkedHashMap<>();
@@ -94,7 +97,16 @@ public class KeyPartitioningScenarioStarter implements ScenarioStarter {
             result.consumerAssignments().keySet().forEach(consumerId ->
                     waiting(scenario, nodeId(consumerId), consumerId + " cannot restore cross-partition order"));
             waiting(scenario, "kafka-broker", "Kafka worked, but the business key is unsafe");
-            waiting(scenario, "topic", "Technical run completed without an ordering guarantee");
+            long observedPartitions = result.observations().stream()
+                    .filter(record -> "order-42".equals(record.orderId()))
+                    .map(KeyedRecordObservation::partition)
+                    .distinct()
+                    .count();
+            String observation = observedPartitions == 1
+                    ? "One partition observed by chance; no routing guarantee"
+                    : "order-42 spread across " + observedPartitions + " partitions";
+            waiting(scenario, "topic", observation);
+            runtime.updateNodeDetail(scenario, "topic", observation + "; choose ORDER_ID");
         }
         pause();
         return runtime.completeActiveSession(scenario);
@@ -112,6 +124,10 @@ public class KeyPartitioningScenarioStarter implements ScenarioStarter {
         event(scenario, "signal-started", null, edge, label, from, to, "ACTIVE");
         pause();
         event(scenario, "signal-delivered", null, edge, label, from, to, "READY");
+    }
+
+    private void assignment(ScenarioGraph scenario, String from, String to, String label) {
+        event(scenario, "signal-started", null, null, label, from, to, "READY");
     }
 
     private void ready(ScenarioGraph scenario, String node, String label) {

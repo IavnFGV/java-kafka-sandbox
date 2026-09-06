@@ -214,10 +214,7 @@ public class ScenarioCatalog {
                                 "One of three concurrent consumers in the same group.")
                 ),
                 List.of(
-                        new ScenarioEdge("publish", "publisher", "topic", "send with orderId key"),
-                        new ScenarioEdge("consume-a", "topic", "consumer-a", "group assignment"),
-                        new ScenarioEdge("consume-b", "topic", "consumer-b", "group assignment"),
-                        new ScenarioEdge("consume-c", "topic", "consumer-c", "group assignment")
+                        new ScenarioEdge("publish", "publisher", "topic", "send with selected key")
                 ),
                 List.of(
                         new ScenarioStep("step-1", "Initial topology",

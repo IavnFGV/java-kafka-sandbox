@@ -587,9 +587,18 @@ function renderSignal(layout, signal, index) {
   const midX = (from.centerX + to.centerX) / 2;
   const midY = (from.centerY + to.centerY) / 2 - 18 - offset;
 
+  if (signal.state === "READY") {
+    return `
+      <g class="assignment-link">
+        <line x1="${from.centerX}" y1="${from.centerY}" x2="${to.centerX}" y2="${to.centerY}" marker-end="url(#arrow)"></line>
+        <text x="${midX}" y="${(from.centerY + to.centerY) / 2 - 10}" text-anchor="middle">${escapeXml(label)}</text>
+      </g>
+    `;
+  }
+
   return `
     <g class="signal">
-      <text class="signal-label" x="${midX}" y="${midY}" text-anchor="middle">${label}</text>
+      <text class="signal-label" x="${midX}" y="${midY}" text-anchor="middle">${escapeXml(label)}</text>
       <circle class="signal-dot" r="8">
         <animate attributeName="cx" from="${from.centerX}" to="${to.centerX}" dur="1.4s" repeatCount="indefinite"></animate>
         <animate attributeName="cy" from="${from.centerY}" to="${to.centerY}" dur="1.4s" repeatCount="indefinite"></animate>
