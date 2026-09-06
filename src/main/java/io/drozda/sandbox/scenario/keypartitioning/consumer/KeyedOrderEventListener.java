@@ -26,4 +26,9 @@ public class KeyedOrderEventListener implements ConsumerSeekAware {
     ) {
         tracker.assigned(Thread.currentThread().getName(), assignments.keySet());
     }
+
+    @Override
+    public void onPartitionsRevoked(java.util.Collection<org.apache.kafka.common.TopicPartition> partitions) {
+        tracker.revoked(Thread.currentThread().getName(), partitions);
+    }
 }

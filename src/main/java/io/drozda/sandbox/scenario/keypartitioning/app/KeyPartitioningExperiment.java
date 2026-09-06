@@ -1,5 +1,6 @@
 package io.drozda.sandbox.scenario.keypartitioning.app;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +38,7 @@ public class KeyPartitioningExperiment {
         List<SendResult<String, KeyedOrderEvent>> sends = new ArrayList<>();
 
         try {
+            tracker.awaitStableAssignments(3, 3, Duration.ofSeconds(TIMEOUT_SECONDS));
             for (KeyedOrderEvent event : events) {
                 sends.add(publisher.publish(strategy, event).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
             }
