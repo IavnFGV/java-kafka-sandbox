@@ -500,7 +500,9 @@ function renderNode(entry, stepView) {
   const ringInset = node.type === "container" ? 10 : 8;
   const titleLines = wrapText(node.label, 18, node.width - 36);
   const blockHeight = titleLines.length * 22;
-  const titleStartY = Math.round((node.height - blockHeight) / 2) + 16;
+  const titleStartY = node.type === "container"
+    ? 34
+    : Math.round((node.height - blockHeight) / 2) + 16;
   const titleMarkup = renderTextLines(titleLines, node.width / 2, titleStartY, 22, "node-title", "middle");
   const resizeHandle = node.type === "container" ? `
     <g class="resize-handle" data-resize-node-id="${node.id}" aria-label="Resize ${escapeXml(node.label)}">
