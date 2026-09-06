@@ -34,6 +34,8 @@ public class ScenarioCatalog {
                 2,
                 "Trade Event Flow",
                 "A real end-to-end Kafka experiment: publish one unique trade event and receive the same event in an isolated listener.",
+                "Use an event log when producers and consumers must be decoupled: the producer finishes after Kafka accepts the record, while consumers process it independently.",
+                List.of(1),
                 1200,
                 650,
                 List.of(
@@ -123,6 +125,8 @@ public class ScenarioCatalog {
                 3,
                 "Topic, Partition, Offset Basics",
                 "A first Kafka mental model: a topic is split into partitions, and offsets are positions inside each partition rather than global numbers.",
+                "Partition a busy stream for parallel processing, preserve order within each shard, and identify exactly where every consumer is reading.",
+                List.of(2, 11, 12),
                 1320,
                 760,
                 List.of(
@@ -187,6 +191,8 @@ public class ScenarioCatalog {
                 4,
                 "One Partition, Two Consumers, One Group",
                 "A classic interview trap: with only one partition, one consumer works and the second consumer in the same group stays idle.",
+                "Avoid paying for consumer instances that cannot increase throughput because the topic has fewer partitions than consumers in the group.",
+                List.of(13, 14),
                 1360,
                 780,
                 List.of(
@@ -248,6 +254,8 @@ public class ScenarioCatalog {
                 5,
                 "Two Partitions, Two Consumers, One Group",
                 "The happy path for scaling: when partitions exist, consumers in the same group can split the work.",
+                "Scale one logical service horizontally by giving its instances separate partitions while processing every record only once per group.",
+                List.of(13, 14),
                 1400,
                 820,
                 List.of(
@@ -312,6 +320,8 @@ public class ScenarioCatalog {
                 6,
                 "Rebalance When a Second Consumer Joins",
                 "A second consumer can trigger rebalance so partition ownership changes while the group is alive.",
+                "Understand temporary processing pauses and ownership changes that happen during deployments, autoscaling, and rolling restarts.",
+                List.of(41, 94),
                 1420,
                 820,
                 List.of(
@@ -380,6 +390,8 @@ public class ScenarioCatalog {
                 7,
                 "Consumer Failure and Partition Takeover",
                 "When one consumer dies, its partition is not lost forever. The group rebalances and a surviving consumer takes over.",
+                "Keep processing after an instance crashes by reassigning its partitions, while accounting for delay and possible repeated processing.",
+                List.of(13, 41, 97),
                 1450,
                 840,
                 List.of(
@@ -451,6 +463,8 @@ public class ScenarioCatalog {
                 1,
                 "System Ready",
                 "A Spring wiring check: the application starts and creates its Kafka-facing beans before any real message is sent.",
+                "Separate application wiring failures from broker and message-flow failures before investigating Kafka behavior.",
+                List.of(),
                 1180,
                 640,
                 List.of(

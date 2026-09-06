@@ -15,6 +15,22 @@ How to use this list:
   - optional visualizer support
   - notes about failure modes and tradeoffs
 
+## Implemented Scenario Mapping
+
+| Scenario | Practical focus | Backlog items |
+|---|---|---|
+| `001 System Ready` | Distinguish Spring wiring failures from Kafka runtime failures | Foundation |
+| `002 Trade Event Flow` | Decouple a producer from asynchronous consumers through a durable event log | #1 |
+| `003 Topic, Partition, Offset` | Scale a stream into ordered shards and address consumer progress precisely | #2, #11, #12 |
+| `004 One Partition, Two Consumers` | Detect why adding consumers may not increase throughput | #13, #14 |
+| `005 Two Partitions, Two Consumers` | Scale one service by distributing partitions across its instances | #13, #14 |
+| `006 Rebalance on Join` | Understand ownership changes during deploys and autoscaling | #41, #94 |
+| `007 Consumer Failure` | Recover partition processing after an instance disappears | #13, #41, #97 |
+
+The mapping is many-to-many: one scenario may cover several backlog questions,
+and one question may require several scenarios. Keep `ScenarioGraph.backlogItems`
+and this table synchronized when scenarios are implemented or reordered.
+
 Suggested priority:
 - `P1` = core foundations, do first
 - `P2` = highly practical, do next
@@ -219,6 +235,8 @@ Phase 4:
 ## Definition of Done for One Topic
 
 For each topic, try to leave behind:
+- one practical problem statement explaining why the behavior matters
+- explicit references to every covered backlog item
 - one integration test
 - one short note in `learning_notes.md`
 - one visual scenario or runtime event sequence

@@ -67,6 +67,46 @@ body {
     font-size: 0.95rem;
 }
 
+.scenario-purpose {
+    max-width: 720px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 14px 14px 0;
+    background: rgba(217, 119, 6, 0.08);
+}
+
+.scenario-purpose-label,
+.backlog-caption {
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.scenario-purpose p {
+    margin: 5px 0 10px;
+    color: var(--ink);
+    line-height: 1.45;
+}
+
+.scenario-backlog-items {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.backlog-badge {
+    padding: 3px 8px;
+    border-radius: 999px;
+    color: #9a4a05;
+    background: rgba(217, 119, 6, 0.15);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
 .eyebrow,
 .section-label {
     margin: 0 0 8px;

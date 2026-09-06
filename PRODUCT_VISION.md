@@ -14,14 +14,19 @@ learning Kafka without production experience.
 Each completed scenario should:
 
 1. Show the initial system topology.
-2. State the question or behavior being explored.
-3. Let the user predict what will happen.
-4. Run a real Kafka-backed experiment.
-5. Visualize messages, component state, partition ownership, or failures.
-6. Explain why Kafka behaved that way.
-7. Include a failure or edge-case variant where it adds value.
-8. Finish with a concise interview-ready takeaway.
-9. Reference the before and after commits so the implementation change is easy to demonstrate.
+2. State the practical problem this Kafka feature solves.
+3. Reference every related item from `KAFKA_100_PROBLEMS_AND_PATTERNS.md`.
+4. Let the user predict what will happen.
+5. Run a real Kafka-backed experiment.
+6. Visualize messages, component state, partition ownership, or failures.
+7. Explain why Kafka behaved that way.
+8. Include a failure or edge-case variant where it adds value.
+9. Finish with a concise interview-ready takeaway.
+10. Reference the before and after commits so the implementation change is easy to demonstrate.
+
+The scenario-to-backlog relationship is many-to-many. The backend stores the
+practical purpose and backlog item numbers in `ScenarioGraph`; the UI displays
+them before the learner starts the experiment.
 
 The UI is not intended to become a general Kafka administration console. Actions
 remain constrained by the selected scenario so that every interaction teaches a

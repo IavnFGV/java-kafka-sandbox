@@ -22,6 +22,8 @@ const graph = document.getElementById("graph");
 const scenarioList = document.getElementById("scenario-list");
 const title = document.getElementById("scenario-title");
 const summary = document.getElementById("scenario-summary");
+const purposeText = document.getElementById("scenario-purpose-text");
+const backlogItems = document.getElementById("scenario-backlog-items");
 const stepTitle = document.getElementById("step-title");
 const stepDescription = document.getElementById("step-description");
 const runtimeLog = document.getElementById("runtime-log");
@@ -168,6 +170,12 @@ function applyScenario(scenario) {
   state.activeScenarioId = scenario.id;
   title.textContent = scenario.title;
   summary.textContent = scenario.summary;
+  purposeText.textContent = scenario.practicalPurpose;
+  backlogItems.innerHTML = scenario.backlogItems.length > 0
+    ? `<span class="backlog-caption">Covers Kafka backlog</span>${scenario.backlogItems
+      .map((item) => `<span class="backlog-badge">#${item}</span>`)
+      .join("")}`
+    : `<span class="backlog-caption">Foundation scenario</span>`;
   graph.setAttribute("viewBox", `0 0 ${scenario.viewportWidth} ${scenario.viewportHeight}`);
   renderScenarioList();
 }

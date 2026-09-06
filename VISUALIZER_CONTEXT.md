@@ -45,6 +45,8 @@ Files:
 
 Current idea:
 - `ScenarioGraph` is the whole scenario
+- `ScenarioGraph.practicalPurpose` explains the real engineering need behind it
+- `ScenarioGraph.backlogItems` links it to the numbered Kafka learning backlog
 - nodes describe boxes on the screen
 - edges describe relations/arrows
 - steps support old scripted playback mode

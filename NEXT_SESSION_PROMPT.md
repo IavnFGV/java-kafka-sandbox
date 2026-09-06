@@ -26,6 +26,9 @@ Important context:
 - The visualizer already supports static scenarios and event-driven runtime updates.
 - Keep solutions incremental. Do not over-engineer unless there is a clear payoff.
 - When adding Kafka knowledge, prefer practical patterns, interview pain points, and failure modes.
+- Every scenario must explain which practical engineering problem it solves; do not introduce Kafka primitives without their motivation.
+- Keep explicit many-to-many links from each scenario to the covered item numbers in `KAFKA_100_PROBLEMS_AND_PATTERNS.md`.
+- Show the practical purpose and covered backlog numbers in the UI and scenario article.
 - Keep a short learning diary in `learning_notes.md` so I can quickly refresh what we learned, what we implemented, and what practical lesson it showed.
 - Do not forget to suggest or make small meaningful commits as progress is completed.
 

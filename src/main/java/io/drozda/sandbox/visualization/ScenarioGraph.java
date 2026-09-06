@@ -7,6 +7,8 @@ public record ScenarioGraph(
         int order,
         String title,
         String summary,
+        String practicalPurpose,
+        List<Integer> backlogItems,
         int viewportWidth,
         int viewportHeight,
         List<ScenarioNode> nodes,
