@@ -29,6 +29,10 @@ What works now:
 - mediator sends HTTP commands to that scenario app
 - controller exposes command and environment endpoints
 - tests cover mediator command execution and environment lifecycle
+- UI Play runs the default backend command
+- UI Stop closes the scenario environment and restores baseline topology
+- runtime events are retained in a per-scenario browser log until reload
+- container nodes can be resized and keep child nodes inside their bounds
 
 What is still intentionally missing:
 
@@ -39,6 +43,6 @@ What is still intentionally missing:
 
 Most likely next step:
 
-- add the second scenario as a real starter/environment pair
-- keep it in-process first
+- make the next scenario publish a real Kafka record and verify listener receipt
+- use that experiment to establish honest broker/topic/listener readiness events
 - only after that introduce external process/container orchestration

@@ -2,16 +2,21 @@
 
 Reusable Spring Boot sandbox repository for learning Kafka locally with a clean, devcontainer-friendly setup.
 
+The long-term goal is an interactive Kafka scenario lab: instead of only reading
+theory, a Java developer can run focused experiments, observe Kafka behavior, and
+refresh interview-ready mental models. See `PRODUCT_VISION.md` for the intended
+learning experience and `KAFKA_100_PROBLEMS_AND_PATTERNS.md` for the scenario backlog.
+
 This sandbox is for:
 
 - Practicing Kafka concepts with small Spring Boot exercises.
 - Running one local Kafka broker for development and experiments.
 - Keeping Java 17, Gradle wrapper, tests, and devcontainer support ready to use.
 
-This sandbox is not for:
+This sandbox is not currently:
 
 - Coding-challenge jar submissions.
-- A complete demo application.
+- A completed training application.
 - Production-ready infrastructure, security, or cloud setup.
 - A full event-driven architecture example out of the box.
 
