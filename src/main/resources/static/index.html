@@ -15,6 +15,26 @@
                 A small visual layer for understanding how events move through the system.
                 Today it shows a graph. Next, we can teach it retries, failures, and real monitoring signals.
             </p>
+            <div class="theme-picker">
+                <button id="theme-toggle" class="theme-toggle" type="button" aria-expanded="false" aria-controls="theme-panel">
+                    Palette
+                </button>
+                <div id="theme-panel" class="theme-panel" hidden>
+                    <div id="color-wheel" class="color-wheel" role="slider" aria-label="Base palette hue" aria-valuemin="0" aria-valuemax="359" tabindex="0">
+                        <span class="harmony-marker" style="--offset: 0deg; --marker-hue: 0"></span>
+                        <span class="harmony-marker" style="--offset: 90deg; --marker-hue: 90"></span>
+                        <span class="harmony-marker" style="--offset: 180deg; --marker-hue: 180"></span>
+                        <span class="harmony-marker" style="--offset: 270deg; --marker-hue: 270"></span>
+                    </div>
+                    <div>
+                        <strong>Tetradic harmony</strong>
+                        <p>Four colors spaced 90° apart.</p>
+                        <label for="theme-hue">Base hue</label>
+                        <input id="theme-hue" type="range" min="0" max="359" value="32">
+                        <button id="theme-reset" class="theme-reset" type="button">Reset</button>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section class="workspace">

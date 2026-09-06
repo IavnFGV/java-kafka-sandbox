@@ -230,6 +230,8 @@ How it works:
 - Stop closes the environment and resets the visual topology
 - `trade-flow` owns a separate topic, publisher, listener, tracker, and Spring context
 - Kafka can be rendered as a resizable broker container with a topic inside it
+- the header palette picker derives a tetradic four-color UI theme from a selected base hue and stores it in browser `localStorage`
+- semantic runtime colors such as ready and failed remain fixed across themes
 
 Tests cover mediator behavior and runtime state, but tests are no longer intended
 to be the user-facing mechanism for running scenarios.

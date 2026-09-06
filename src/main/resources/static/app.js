@@ -3,6 +3,7 @@ const DEFAULT_SCENARIO_ID = "system-ready";
 const CONTAINER_PADDING = 20;
 const MIN_CONTAINER_WIDTH = 180;
 const MIN_CONTAINER_HEIGHT = 140;
+const DEFAULT_THEME_HUE = 32;
 
 const state = {
   scenarios: [],
@@ -31,15 +32,54 @@ const playBtn = document.getElementById("play-btn");
 const stopBtn = document.getElementById("stop-btn");
 const scenarioInputs = document.getElementById("scenario-inputs");
 const keyStrategy = document.getElementById("key-strategy");
+const themeToggle = document.getElementById("theme-toggle");
+const themePanel = document.getElementById("theme-panel");
+const themeHue = document.getElementById("theme-hue");
+const colorWheel = document.getElementById("color-wheel");
+const themeReset = document.getElementById("theme-reset");
 let scenarioId = new URLSearchParams(window.location.search).get("scenario") || DEFAULT_SCENARIO_ID;
 
 bootstrap();
 
 function bootstrap() {
+  initializeThemePicker();
   bindControlEvents();
   bindDragEvents();
   loadInitialScenario();
   pollRuntimeUpdates();
+}
+
+function initializeThemePicker() {
+  const storedHue = Number.parseInt(window.localStorage.getItem("visualizer-theme-hue"), 10);
+  applyThemeHue(Number.isFinite(storedHue) ? storedHue : DEFAULT_THEME_HUE);
+
+  themeToggle.addEventListener("click", () => {
+    const opening = themePanel.hidden;
+    themePanel.hidden = !opening;
+    themeToggle.setAttribute("aria-expanded", String(opening));
+  });
+  themeHue.addEventListener("input", () => applyThemeHue(Number(themeHue.value)));
+  colorWheel.addEventListener("click", (event) => {
+    const bounds = colorWheel.getBoundingClientRect();
+    const angle = Math.atan2(event.clientY - bounds.top - bounds.height / 2,
+      event.clientX - bounds.left - bounds.width / 2) * 180 / Math.PI + 90;
+    applyThemeHue(Math.round((angle + 360) % 360));
+  });
+  colorWheel.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    applyThemeHue(Number(themeHue.value) + (event.key === "ArrowRight" ? 5 : -5));
+  });
+  themeReset.addEventListener("click", () => applyThemeHue(DEFAULT_THEME_HUE));
+}
+
+function applyThemeHue(rawHue) {
+  const hue = ((rawHue % 360) + 360) % 360;
+  document.documentElement.style.setProperty("--theme-hue", hue);
+  themeHue.value = hue;
+  colorWheel.style.setProperty("--selected-hue", `${hue}deg`);
+  colorWheel.setAttribute("aria-valuenow", String(hue));
+  window.localStorage.setItem("visualizer-theme-hue", String(hue));
 }
 
 function loadInitialScenario() {
