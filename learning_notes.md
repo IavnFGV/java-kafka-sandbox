@@ -63,6 +63,7 @@
 - Rebalance observation: during startup the first consumer may temporarily own all partitions; the experiment must wait for stable assignment and process partition revocations
 - Ordering insight: a shared database does not remove the problem because consumers from different partitions may finish updates out of order
 - Next 004 enhancement: quantify the chance of accidentally observing one partition with an unsafe strategy; do not use Student's t-test for this categorical routing experiment
+- Probability check implemented: with 10 independently hashed event IDs and 3 partitions, accidental same-partition placement is `(1/3)^9`, about `0.0051%`; no-key sticky partitioning is not modeled by this formula
 
 ## ETL Mapping
 
