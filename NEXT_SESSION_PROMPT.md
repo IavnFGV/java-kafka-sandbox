@@ -33,7 +33,7 @@ Important context:
 - Do not forget to suggest or make small meaningful commits as progress is completed.
 
 Session goals:
-1. Continue with `005 Ordering Within One Partition` (backlog #11); do not return to the old consumer-group-first ordering
+1. Finish the probability/sample-size explanation for interactive scenario `004`, then continue with `005 Ordering Within One Partition` (backlog #11)
 2. Explain why it matters in practical systems and interviews
 3. For Kafka/Java code, guide me through implementing it in the repository with tests first or test-driven enough
 4. If useful, extend the visualizer so the scenario can be seen, not just asserted
@@ -75,4 +75,9 @@ Current agreed learning route:
 - `010` earliest vs latest (#16)
 - `011` rebalance when a consumer joins (#41, #94)
 - `012` consumer failure and takeover (#13, #41, #97)
+
+Current scenario 004 state:
+- UI offers `No key`, `Unique eventId`, and `Order ID`; the default is intentionally wrong
+- every option performs a real Kafka run, but only `Order ID` makes the learning result green
+- the next small enhancement is a statistically honest confidence/sample-size explanation; Student's t-test is not appropriate for categorical partition outcomes
 ```

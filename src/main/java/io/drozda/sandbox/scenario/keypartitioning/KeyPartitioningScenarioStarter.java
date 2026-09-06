@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import io.drozda.sandbox.mediator.ScenarioCommand;
 import io.drozda.sandbox.scenario.keypartitioning.app.KeyPartitioningScenarioStatus;
+import io.drozda.sandbox.scenario.keypartitioning.app.KeyStrategy;
 import io.drozda.sandbox.scenario.keypartitioning.app.KeyedRecordObservation;
 import io.drozda.sandbox.scenario.spi.ScenarioStarter;
 import io.drozda.sandbox.visualization.ActiveScenarioRuntimeState;
@@ -42,11 +43,21 @@ public class KeyPartitioningScenarioStarter implements ScenarioStarter {
 
     @Override
     public ActiveScenarioRuntimeState execute(String commandId, String invocationName) {
+        return execute(commandId, invocationName, Map.of());
+    }
+
+    @Override
+    public ActiveScenarioRuntimeState execute(
+            String commandId,
+            String invocationName,
+            Map<String, String> parameters
+    ) {
         if (!ROUTE_BY_KEY.equals(commandId)) throw new IllegalArgumentException("Unknown command: " + commandId);
         ScenarioGraph scenario = catalog.scenarioById(scenarioId());
+        KeyStrategy strategy = KeyStrategy.from(parameters.get("keyStrategy"));
         runtime.startActiveSession(scenario, invocationName);
-        ready(scenario, "publisher", "Publisher sends orderId as record key");
-        KeyPartitioningScenarioStatus result = environment.routeByKey(invocationName);
+        runtime.updateNodeDetail(scenario, "publisher", "selected strategy: " + strategy);
+        KeyPartitioningScenarioStatus result = environment.runExperiment(invocationName, strategy);
         if (!result.published() || !result.received()) {
             event(scenario, "component-failed", "publisher", null, result.error(), null, null, "FAILED");
             return runtime.completeActiveSession(scenario);
@@ -66,12 +77,21 @@ public class KeyPartitioningScenarioStarter implements ScenarioStarter {
         int orderPartition = result.observations().get(0).partition();
         runtime.updateActiveStep(scenario, 1);
         signal(scenario, "publish", "publisher", "partition-" + orderPartition,
-                "order-42 key → partition " + orderPartition);
+                strategy + " → observed partition " + orderPartition);
         runtime.updateActiveStep(scenario, 2);
-        ready(scenario, "consumer", "Consumer verified matching keys and coordinates");
-        runtime.updateNodeDetail(scenario, "consumer", "order-42 stayed in partition " + orderPartition);
-        ready(scenario, "kafka-broker", "Kafka partitioner routed all records");
-        ready(scenario, "topic", "Three-partition topic stored four records");
+        if (result.learningGoalMet()) {
+            ready(scenario, "publisher", "orderId selected as stable business key");
+            ready(scenario, "consumer", "Consumer verified one ordered shard for order-42");
+            runtime.updateNodeDetail(scenario, "consumer", "GUARANTEED: order-42 → partition " + orderPartition);
+            ready(scenario, "kafka-broker", "Kafka partitioner routed all records");
+            ready(scenario, "topic", "Related events share one partition log");
+        } else {
+            waiting(scenario, "publisher", "Strategy does not preserve order-42 affinity");
+            waiting(scenario, "consumer", "Observed distribution is not a routing guarantee");
+            runtime.updateNodeDetail(scenario, "consumer", "LEARNING GOAL NOT MET: choose ORDER_ID");
+            waiting(scenario, "kafka-broker", "Kafka worked, but the business key is unsafe");
+            waiting(scenario, "topic", "Technical run completed without an ordering guarantee");
+        }
         pause();
         return runtime.completeActiveSession(scenario);
     }
@@ -84,6 +104,10 @@ public class KeyPartitioningScenarioStarter implements ScenarioStarter {
 
     private void ready(ScenarioGraph scenario, String node, String label) {
         event(scenario, "component-ready", node, null, label, null, null, "READY");
+    }
+
+    private void waiting(ScenarioGraph scenario, String node, String label) {
+        event(scenario, "component-waiting", node, null, label, null, null, "WAITING");
     }
 
     private void event(ScenarioGraph scenario, String type, String node, String edge, String label,

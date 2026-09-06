@@ -41,12 +41,16 @@ public class KeyPartitioningScenarioController {
             throw new IllegalArgumentException("Unknown key-partitioning command: " + commandId);
         }
         String name = request != null && request.invocationName() != null ? request.invocationName() : commandId;
-        return experiment.run(name);
+        KeyStrategy strategy = request != null && request.keyStrategy() != null
+                ? request.keyStrategy()
+                : KeyStrategy.NO_KEY;
+        return experiment.run(name, strategy);
     }
 
     private KeyPartitioningScenarioStatus ready(String name) {
         return new KeyPartitioningScenarioStatus(
-                "key-partitioning", name, true, true, true, false, false, topic, List.of(), null
+                "key-partitioning", name, true, true, true, false, false,
+                KeyStrategy.NO_KEY, false, topic, List.of(), null
         );
     }
 }

@@ -153,7 +153,8 @@ public class ScenarioGraphController {
         return scenarioMediatorService.execute(
                 scenarioId,
                 commandId,
-                request != null ? request.invocationName() : null
+                request != null ? request.invocationName() : null,
+                request != null ? request.parameters() : null
         );
     }
 
@@ -164,7 +165,8 @@ public class ScenarioGraphController {
     ) {
         return scenarioMediatorService.runDefault(
                 scenarioId,
-                request != null ? request.invocationName() : null
+                request != null ? request.invocationName() : null,
+                request != null ? request.parameters() : null
         );
     }
 }

@@ -58,6 +58,9 @@
 - Important boundary: a different key may still collide in the same partition; Kafka does not promise one partition per key
 - Practical takeaway: use a stable business key when related events need one ordered shard
 - Files to revisit: `KeyedOrderEventPublisher`, `KeyPartitioningExperiment`, `KeyPartitioningScenarioStarter`
+- Interactive check: the UI now asks for `No key`, `Unique eventId`, or `Order ID`; only the stable business key completes the learning goal
+- Ordering insight: a shared database does not remove the problem because consumers from different partitions may finish updates out of order
+- Next 004 enhancement: quantify the chance of accidentally observing one partition with an unsafe strategy; do not use Student's t-test for this categorical routing experiment
 
 ## ETL Mapping
 

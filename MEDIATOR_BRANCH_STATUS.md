@@ -40,6 +40,8 @@ What works now:
 - `topic-partition-offsets` appends records to two explicit partitions
 - one scenario consumer receives both partitions and verifies their local offsets
 - `key-partitioning` verifies that one business key maps to one partition without explicit partition selection
+- mediator commands accept scenario-specific string parameters without coupling the mediator to a concrete scenario
+- `key-partitioning` lets the learner choose no key, a unique event key, or stable order ID; only order ID satisfies the ordering-affinity goal
 
 What is still intentionally missing:
 
@@ -47,10 +49,11 @@ What is still intentionally missing:
 - starting/stopping Kafka containers
 - scenario-owned Kafka cleanup (`Clean`: delete and recreate topics via Admin API)
 - full Kafka container/volume reset as a separate destructive maintenance action
-- starter/environment implementations for scenarios `004` and later
+- starter/environment implementations for scenarios `005` and later
 
-Most likely next step:
+Most likely next steps:
 
+- add the probability/sample-size explanation to scenario `004`
 - implement `005 Ordering Within One Partition` for backlog item #11
 - prove the observed order of related records after key-based routing
 - only after that introduce external process/container orchestration

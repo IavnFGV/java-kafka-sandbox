@@ -29,6 +29,8 @@ const stepDescription = document.getElementById("step-description");
 const runtimeLog = document.getElementById("runtime-log");
 const playBtn = document.getElementById("play-btn");
 const stopBtn = document.getElementById("stop-btn");
+const scenarioInputs = document.getElementById("scenario-inputs");
+const keyStrategy = document.getElementById("key-strategy");
 let scenarioId = new URLSearchParams(window.location.search).get("scenario") || DEFAULT_SCENARIO_ID;
 
 bootstrap();
@@ -75,7 +77,12 @@ function runScenario() {
   fetchJson(`/api/scenarios/${scenarioId}/run`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ invocationName: `${state.scenario.title} Run` })
+    body: JSON.stringify({
+      invocationName: `${state.scenario.title} Run`,
+      parameters: state.scenario.id === "key-partitioning"
+        ? { keyStrategy: keyStrategy.value }
+        : {}
+    })
   }).then((runtime) => {
     state.activeRuntime = runtime;
     state.stepIndex = runtime.currentStepIndex;
@@ -176,6 +183,7 @@ function applyScenario(scenario) {
       .map((item) => `<span class="backlog-badge">#${item}</span>`)
       .join("")}`
     : `<span class="backlog-caption">Foundation scenario</span>`;
+  scenarioInputs.hidden = scenario.id !== "key-partitioning";
   graph.setAttribute("viewBox", `0 0 ${scenario.viewportWidth} ${scenario.viewportHeight}`);
   renderScenarioList();
 }

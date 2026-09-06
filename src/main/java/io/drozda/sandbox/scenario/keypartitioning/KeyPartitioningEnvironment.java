@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClient;
 
 import io.drozda.sandbox.mediator.ScenarioEnvironmentStatus;
 import io.drozda.sandbox.scenario.keypartitioning.app.KeyPartitioningCommandRequest;
+import io.drozda.sandbox.scenario.keypartitioning.app.KeyStrategy;
 import io.drozda.sandbox.scenario.keypartitioning.app.KeyPartitioningScenarioApplication;
 import io.drozda.sandbox.scenario.keypartitioning.app.KeyPartitioningScenarioStatus;
 import io.drozda.sandbox.scenario.spi.ScenarioEnvironment;
@@ -73,11 +74,11 @@ public class KeyPartitioningEnvironment implements ScenarioEnvironment {
                 : environmentStatus("STARTED", "Key-partitioning app is running.", fetchStatus());
     }
 
-    public synchronized KeyPartitioningScenarioStatus routeByKey(String invocationName) {
+    public synchronized KeyPartitioningScenarioStatus runExperiment(String invocationName, KeyStrategy strategy) {
         if (applicationContext == null) start();
         return client().post()
                 .uri("/internal/key-partitioning/commands/{id}", KeyPartitioningScenarioStarter.ROUTE_BY_KEY)
-                .body(new KeyPartitioningCommandRequest(invocationName))
+                .body(new KeyPartitioningCommandRequest(invocationName, strategy))
                 .retrieve().body(KeyPartitioningScenarioStatus.class);
     }
 

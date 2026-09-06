@@ -42,6 +42,16 @@
                         </div>
                     </div>
 
+                    <div id="scenario-inputs" class="scenario-inputs" hidden>
+                        <label for="key-strategy">What should be used as the Kafka message key?</label>
+                        <select id="key-strategy">
+                            <option value="NO_KEY" selected>No key</option>
+                            <option value="EVENT_ID">Unique eventId</option>
+                            <option value="ORDER_ID">Order ID</option>
+                        </select>
+                        <span>Choose a strategy, then run the same events through Kafka.</span>
+                    </div>
+
                     <div class="graph-shell">
                         <svg id="graph" viewBox="0 0 980 520" role="img" aria-label="System integration graph"></svg>
                     </div>

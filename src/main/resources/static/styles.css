@@ -139,6 +139,41 @@ body {
     gap: 12px;
 }
 
+.scenario-inputs {
+    display: grid;
+    grid-template-columns: minmax(220px, auto) minmax(180px, 260px) 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: 1px solid rgba(217, 119, 6, 0.26);
+    border-radius: 16px;
+    background: rgba(255, 247, 237, 0.72);
+}
+
+.scenario-inputs[hidden] {
+    display: none;
+}
+
+.scenario-inputs label {
+    font-weight: 700;
+}
+
+.scenario-inputs select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid rgba(180, 83, 9, 0.35);
+    border-radius: 10px;
+    color: var(--ink);
+    background: #fffaf3;
+    font: inherit;
+}
+
+.scenario-inputs span {
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
 .visualizer-column {
     min-width: 0;
 }
@@ -455,6 +490,10 @@ button:hover {
     .controls {
         width: 100%;
         flex-wrap: wrap;
+    }
+
+    .scenario-inputs {
+        grid-template-columns: 1fr;
     }
 
     .scenario-list-panel {

@@ -2,6 +2,7 @@ package io.drozda.sandbox.scenario.keypartitioning.app;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +26,7 @@ public class KeyPartitioningExperiment {
         this.topic = topic;
     }
 
-    public KeyPartitioningScenarioStatus run(String invocationName) {
+    public KeyPartitioningScenarioStatus run(String invocationName, KeyStrategy strategy) {
         List<KeyedOrderEvent> events = List.of(
                 event("order-42", "CREATED"),
                 event("order-42", "PAID"),
@@ -38,16 +39,17 @@ public class KeyPartitioningExperiment {
 
         try {
             for (KeyedOrderEvent event : events) {
-                sends.add(publisher.publish(event).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+                sends.add(publisher.publish(strategy, event).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
             }
             List<ConsumerRecord<String, KeyedOrderEvent>> consumed = new ArrayList<>();
             for (CompletableFuture<ConsumerRecord<String, KeyedOrderEvent>> receive : receives) {
                 consumed.add(receive.get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
             }
-            verify(events, sends, consumed);
-            return status(invocationName, true, true, observations(events, sends), null);
+            verify(events, sends, consumed, strategy);
+            return status(invocationName, true, true, strategy, observations(events, sends), null);
         } catch (Exception exception) {
-            return status(invocationName, sends.size() == events.size(), false, observations(events, sends), rootMessage(exception));
+            return status(invocationName, sends.size() == events.size(), false, strategy,
+                    observations(events, sends), rootMessage(exception));
         } finally {
             events.forEach(event -> tracker.discard(event.eventId()));
         }
@@ -56,20 +58,25 @@ public class KeyPartitioningExperiment {
     private void verify(
             List<KeyedOrderEvent> events,
             List<SendResult<String, KeyedOrderEvent>> sends,
-            List<ConsumerRecord<String, KeyedOrderEvent>> consumed
+            List<ConsumerRecord<String, KeyedOrderEvent>> consumed,
+            KeyStrategy strategy
     ) {
-        int order42Partition = sends.get(0).getRecordMetadata().partition();
         for (int index = 0; index < events.size(); index++) {
-            if (!events.get(index).orderId().equals(consumed.get(index).key())
+            String expectedKey = keyFor(strategy, events.get(index));
+            if (!Objects.equals(expectedKey, consumed.get(index).key())
                     || sends.get(index).getRecordMetadata().partition() != consumed.get(index).partition()
                     || sends.get(index).getRecordMetadata().offset() != consumed.get(index).offset()) {
                 throw new IllegalStateException("Producer and consumer coordinates or key differ");
             }
-            if ("order-42".equals(events.get(index).orderId())
-                    && sends.get(index).getRecordMetadata().partition() != order42Partition) {
-                throw new IllegalStateException("Records sharing order-42 key reached different partitions");
-            }
         }
+    }
+
+    private String keyFor(KeyStrategy strategy, KeyedOrderEvent event) {
+        return switch (strategy) {
+            case NO_KEY -> null;
+            case EVENT_ID -> event.eventId();
+            case ORDER_ID -> event.orderId();
+        };
     }
 
     private List<KeyedRecordObservation> observations(
@@ -91,12 +98,13 @@ public class KeyPartitioningExperiment {
     }
 
     private KeyPartitioningScenarioStatus status(
-            String invocationName, boolean published, boolean received,
+            String invocationName, boolean published, boolean received, KeyStrategy strategy,
             List<KeyedRecordObservation> observations, String error
     ) {
         return new KeyPartitioningScenarioStatus(
                 "key-partitioning", invocationName, true, true, true,
-                published, received, topic, observations, error
+                published, received, strategy, strategy == KeyStrategy.ORDER_ID,
+                topic, observations, error
         );
     }
 

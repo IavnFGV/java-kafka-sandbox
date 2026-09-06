@@ -10,6 +10,8 @@ public record KeyPartitioningScenarioStatus(
         boolean kafkaTemplateReady,
         boolean published,
         boolean received,
+        KeyStrategy keyStrategy,
+        boolean learningGoalMet,
         String topic,
         List<KeyedRecordObservation> observations,
         String error

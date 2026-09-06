@@ -6,6 +6,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 
 import io.drozda.sandbox.scenario.keypartitioning.model.KeyedOrderEvent;
+import io.drozda.sandbox.scenario.keypartitioning.app.KeyStrategy;
 
 public class KeyedOrderEventPublisher {
     private final KafkaTemplate<String, KeyedOrderEvent> kafkaTemplate;
@@ -16,7 +17,14 @@ public class KeyedOrderEventPublisher {
         this.topic = topic;
     }
 
-    public CompletableFuture<SendResult<String, KeyedOrderEvent>> publish(KeyedOrderEvent event) {
-        return kafkaTemplate.send(topic, event.orderId(), event);
+    public CompletableFuture<SendResult<String, KeyedOrderEvent>> publish(
+            KeyStrategy strategy,
+            KeyedOrderEvent event
+    ) {
+        return switch (strategy) {
+            case NO_KEY -> kafkaTemplate.send(topic, event);
+            case EVENT_ID -> kafkaTemplate.send(topic, event.eventId(), event);
+            case ORDER_ID -> kafkaTemplate.send(topic, event.orderId(), event);
+        };
     }
 }

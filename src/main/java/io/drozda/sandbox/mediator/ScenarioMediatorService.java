@@ -1,6 +1,7 @@
 package io.drozda.sandbox.mediator;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
@@ -40,17 +41,35 @@ public class ScenarioMediatorService {
     }
 
     public ActiveScenarioRuntimeState execute(String scenarioId, String commandId, String invocationName) {
+        return execute(scenarioId, commandId, invocationName, Map.of());
+    }
+
+    public ActiveScenarioRuntimeState execute(
+            String scenarioId,
+            String commandId,
+            String invocationName,
+            Map<String, String> parameters
+    ) {
         startEnvironment(scenarioId);
-        return starterFor(scenarioId).execute(commandId, invocationName);
+        return starterFor(scenarioId).execute(commandId, invocationName,
+                parameters != null ? parameters : Map.of());
     }
 
     public ActiveScenarioRuntimeState runDefault(String scenarioId, String invocationName) {
+        return runDefault(scenarioId, invocationName, Map.of());
+    }
+
+    public ActiveScenarioRuntimeState runDefault(
+            String scenarioId,
+            String invocationName,
+            Map<String, String> parameters
+    ) {
         List<ScenarioCommand> commands = commandsFor(scenarioId);
         if (commands.isEmpty()) {
             throw new IllegalArgumentException("No commands registered for scenario: " + scenarioId);
         }
 
-        return execute(scenarioId, commands.get(0).id(), invocationName);
+        return execute(scenarioId, commands.get(0).id(), invocationName, parameters);
     }
 
     private ScenarioStarter starterFor(String scenarioId) {
