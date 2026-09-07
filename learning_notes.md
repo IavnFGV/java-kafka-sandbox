@@ -164,3 +164,11 @@
 - Expected offsets are `0..4` for earliest and `3..4` for latest.
 - Every run uses a new topic and new group IDs so repeated playback demonstrates new-group behavior.
 - Scenario package: `io.drozda.sandbox.scenario.earliestvslatest`.
+
+## Scenario 011: Rebalance When a Second Consumer Joins
+
+- One consumer initially owns both partitions; starting a second member changes group membership and triggers a real rebalance.
+- Ownership is derived from `onPartitionsRevoked` and `onPartitionsAssigned`, never hard-coded in the UI.
+- Records published before and after join verify that delivery follows the ownership map in each phase.
+- Rebalance enables scaling but introduces a coordination pause and can become operationally expensive when triggered repeatedly.
+- Scenario package: `io.drozda.sandbox.scenario.rebalancewhensecondconsumerjoins`.

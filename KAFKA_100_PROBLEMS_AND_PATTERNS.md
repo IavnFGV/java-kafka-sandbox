@@ -29,7 +29,7 @@ How to use this list:
 | `008 Two Partitions, Two Consumers` | Implemented | Scale one service by distributing two partition owners across two group members | #13, #14 |
 | `009 Multiple Consumer Groups` | Implemented | Let independent services process the same event stream | #15 |
 | `010 Earliest vs Latest` | Implemented | Control where a new group begins reading | #16 |
-| `011 Rebalance on Join` | Static UI | Understand ownership changes during deploys and autoscaling | #41, #94 |
+| `011 Rebalance on Join` | Implemented | Understand ownership changes during deploys and autoscaling | #41, #94 |
 | `012 Consumer Failure` | Static UI | Recover partition processing after an instance disappears | #13, #41, #97 |
 
 The mapping is many-to-many: one scenario may cover several backlog questions,
