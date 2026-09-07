@@ -1,0 +1,3 @@
+package io.drozda.sandbox.scenario.consumerfailureandpartitiontakeover.producer;
+import java.util.concurrent.CompletableFuture; import org.springframework.kafka.core.KafkaTemplate; import org.springframework.kafka.support.SendResult; import io.drozda.sandbox.scenario.consumerfailureandpartitiontakeover.model.TakeoverEvent;
+public class TakeoverPublisher { private final KafkaTemplate<String,TakeoverEvent> template; public TakeoverPublisher(KafkaTemplate<String,TakeoverEvent> template){this.template=template;} public CompletableFuture<SendResult<String,TakeoverEvent>> publish(String topic,TakeoverEvent event){return template.send(topic,event.partition(),"p"+event.partition(),event);} }

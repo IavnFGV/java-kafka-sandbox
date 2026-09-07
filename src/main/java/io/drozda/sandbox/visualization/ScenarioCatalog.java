@@ -576,12 +576,7 @@ public class ScenarioCatalog {
                 ),
                 List.of(
                         new ScenarioEdge("producer-p0", "producer", "partition-0", "append"),
-                        new ScenarioEdge("producer-p1", "producer", "partition-1", "append"),
-                        new ScenarioEdge("p0-a", "partition-0", "consumer-a", "owned by A"),
-                        new ScenarioEdge("p1-b", "partition-1", "consumer-b", "owned by B"),
-                        new ScenarioEdge("p1-lag", "partition-1", "lag-view", "temporarily waiting"),
-                        new ScenarioEdge("p1-a", "partition-1", "consumer-a", "taken over by A"),
-                        new ScenarioEdge("coordinator-group", "coordinator", "group-box", "detect failure")
+                        new ScenarioEdge("producer-p1", "producer", "partition-1", "append")
                 ),
                 List.of(
                         new ScenarioStep("step-1", "Initial topology",
@@ -600,20 +595,7 @@ public class ScenarioCatalog {
                                 "After rebalance, Consumer A owns both partitions and processing resumes.",
                                 List.of("event-a-takes-over"))
                 ),
-                List.of(
-                        new VisualizationEvent("event-balanced-start", "assignment", "p0 -> A, p1 -> B",
-                                "This is the normal balanced state before any failure.", List.of("partition-0", "partition-1", "consumer-a", "consumer-b"),
-                                List.of("p0-a", "p1-b"), "partition-1", "consumer-b"),
-                        new VisualizationEvent("event-b-failed", "failure", "Consumer B failed",
-                                "Consumer B disappears, and partition 1 is now temporarily unserved.", List.of("consumer-b", "partition-1", "lag-view"),
-                                List.of("p1-lag"), "partition-1", "lag-view"),
-                        new VisualizationEvent("event-failure-detected", "rebalance", "Coordinator detected failure",
-                                "Missed heartbeats cause the coordinator to trigger rebalance for the group.", List.of("coordinator", "group-box", "consumer-a", "partition-1"),
-                                List.of("coordinator-group", "p1-lag"), "coordinator", "group-box"),
-                        new VisualizationEvent("event-a-takes-over", "assignment", "A now owns p0 and p1",
-                                "The surviving consumer takes over partition 1, so records there are processed again.", List.of("consumer-a", "partition-0", "partition-1", "lag-view"),
-                                List.of("p0-a", "p1-a"), "partition-1", "consumer-a")
-                )
+                List.of()
         );
     }
 
