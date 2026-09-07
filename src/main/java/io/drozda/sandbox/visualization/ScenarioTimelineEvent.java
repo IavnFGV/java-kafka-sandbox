@@ -5,6 +5,7 @@ public record ScenarioTimelineEvent(
         ActiveScenarioRuntimeState before,
         ActiveScenarioRuntimeState after,
         boolean visibleInTimeline,
-        boolean animated
+        boolean animated,
+        String playbackGroup
 ) {
 }

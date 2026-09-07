@@ -239,7 +239,7 @@ public class ScenarioRuntimeService {
                 eventLog,
                 request.type(),
                 request.label()
-        ), visibleInTimeline, animated);
+        ), visibleInTimeline, animated, request.playbackGroup());
     }
 
     public ActiveScenarioRuntimeState updateNodeDetail(ScenarioGraph scenario, String nodeId, String detail) {
@@ -276,12 +276,21 @@ public class ScenarioRuntimeService {
             boolean visibleInTimeline,
             boolean animated
     ) {
+        return publishRuntime(runtime, visibleInTimeline, animated, null);
+    }
+
+    private synchronized ActiveScenarioRuntimeState publishRuntime(
+            ActiveScenarioRuntimeState runtime,
+            boolean visibleInTimeline,
+            boolean animated,
+            String playbackGroup
+    ) {
         ActiveScenarioRuntimeState before = activeRuntime;
         activeRuntime = runtime;
         long revision = runtimeRevision.incrementAndGet();
         synchronized (runtimeTimeline) {
             runtimeTimeline.add(new ScenarioTimelineEvent(
-                    revision, before, runtime, visibleInTimeline, animated));
+                    revision, before, runtime, visibleInTimeline, animated, playbackGroup));
             if (runtimeTimeline.size() > MAX_TIMELINE_EVENTS) {
                 runtimeTimeline.remove(0);
             }

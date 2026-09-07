@@ -213,6 +213,13 @@ function receiveTimelineEvents(events) {
     if (timeline.events.some((existing) => existing.sequence === event.sequence)) return;
     timeline.events.push(event);
     if (event.visibleInTimeline) {
+      const previousFrame = timeline.frames[timeline.frames.length - 1];
+      if (event.playbackGroup && previousFrame?.event.playbackGroup === event.playbackGroup) {
+        previousFrame.transition = event.after;
+        previousFrame.after = event.after;
+        previousFrame.technicalEvents.push(event);
+        return;
+      }
       timeline.frames.push({
         event,
         before: event.before,
@@ -816,6 +823,7 @@ function renderSignal(layout, signal, index) {
 
   return `
     <g class="signal">
+      <line class="signal-path" x1="${endpoints.from.x}" y1="${endpoints.from.y}" x2="${endpoints.to.x}" y2="${endpoints.to.y}" marker-end="url(#arrow)"></line>
       <text class="signal-label" x="${midX}" y="${midY}" text-anchor="middle">${escapeXml(label)}</text>
       <circle class="signal-dot" r="8">
         <animate attributeName="cx" from="${endpoints.from.x}" to="${endpoints.to.x}" dur="3s" repeatCount="indefinite"></animate>

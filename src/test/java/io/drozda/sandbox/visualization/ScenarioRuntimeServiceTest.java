@@ -183,6 +183,23 @@ class ScenarioRuntimeServiceTest {
     }
 
     @Test
+    void shouldExposePlaybackGroupForSimultaneousSignals() {
+        ScenarioGraph scenario = scenarioCatalog.systemReadyScenario();
+        runtimeService.startActiveSession(scenario, "parallel-playback-test");
+        long cursor = runtimeService.currentRuntimeUpdate().revision();
+
+        runtimeService.applyRuntimeEvent(scenario, new RuntimeEventRequest(
+                scenario.id(), "signal-started", null, null, "audit delivery",
+                "kafka", "listener", "ACTIVE", "record-1-fan-out"));
+
+        ScenarioRuntimeUpdate update = (ScenarioRuntimeUpdate) runtimeService
+                .awaitRuntimeUpdate(cursor, 5_000).getResult();
+
+        assertEquals("record-1-fan-out", update.events().get(0).playbackGroup());
+        assertTrue(update.events().get(0).animated());
+    }
+
+    @Test
     void shouldReturnEveryRuntimeTransitionAfterSequenceCursor() {
         ScenarioGraph scenario = scenarioCatalog.systemReadyScenario();
         long beforeRun = runtimeService.currentRuntimeUpdate().revision();

@@ -61,11 +61,8 @@ public class MultipleConsumerGroupsScenarioStarter implements ScenarioStarter {
                         "record " + observation.sequence() + " @" + observation.offset()));
 
         runtime.updateActiveStep(scenario, 3);
-        result.observations().stream()
-                .sorted(Comparator.comparingInt(ConsumerGroupObservation::sequence)
-                        .thenComparing(ConsumerGroupObservation::groupId))
-                .forEach(observation -> signal(scenario, "partition-0", consumerNode(observation.groupId()),
-                        "record " + observation.sequence() + " @" + observation.offset()));
+        result.observations().stream().map(ConsumerGroupObservation::sequence).distinct().sorted()
+                .forEach(sequence -> parallelDelivery(scenario, result, sequence));
 
         runtime.updateActiveStep(scenario, 4);
         runtime.updateNodeDetail(scenario, "observer", "3 published | 3 audit | 3 notification | independent offsets");
@@ -76,6 +73,23 @@ public class MultipleConsumerGroupsScenarioStarter implements ScenarioStarter {
     private String consumerNode(String groupId) {
         return "audit-group".equals(groupId) ? "audit-consumer" : "notification-consumer";
     }
+    private void parallelDelivery(
+            ScenarioGraph scenario, MultipleConsumerGroupsScenarioStatus result, int sequence) {
+        List<ConsumerGroupObservation> deliveries = result.observations().stream()
+                .filter(observation -> observation.sequence() == sequence)
+                .sorted(Comparator.comparing(ConsumerGroupObservation::groupId))
+                .toList();
+        String playbackGroup = "record-" + sequence + "-fan-out";
+        deliveries.forEach(observation -> event(
+                scenario, "signal-started", null,
+                "record " + observation.sequence() + " @" + observation.offset(),
+                "partition-0", consumerNode(observation.groupId()), "ACTIVE", playbackGroup));
+        pause();
+        deliveries.forEach(observation -> event(
+                scenario, "signal-delivered", null,
+                "record " + observation.sequence() + " @" + observation.offset(),
+                "partition-0", consumerNode(observation.groupId()), "READY", playbackGroup));
+    }
     private void signal(ScenarioGraph scenario, String from, String to, String label) {
         event(scenario, "signal-started", null, label, from, to, "ACTIVE");
         pause();
@@ -83,8 +97,13 @@ public class MultipleConsumerGroupsScenarioStarter implements ScenarioStarter {
     }
     private void event(ScenarioGraph scenario, String type, String node, String label,
             String from, String to, String status) {
+        event(scenario, type, node, label, from, to, status, null);
+    }
+    private void event(ScenarioGraph scenario, String type, String node, String label,
+            String from, String to, String status, String playbackGroup) {
         runtime.applyRuntimeEvent(scenario,
-                new RuntimeEventRequest(scenario.id(), type, node, null, label, from, to, status));
+                new RuntimeEventRequest(
+                        scenario.id(), type, node, null, label, from, to, status, playbackGroup));
     }
     private void pause() {
         try { Thread.sleep(STEP_DELAY_MS); }

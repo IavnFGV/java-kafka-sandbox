@@ -153,4 +153,5 @@
 - Consumers sharing a `group.id` divide partitions; consumers with different `group.id` values each receive the complete stream.
 - Every group owns independent committed offsets, even though all groups observe the same topic-partition-offset coordinates.
 - Scenario package: `io.drozda.sandbox.scenario.multipleconsumergroups`.
+- Runtime events can share a `playbackGroup`; the browser combines them into one frame for simultaneous animation while retaining every backend event.
 - Next group-focused scenario: start one consumer with both partitions, add a second consumer, and observe the real rebalance.

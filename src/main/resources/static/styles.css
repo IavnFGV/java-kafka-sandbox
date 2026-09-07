@@ -780,6 +780,13 @@ button:disabled {
     fill: var(--active);
 }
 
+.signal-path {
+    stroke: var(--active);
+    stroke-width: 2.5;
+    stroke-dasharray: 8 6;
+    opacity: 0.62;
+}
+
 .assignment-link line {
   stroke: var(--service);
   opacity: 0.62;
