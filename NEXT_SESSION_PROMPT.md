@@ -35,7 +35,7 @@ Important context:
 - Do not forget to suggest or make small meaningful commits as progress is completed.
 
 Session goals:
-1. Review completed scenario `008`, then continue with multiple consumer groups reading one topic (backlog #15)
+1. Review completed scenario `009`, then implement rebalance when a second consumer joins (backlog #41 and #94)
 2. Explain why it matters in practical systems and interviews
 3. For Kafka/Java code, guide me through implementing it in the repository with tests first or test-driven enough
 4. If useful, extend the visualizer so the scenario can be seen, not just asserted
@@ -73,7 +73,8 @@ Current agreed learning route:
 - `006` no global ordering across partitions (#12)
 - `007` one partition, two consumers, one group (#13, #14)
 - `008` two partitions, two consumers, one group (#13, #14)
-- `009` multiple independent consumer groups (#15)
+- `009` multiple independent consumer groups (#15) is implemented
+- next: rebalance when a second consumer joins (#41, #94)
 - `010` earliest vs latest (#16)
 - `011` rebalance when a consumer joins (#41, #94)
 - `012` consumer failure and takeover (#13, #41, #97)
