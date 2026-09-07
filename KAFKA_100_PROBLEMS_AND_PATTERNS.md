@@ -215,18 +215,17 @@ The visualizer should eventually be able to show:
 
 ## Playground Infrastructure Backlog
 
-- Add a lossless scenario timeline instead of exposing only the latest runtime snapshot.
-- Record every meaningful learning transition on the backend with a monotonic sequence,
-  title, state before the transition, animated signal, and state after the transition.
-- Let long polling return every timeline event after the client's sequence cursor so a
-  fast Spring/Kafka experiment cannot skip steps that the browser has not rendered yet.
-- Queue timeline events in the browser and replay them at a human-readable speed without
-  slowing down the real Kafka experiment.
-- Add step navigation: selecting a step restores the preceding state, replays that one
-  transition, and pauses on its resulting state; also provide `Previous`, `Replay`,
-  `Next`, and `Play all` controls.
-- Keep technical runtime updates out of the learning timeline unless they explain a
-  meaningful Kafka or application transition.
+- Implemented in `a86c50b`: the backend retains scenario transitions instead of exposing
+  only the latest runtime snapshot. Every event has a monotonic sequence and immutable
+  `before`/`after` states; long polling returns all retained events after the client cursor.
+- Implemented in `ee84560`: the browser queues transitions and replays them independently
+  of Kafka execution speed. Selecting a step restores its preceding state, animates the
+  transition, and pauses on its resulting state; `Previous`, `Replay`, `Next`, and
+  `Play all` navigate the captured run.
+- Timeline follow-up: classify explicitly which runtime updates are meaningful learning
+  steps and hide incidental technical telemetry from the visible timeline.
+- Timeline follow-up: report an explicit cursor gap if a client falls behind the bounded
+  backend retention window of 1,000 transitions.
 - Add an explicit `Clean` action separate from `Stop`.
 - `Stop` must only close the scenario Spring context and keep Kafka data intact.
 - `Clean` should stop the scenario, delete its owned topics through Kafka Admin API,

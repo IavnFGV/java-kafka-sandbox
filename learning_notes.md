@@ -84,6 +84,12 @@
 - Important boundary: a frontend queue alone cannot recover states that the backend never returned; lossless capture must therefore be implemented backend-first
 - Scope rule: only pedagogically meaningful transitions belong in the timeline; internal polling and incidental status changes remain technical telemetry
 - Current temporary adjustment: moving signal dots take `3s` instead of `1.4s`, but full SVG rerenders can still restart them until timeline playback is implemented
+- Implemented backend in commit `a86c50b`: `ScenarioRuntimeService` now stores each transition with monotonic sequence and `before`/`after` snapshots; one long-poll response can carry every retained event after the browser cursor
+- Implemented UI in commit `ee84560`: each browser tab starts at the current journal head, records only new transitions, queues playback per scenario, and retains the history until reload
+- Playback behavior: selecting a card pauses autoplay, renders the previous snapshot, then renders and animates the selected transition; navigation supports `Previous`, `Replay`, `Next`, and `Play all`
+- Verification: `ScenarioRuntimeServiceTest` proves that three backend transitions produced before the request is read are returned in order; the complete Gradle test suite passed
+- Remaining refinement: visible cards currently include all runtime publications, including node-detail updates; later add an explicit learning-step classification rather than guessing in JavaScript
+- Retention boundary: the in-memory backend journal keeps 1,000 transitions; later expose an explicit gap indicator when a stale cursor falls behind that window
 
 ## ETL Mapping
 

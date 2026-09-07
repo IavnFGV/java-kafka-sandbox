@@ -85,11 +85,11 @@ Current scenario 004 state:
 - assignment lines are generated from the real rebalance result and rebuilt on each run
 - scenario 005 is implemented: it compares payload sequence, increasing offsets, and actual callback order inside one partition
 
-Visualizer improvement recorded but not implemented:
-- replace latest-only runtime snapshots with a lossless backend scenario timeline
-- return all events after a sequence cursor through long polling
-- queue and replay transitions in the UI at teaching speed
-- support step selection plus `Previous`, `Replay`, `Next`, and `Play all`
+Visualizer timeline implemented:
+- backend commit `a86c50b` stores sequenced `before`/`after` transitions and long polling returns every retained event after the browser cursor
+- UI commit `ee84560` queues transitions per scenario and supports step selection plus `Previous`, `Replay`, `Next`, and `Play all`
 - selecting a step restores its preceding state, animates that transition, and pauses on its resulting state
-- implement backend capture first because a frontend queue cannot recover skipped snapshots
+- a new browser page starts at the current journal head, so timeline history is intentionally local to that page lifetime
+- follow-up: classify learning steps explicitly so incidental node-detail updates do not create noisy timeline cards
+- follow-up: expose a cursor-gap response if a browser falls behind the 1,000-event backend retention window
 ```
