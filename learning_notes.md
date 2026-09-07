@@ -74,6 +74,17 @@
 - Boundary: Kafka preserves partition/poll order, not completion order after application-level parallel dispatch
 - Files to revisit: `PartitionOrderingExperiment`, `OrderedEventTracker`, `OrderedEventListener`, `PartitionOrderingScenarioStarter`
 
+#### 2026-09-07 — Scenario 006
+
+- Topic: parallel ordered shards do not form one globally ordered stream
+- Behavior reproduced: one partition and one consumer made Fast Order wait behind Slow Order; two partitions and two consumers let Fast Order complete independently
+- Preserved contract: each order retained sequence `0..N` even though the global completion order differed from publish order
+- Practical takeaway: partitions remove head-of-line blocking for independent entities, but Kafka ordering ends at the partition boundary
+- Experiment detail: explicit partitions make the comparison deterministic; production routing should normally use the stable `orderId` key
+- Files to revisit: `GlobalOrderingExperiment`, `GlobalOrderTracker`, `GlobalOrderListener`, `GlobalOrderingScenarioStarter`
+- Implementation commit: `50cc164`
+- Next scenario: `007 One Partition, Two Consumers`, demonstrating why consumer count above partition count does not add throughput
+
 #### 2026-09-06 — Visualizer Timeline Improvement
 
 - Problem found: every long-poll update currently triggers a complete SVG render, so an active signal animation restarts; if the backend advances through several states quickly, a latest-snapshot API can also hide intermediate learning steps entirely

@@ -35,7 +35,7 @@ Important context:
 - Do not forget to suggest or make small meaningful commits as progress is completed.
 
 Session goals:
-1. Review completed scenario `005`, then continue with `006 No Global Ordering Across Partitions` (backlog #12)
+1. Review completed scenario `006`, then continue with `007 One Partition, Two Consumers` (backlog #13, #14)
 2. Explain why it matters in practical systems and interviews
 3. For Kafka/Java code, guide me through implementing it in the repository with tests first or test-driven enough
 4. If useful, extend the visualizer so the scenario can be seen, not just asserted
@@ -84,6 +84,9 @@ Current scenario 004 state:
 - scenario 004 now uses ten related events: for independently hashed unique keys, accidental one-partition placement is `(1/3)^9 ≈ 0.0051%`; no-key sticky partitioning needs separate reasoning
 - assignment lines are generated from the real rebalance result and rebuilt on each run
 - scenario 005 is implemented: it compares payload sequence, increasing offsets, and actual callback order inside one partition
+- scenario 006 is implemented in `50cc164`: UI compares one partition/consumer with two partitions/consumers using the same interleaved Fast and Slow order stream
+- scenario 006 records real completion order and elapsed time; parallel shards preserve each order sequence while allowing Fast Order to complete before Slow Order
+- scenario 006 article: `docs/006-no-global-ordering-across-partitions.md`
 
 Visualizer timeline implemented:
 - backend commit `a86c50b` stores sequenced `before`/`after` transitions and long polling returns every retained event after the browser cursor

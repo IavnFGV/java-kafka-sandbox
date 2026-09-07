@@ -23,8 +23,8 @@ How to use this list:
 | `002 Trade Event Flow` | Implemented | Decouple a producer from asynchronous consumers through a durable event log | #1 |
 | `003 Topic, Partition, Offset` | Implemented | Scale a stream into ordered shards and address consumer progress precisely | #2; introduces #11, #12 |
 | `004 Message Key and Partition Selection` | Implemented | Keep related entity events in the same ordered shard | #10 |
-| `005 Ordering Within One Partition` | Next | Preserve the order of related events | #11 |
-| `006 No Global Ordering Across Partitions` | Planned | Avoid assuming one timeline for a parallel stream | #12 |
+| `005 Ordering Within One Partition` | Implemented | Preserve the order of related events | #11 |
+| `006 Parallel Orders Without Global Ordering` | Implemented | Remove head-of-line blocking while preserving per-order sequence | #12 |
 | `007 One Partition, Two Consumers` | Static UI | Detect why adding consumers may not increase throughput | #13, #14 |
 | `008 Two Partitions, Two Consumers` | Static UI | Scale one service by distributing partitions across its instances | #13, #14 |
 | `009 Multiple Consumer Groups` | Planned | Let independent services process the same event stream | #15 |
@@ -63,7 +63,7 @@ Reference sources used to curate this list:
 9. `P1` Compression basics
 10. `P1` Message key and partition selection - route related entity events into one partition (`004`)
 11. `P1` Ordering guarantees within a partition - verify send order, offsets, and consume order (`005`)
-12. `P1` Why global ordering does not exist across partitions
+12. `P1` Why global ordering does not exist across partitions - compare one ordered queue with two parallel ordered shards (`006`)
 13. `P1` Consumer group mechanics
 14. `P1` One partition assigned to one consumer in a group
 15. `P1` Multiple consumer groups reading the same topic
