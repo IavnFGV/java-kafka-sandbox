@@ -155,3 +155,12 @@
 - Scenario package: `io.drozda.sandbox.scenario.multipleconsumergroups`.
 - Runtime events can share a `playbackGroup`; the browser combines them into one frame for simultaneous animation while retaining every backend event.
 - Next group-focused scenario: start one consumer with both partitions, add a second consumer, and observe the real rebalance.
+
+## Scenario 010: Earliest vs Latest
+
+- `auto.offset.reset` applies only when a consumer group has no valid committed offset.
+- A new `earliest` group replays retained history; a new `latest` group starts after the log end observed on assignment.
+- The experiment publishes history before starting manually controlled listeners, waits for both assignments, then publishes live records.
+- Expected offsets are `0..4` for earliest and `3..4` for latest.
+- Every run uses a new topic and new group IDs so repeated playback demonstrates new-group behavior.
+- Scenario package: `io.drozda.sandbox.scenario.earliestvslatest`.
