@@ -1,277 +1,155 @@
-# Visualizer Context
+# Visualizer Architecture
 
-This file explains how the current integration visualizer works in this repository.
+This guide describes the implemented architecture on `main`. The
+[scenario index](docs/README.md) contains all 12 scenarios and their two supplementary
+articles; [the roadmap](KAFKA_100_PROBLEMS_AND_PATTERNS.md) separates implemented
+coverage from future experiments.
 
-## Purpose
+## Execution path
 
-The visualizer is a lightweight Spring Boot + browser UI used to display integration scenarios:
-- static graph structure
-- scripted scenario steps
-- backend-driven runtime updates from scenario starters
+1. The browser loads the catalog and selected scenario from `/api/scenarios`.
+2. Play sends `POST /api/scenarios/{scenarioId}/run`, including optional scenario parameters.
+3. [ScenarioMediatorService](src/main/java/io/drozda/sandbox/mediator/ScenarioMediatorService.java#L47)
+   starts the matching environment and invokes its starter through
+   [ScenarioStarter](src/main/java/io/drozda/sandbox/scenario/spi/ScenarioStarter.java).
+4. The environment owns a nested Spring Boot application in the same JVM. It calls
+   that application's internal HTTP endpoints on a random port. For a readable
+   example, see [TradeFlowEnvironment](src/main/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowEnvironment.java#L35).
+5. Scenario-owned publishers, listeners, trackers, and experiments perform the work.
+   [TradeFlowExperiment](src/main/java/io/drozda/sandbox/scenario/tradeeventflow/app/TradeFlowExperiment.java#L27)
+   waits separately for broker acknowledgement and a matching listener event.
+6. The starter translates the result into runtime facts and animation signals.
+   [ScenarioRuntimeService](src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java)
+   retains transitions; the browser receives and replays them.
 
-It is intentionally simple and hackable.
+All 12 catalog scenarios have starters and environments. `system-ready` verifies
+Spring wiring only. Scenarios 002–012 send and consume real Kafka records; static
+steps remain as baseline topology and legacy step navigation, not evidence of success.
+Tests exercise the same mediator path but are not the user-facing runner.
 
-## Main Moving Parts
+## Scenario ownership and lifecycle
 
-### 1. Static browser assets
+[ScenarioEnvironment](src/main/java/io/drozda/sandbox/scenario/spi/ScenarioEnvironment.java)
+exposes start, stop, reset, and status. Environments isolate scenario beans using
+conditional configuration, scenario-owned models, topics, and consumer groups.
+The [catalog source mapping](src/main/java/io/drozda/sandbox/visualization/ScenarioCatalog.java#L30)
+lists the semantic package for every scenario ID.
 
-Files:
-- `src/main/resources/static/index.html`
-- `src/main/resources/static/styles.css`
-- `src/main/resources/static/app.js`
+- 001 reuses its context while checking injected components.
+- 002–009 reuse their context on repeated Play; a new context gets unique topic/group names.
+- 010–012 recreate the context for each experiment, with new topics and group IDs.
+- Stop closes the context and its listeners; the controller also clears the visual runtime.
+- Reset calls scenario-specific in-memory reset logic and starts the environment if needed.
+  It does not delete topics or reset Kafka offsets globally.
 
-How they are served:
-- Spring Boot automatically serves files from `src/main/resources/static/`
-- `index.html` is the welcome page at `/`
-- `styles.css` is available at `/styles.css`
-- `app.js` is available at `/app.js`
+The mediator does not manage Docker, external JVMs, or broker lifecycle. Its HTTP
+boundary separates application contexts but does not provide process isolation.
+Topic cleanup and external orchestration remain backlog work.
 
-Browser flow:
-1. browser requests `/`
-2. Spring returns `index.html`
-3. browser loads `/styles.css`
-4. browser loads `/app.js`
-5. `app.js` fetches scenario JSON from backend API and renders the graph
+## Models and runtime journal
 
-## 2. Scenario model
-
-Files:
-- `src/main/java/io/drozda/sandbox/visualization/ScenarioGraph.java`
-- `src/main/java/io/drozda/sandbox/visualization/ScenarioNode.java`
-- `src/main/java/io/drozda/sandbox/visualization/ScenarioEdge.java`
-- `src/main/java/io/drozda/sandbox/visualization/ScenarioStep.java`
-- `src/main/java/io/drozda/sandbox/visualization/VisualizationEvent.java`
-- `src/main/java/io/drozda/sandbox/visualization/ScenarioCatalog.java`
-
-Current idea:
-- `ScenarioGraph` is the whole scenario
-- `ScenarioGraph.practicalPurpose` explains the real engineering need behind it
-- `ScenarioGraph.backlogItems` links it to the numbered Kafka learning backlog
-- nodes describe boxes on the screen
-- edges describe relations/arrows
-- steps support old scripted playback mode
-- `VisualizationEvent` supports step-linked visual highlights
-- `ScenarioCatalog` builds hardcoded scenarios in Java
-
-Current built-in scenarios:
-- `system-ready`
-- `trade-flow`
-- `topic-partition-offsets`
-- `consumer-group-single-partition`
-- `consumer-group-two-partitions`
-- `consumer-group-rebalance-join`
-- `consumer-group-consumer-failure`
-
-The implemented scenarios are followed by gaps reserved for the agreed learning
-route. Existing static consumer-group scenarios now use orders `007`, `008`,
-`011`, and `012`; orders `004–006`, `009`, and `010` will be added incrementally.
-`system-ready`, `trade-flow`, `topic-partition-offsets`, and `key-partitioning` have backend scenario
-starters. The remaining scenarios are scripted visual explanations waiting for
-real Kafka experiments.
-
-## 3. Runtime state
-
-Files:
-- `src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java`
-- `src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeState.java`
-- `src/main/java/io/drozda/sandbox/visualization/ActiveScenarioRuntimeState.java`
-- `src/main/java/io/drozda/sandbox/visualization/RuntimeEventRequest.java`
-- `src/main/java/io/drozda/sandbox/visualization/RuntimeSignal.java`
+[ScenarioGraph](src/main/java/io/drozda/sandbox/visualization/ScenarioGraph.java)
+contains topology, legacy steps, practical purpose, backlog IDs, and `sourceRoot`.
+The [catalog](src/main/java/io/drozda/sandbox/visualization/ScenarioCatalog.java)
+builds these graphs in Java. Nodes describe components, edges describe connections,
+and steps provide the initial/scripted view.
 
 There are two runtime models:
 
-### Step runtime
+- [ScenarioRuntimeState](src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeState.java)
+  stores the legacy current step index.
+- [ActiveScenarioRuntimeState](src/main/java/io/drozda/sandbox/visualization/ActiveScenarioRuntimeState.java)
+  stores the active scenario, session flags, node statuses/details, edge statuses,
+  active signals, recent log, and latest event description.
 
-Retained for scripted scenario playback:
-- current step index for a scenario
-- next / previous / reset behavior
+[RuntimeEventRequest](src/main/java/io/drozda/sandbox/visualization/RuntimeEventRequest.java)
+supports component ready/busy/waiting/failed, signal started/finished/delivered,
+runtime reset, and session completion. Type/status strings are normalized by the
+runtime service. `playbackGroup` associates simultaneous visual actions.
 
-### Active runtime
+[ScenarioTimelineEvent](src/main/java/io/drozda/sandbox/visualization/ScenarioTimelineEvent.java#L3)
+contains a monotonic sequence, `before`/`after` snapshots, `visibleInTimeline`,
+`animated`, and `playbackGroup`. The service retains up to 1,000 events globally
+in memory; the active runtime log contains only its latest 24 lines.
 
-Used by live event-driven visualization:
-- active scenario id
-- current step index
-- whether session is active or completed
-- test name
-- node statuses
-- edge statuses
-- active signals
-- last event type
-- last event label
+Long polling returns retained events after a cursor plus the current snapshot.
+The browser first reads `/runtime/head`, then requests `/runtime/updates?after=...`.
+[DeferredResult waiting](src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L72)
+avoids holding a servlet thread while waiting for updates. The controller bounds
+request timeouts to 1–120 seconds.
 
-Important point:
-- `system-ready` is already moving toward event-driven behavior
-- `trade-flow` still mostly fits the step-based model
+The journal is bounded and not durable. Clients that fall behind its retention
+window receive the retained suffix; an explicit cursor-gap response is not implemented.
+There is one global active runtime rather than independent concurrent user sessions.
 
-## 4. Runtime events
+## Frontend
 
-Backend endpoint:
-- `POST /api/scenarios/runtime/event`
+Spring Boot serves [index.html](src/main/resources/static/index.html) at `/`, with
+[styles.css](src/main/resources/static/styles.css) and
+[app.js](src/main/resources/static/app.js). There is no frontend build step.
 
-Handled by:
-- `ScenarioGraphController`
-- `ScenarioRuntimeService.applyRuntimeEvent(...)`
+The browser keeps scenario-local event lists, playback frames, logs, timers, and
+render tokens. Incoming events are deduplicated by sequence. Consecutive visible
+events with the same `playbackGroup` share a frame, while hidden technical updates
+are folded into the preceding frame's final state.
 
-Current event intent:
-- independent runtime facts instead of rigid step numbers
+Playback renders the frame's starting snapshot, then its transition, then its
+final state. Animated frames use 3,200 ms and static frames use 700 ms. These are
+presentation delays; scenario code can finish before playback does. Some starters
+also use short pauses when emitting visual events.
 
-Examples of event types already supported by normalization in runtime service:
-- `component-ready`
-- `component-busy`
-- `component-waiting`
-- `component-failed`
-- `signal-started`
-- `signal-finished`
-- `signal-delivered`
-- `runtime-reset`
-- `session-completed`
+The timeline supports Previous, Replay, Next, Play all, and direct frame selection.
+A new Play clears the selected scenario's timeline; reloading begins at the current
+backend head and discards the old local history. Stop pauses playback and clears
+client state after stopping the environment. The UI disables Play/Stop while its
+run request is in flight, but the backend does not isolate concurrent callers.
 
-Typical payload fields:
-- `scenarioId`
-- `type`
-- `nodeId`
-- `edgeId`
-- `label`
-- `fromNodeId`
-- `toNodeId`
-- `status`
+Nodes can be dragged, container nodes resized, and child positions constrained
+inside containers. Clicking a node opens its description and a GitHub link to
+`sourceRoot` on `main`. This is a package-level branch link, not a commit-pinned
+file/line permalink or an embedded source viewer. Articles provide finer source links.
 
-## 5. REST API
+The hue picker stores its theme in `localStorage`. Component type colors identify
+nodes; runtime highlights indicate ready, busy, waiting, and failed states.
+Runtime log and legend are dialogs. Animated signals include a moving dot and path.
 
-File:
-- `src/main/java/io/drozda/sandbox/visualization/ScenarioGraphController.java`
+## HTTP API
 
-Important endpoints:
+All routes below are relative to `/api/scenarios` and implemented by
+[ScenarioGraphController](src/main/java/io/drozda/sandbox/visualization/ScenarioGraphController.java).
 
-Scenario data:
-- `GET /api/scenarios/{scenarioId}`
-- `GET /api/scenarios/{scenarioId}/runtime`
+| Method | Route | Purpose |
+| --- | --- | --- |
+| GET | `/` | List catalog scenarios |
+| GET | `/{scenarioId}` | Selected graph |
+| GET | `/{scenarioId}/commands` | Available commands |
+| POST | `/{scenarioId}/run` | Run default command |
+| POST | `/{scenarioId}/commands/{commandId}` | Run named command |
+| GET | `/{scenarioId}/environment` | Environment status |
+| POST | `/{scenarioId}/environment/start` | Start environment |
+| POST | `/{scenarioId}/environment/stop` | Stop environment and reset visual state |
+| POST | `/{scenarioId}/environment/reset` | Reset scenario state |
+| GET | `/{scenarioId}/runtime` | Legacy step state |
+| POST | `/{scenarioId}/runtime/next`, `/previous`, `/reset` | Legacy step navigation under the same prefix |
+| GET | `/runtime/active` | Latest active snapshot |
+| GET | `/runtime/head` | Current revision without replaying history |
+| GET | `/runtime/updates?after={revision}&timeoutMs=120000` | Long-poll updates |
+| POST | `/runtime/session/start`, `/step`, `/complete` | Session control under the same prefix |
+| POST | `/runtime/event` | Apply a runtime event |
 
-Step navigation:
-- `POST /api/scenarios/{scenarioId}/runtime/next`
-- `POST /api/scenarios/{scenarioId}/runtime/previous`
-- `POST /api/scenarios/{scenarioId}/runtime/reset`
+Run/command requests accept `invocationName` and a string-to-string `parameters`
+map. Scenario 004 uses `keyStrategy`; 006 uses `topology`.
 
-Live runtime:
-- `GET /api/scenarios/runtime/active`
-- `GET /api/scenarios/runtime/updates?after={revision}`
-- `POST /api/scenarios/runtime/session/start`
-- `POST /api/scenarios/runtime/session/step`
-- `POST /api/scenarios/runtime/session/complete`
-- `POST /api/scenarios/runtime/event`
+## Validation and remaining work
 
-## 6. Frontend structure
+[ScenarioCatalogTest](src/test/java/io/drozda/sandbox/visualization/ScenarioCatalogTest.java)
+checks purpose, backlog IDs, and unique scenario order.
+[ScenarioSourceReferenceTest](src/test/java/io/drozda/sandbox/visualization/ScenarioSourceReferenceTest.java)
+checks source directories.
+[ScenarioRuntimeServiceTest](src/test/java/io/drozda/sandbox/visualization/ScenarioRuntimeServiceTest.java)
+checks runtime transitions, waiting, and timeline behavior. Scenario integration
+tests require a reachable Kafka broker; see [README](README.md) for commands.
 
-File:
-- `src/main/resources/static/app.js`
-
-The file was recently reorganized so it is easier to navigate.
-
-Current major sections:
-1. constants and state
-2. bootstrap
-3. runtime/api functions
-4. render entry point
-5. view-model building
-6. SVG rendering helpers
-7. layout helpers
-8. drag helpers
-9. small utilities
-
-Main frontend behavior:
-- load initial scenario and runtime
-- keep one long-poll request open until the runtime revision changes or times out
-- if an active runtime exists, render live mode
-- otherwise render step mode
-- expose Play and Stop controls
-- keep a per-scenario browser log until page reload
-- allow dragging nodes in the SVG
-- keep child nodes inside their container
-- allow container resizing from the bottom-right corner
-
-## 7. Current visual semantics
-
-Node types have their own base colors:
-- external
-- container
-- service
-- broker
-- consumer
-- monitor
-
-Runtime state is shown mostly by glow/highlight:
-- `ready` = green glow
-- `busy` = orange glow
-- `failed` = red glow
-- active edge = stronger active line
-- signal = animated dot moving between nodes
-
-Important design choice:
-- base border colors should stay by node type
-- runtime should mostly add glow, not repaint the node identity
-
-## 8. Mediator and scenario execution
-
-Files:
-- `src/main/java/io/drozda/sandbox/mediator/ScenarioMediatorService.java`
-- `src/main/java/io/drozda/sandbox/scenario/spi/ScenarioStarter.java`
-- `src/main/java/io/drozda/sandbox/scenario/spi/ScenarioEnvironment.java`
-- `src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyEnvironment.java`
-- `src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyScenarioStarter.java`
-- `src/main/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowEnvironment.java`
-- `src/main/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowScenarioStarter.java`
-
-How it works:
-- Play calls the mediator's default command for the selected scenario
-- the mediator starts the matching environment
-- `system-ready` starts a dedicated nested Spring Boot context on a random port
-- the mediator communicates with that scenario application over HTTP
-- the starter translates the result into visual runtime events
-- Stop closes the environment and resets the visual topology
-- `trade-flow` owns a separate topic, publisher, listener, tracker, and Spring context
-- Kafka can be rendered as a resizable broker container with a topic inside it
-- the header palette picker derives a tetradic four-color UI theme from a selected base hue and stores it in browser `localStorage`
-- semantic runtime colors such as ready and failed remain fixed across themes
-
-Tests cover mediator behavior and runtime state, but tests are no longer intended
-to be the user-facing mechanism for running scenarios.
-
-## 9. Known strengths
-
-What already works well:
-- quick iteration
-- hardcoded scenarios are easy to understand
-- event-driven runtime is enough for first practical demos
-- integration tests can drive the browser visualization
-
-## 10. Known weaknesses
-
-What will likely need refactoring later:
-- scenarios are hardcoded in `ScenarioCatalog`
-- frontend is still plain JS in one file
-- runtime status model is string-based
-- there is no persistent scenario/session history
-- only one active runtime session is effectively tracked at a time
-- layout is manual and not auto-arranged
-- `system-ready` currently checks bean creation, not real broker health
-- runtime updates use long polling rather than a server-push stream such as SSE
-
-## 11. Good next refactoring directions
-
-Reasonable next steps:
-- introduce typed enums for runtime status/event categories
-- separate frontend modules further if JS grows
-- replace string statuses with typed values
-- support richer visual events like retry, DLQ, rebalance, lag
-- support multiple runtime sessions or history playback
-- turn topic/partition/offset into the next real scenario before expanding orchestration
-
-## 12. Good next learning scenarios
-
-Best next Kafka-driven visual scenarios:
-- consumer group rebalance
-- duplicate delivery with at-least-once semantics
-- retry then DLQ
-- key-based partition routing
-- Kafka unavailable during publish
-- lag growing because consumer is slow
+Pending work includes explicit cursor-gap detection, independent sessions,
+node-level source references, topic cleanup, and external process/container control.
+Kafka learning priorities are recorded in the roadmap rather than repeated here.

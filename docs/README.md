@@ -17,7 +17,8 @@ without maintaining a separate scenario-to-document mapping.
 The `*-a-*` documents are supplementary articles for the corresponding numbered scenario and
 follow the same language convention.
 
-All 14 articles are available in Russian and English. Each version links to the relevant
+All 14 articles are available in Russian and English. The articles include historical
+before/after notes; completed changes in those sections are not a current task list. Each version links to the relevant
 implementation using repository-relative paths and `#L` line anchors. Update these anchors
 when the referenced code moves. `README.en.md` is the explicitly suffixed English copy of this index.
 

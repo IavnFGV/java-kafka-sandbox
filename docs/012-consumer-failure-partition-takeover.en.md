@@ -11,10 +11,12 @@ Initially, two consumers in one group share two partitions. The backend does not
 assume a particular distribution; it obtains it from `onPartitionsAssigned`.
 It then selects the actual owner of Partition 1 and stops that listener container.
 
-While ownership changes, the producer sends a new record to the released
-partition. The record is stored in Kafka while a consumer is temporarily absent.
-After rebalance, the remaining member receives both partitions and reads the
-waiting record at its offset.
+After stopping the owner, the producer sends a new record to Partition 1. The
+backend waits for the remaining member to own both partitions and receive the
+record. The code does not assert that the partition is still ownerless when the
+record is sent: rebalance may already have completed. `Temporary Lag` is therefore
+a teaching representation of the transition, not a measured consumer-unavailability
+window or broker lag.
 
 ## How the experiment works
 

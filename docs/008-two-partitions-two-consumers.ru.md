@@ -43,13 +43,15 @@ listener callbacks.
 нечётные в P1. Явная partition здесь нужна для детерминированного учебного
 опыта. В production partition обычно выбирается из message key.
 
-Experiment проверяет:
+Ожидание assignment подтверждает разных owners для P0 и P1. Последовательность
+отправки создаёт по три records на partition. Затем `verify()` проверяет:
 
-- обе partitions получили по три records;
-- owners P0 и P1 различаются;
 - каждый record обработан owner своей partition;
 - producer metadata совпадает с `ConsumerRecord.partition()` и `offset()`;
-- всего получено ровно шесть ожидаемых event IDs.
+- всего получено шесть callbacks для зарегистрированных event IDs.
+
+Tracker фильтрует чужие event IDs, но не проверяет уникальность каждого callback.
+Эти проверки не доказывают отсутствие повторных доставок.
 
 Визуализация сначала строит реальные assignment-связи, затем показывает путь
 каждого record `Producer -> Partition -> Consumer`. Нода `Parallel Assignment`

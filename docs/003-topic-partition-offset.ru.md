@@ -24,7 +24,7 @@ Kafka topic — логическое имя потока, но записи фи
 
 ## Что делает эксперимент
 
-Сценарное приложение создаёт topic `scenario-003-partition-offsets` с двумя
+Сценарное приложение создаёт topic `scenario-003-partition-offsets-<UUID>` с двумя
 partitions. [`PartitionedEventPublisher`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/producer/PartitionedEventPublisher.java#L20) выполняет три явные отправки:
 
 1. Событие A в partition `0`.
@@ -36,7 +36,7 @@ key и работа стандартного partitioner-а станут отд�
 
 Первый offset partition `0` обозначим `N`, offset partition `1` — `M`. Третья
 запись должна получить в partition `0` значение больше `N`. Мы намеренно не
-проверяем абсолютные `0, 0, 1`: topic сохраняется между запусками, поэтому
+проверяем абсолютные `0, 0, 1`: повторный Play использует topic текущего context, поэтому
 реальные значения могут быть, например, `12, 7, 13`.
 
 ## Как подписан consumer
@@ -80,7 +80,8 @@ partitions остаётся содержимое текущего запуска
 
 Как и в `002`, [`TopicPartitionOffsetsEnvironment`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/TopicPartitionOffsetsEnvironment.java#L19) поднимает отдельный Spring
 context на случайном HTTP-порту. Повторный Play использует тот же context, но
-создаёт новые events; Stop закрывает context. Внутреннее HTTP API запускает
+создаёт новые events; Stop закрывает context. Следующий старт создаёт новый topic
+с UUID, а старый остаётся в Kafka до удаления или потери данных broker. Внутреннее HTTP API запускает
 эксперимент, но сами сообщения отправляются в Kafka через `KafkaTemplate`.
 
 Сценарии `001` и `002` не переиспользуют Kafka-бины `003`. Так следующий
