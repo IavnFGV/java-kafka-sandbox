@@ -75,6 +75,22 @@
                         </div>
                         <svg id="graph" viewBox="0 0 980 520" role="img" aria-label="System integration graph"></svg>
                     </div>
+
+                    <section class="timeline-panel" aria-label="Scenario timeline">
+                        <div class="timeline-heading">
+                            <div>
+                                <p class="section-label">Recorded Timeline</p>
+                                <p class="timeline-copy">Select a transition to restore its previous state and replay it.</p>
+                            </div>
+                            <div class="timeline-controls">
+                                <button id="timeline-previous" type="button">Previous</button>
+                                <button id="timeline-replay" type="button">Replay</button>
+                                <button id="timeline-next" type="button">Next</button>
+                                <button id="timeline-play-all" type="button">Play all</button>
+                            </div>
+                        </div>
+                        <ol id="scenario-timeline" class="scenario-timeline"></ol>
+                    </section>
                 </section>
 
                 <section class="panel details">

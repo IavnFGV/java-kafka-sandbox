@@ -340,6 +340,12 @@ button:hover {
     transform: translateY(-1px);
 }
 
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.46;
+    transform: none;
+}
+
 .graph-shell {
     position: relative;
     margin-top: 20px;
@@ -370,6 +376,100 @@ button:hover {
     display: block;
     width: 100%;
     height: auto;
+}
+
+.timeline-panel {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.52);
+}
+
+.timeline-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.timeline-copy {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.timeline-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.timeline-controls button {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    box-shadow: none;
+}
+
+.scenario-timeline {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 2px 0 6px;
+    overflow-x: auto;
+    list-style: none;
+}
+
+.timeline-empty {
+    padding: 8px 2px;
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.timeline-step {
+    flex: 0 0 178px;
+}
+
+.timeline-step button {
+    width: 100%;
+    min-height: 64px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: none;
+    text-align: left;
+}
+
+.timeline-step button:hover {
+    border-color: var(--accent-border);
+}
+
+.timeline-step.current button {
+    border-color: var(--accent);
+    background: var(--accent-surface);
+    box-shadow: 0 6px 16px var(--accent-soft);
+}
+
+.timeline-step-sequence {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.timeline-step-title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.25;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .step-card {
@@ -415,6 +515,17 @@ button:hover {
     font-size: 0.88rem;
     color: var(--muted);
     line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+    .timeline-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .timeline-controls {
+        justify-content: flex-start;
+    }
 }
 
 .runtime-log-line + .runtime-log-line {

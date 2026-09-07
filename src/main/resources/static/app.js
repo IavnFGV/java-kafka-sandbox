@@ -4,6 +4,8 @@ const CONTAINER_PADDING = 20;
 const MIN_CONTAINER_WIDTH = 180;
 const MIN_CONTAINER_HEIGHT = 140;
 const DEFAULT_THEME_HUE = 32;
+const SIGNAL_PLAYBACK_MS = 3200;
+const STATE_PLAYBACK_MS = 700;
 
 const state = {
   scenarios: [],
@@ -15,6 +17,7 @@ const state = {
   logsByScenario: {},
   lastPlaybackStepKeyByScenario: {},
   lastRuntimeSnapshotByScenario: {},
+  timelinesByScenario: {},
   runtimeRevision: -1,
   runInFlight: false
 };
@@ -30,6 +33,11 @@ const stepDescription = document.getElementById("step-description");
 const runtimeLog = document.getElementById("runtime-log");
 const playBtn = document.getElementById("play-btn");
 const stopBtn = document.getElementById("stop-btn");
+const scenarioTimeline = document.getElementById("scenario-timeline");
+const timelinePrevious = document.getElementById("timeline-previous");
+const timelineReplay = document.getElementById("timeline-replay");
+const timelineNext = document.getElementById("timeline-next");
+const timelinePlayAll = document.getElementById("timeline-play-all");
 const scenarioInputs = document.getElementById("scenario-inputs");
 const keyStrategy = document.getElementById("key-strategy");
 const themeToggle = document.getElementById("theme-toggle");
@@ -45,8 +53,7 @@ function bootstrap() {
   initializeThemePicker();
   bindControlEvents();
   bindDragEvents();
-  loadInitialScenario();
-  pollRuntimeUpdates();
+  loadInitialScenario().then(pollRuntimeUpdates);
 }
 
 function initializeThemePicker() {
@@ -83,15 +90,17 @@ function applyThemeHue(rawHue) {
 }
 
 function loadInitialScenario() {
-  Promise.all([
+  return Promise.all([
     fetchJson("/api/scenarios"),
     fetchJson(`/api/scenarios/${scenarioId}`),
-    fetchJson(`/api/scenarios/${scenarioId}/runtime`)
-  ]).then(([scenarios, scenario, runtime]) => {
+    fetchJson(`/api/scenarios/${scenarioId}/runtime`),
+    fetchJson("/api/scenarios/runtime/head")
+  ]).then(([scenarios, scenario, runtime, runtimeHead]) => {
     state.scenarios = scenarios;
     applyScenario(scenario);
     state.stepIndex = runtime.currentStepIndex;
     state.activeRuntime = null;
+    state.runtimeRevision = runtimeHead.revision;
     render();
   });
 }
@@ -99,6 +108,10 @@ function loadInitialScenario() {
 function bindControlEvents() {
   playBtn.addEventListener("click", runScenario);
   stopBtn.addEventListener("click", stopScenario);
+  timelinePrevious.addEventListener("click", () => navigateTimeline(-1));
+  timelineReplay.addEventListener("click", replayTimelineStep);
+  timelineNext.addEventListener("click", () => navigateTimeline(1));
+  timelinePlayAll.addEventListener("click", playTimelineToEnd);
 }
 
 function runScenario() {
@@ -111,6 +124,8 @@ function runScenario() {
   stopBtn.disabled = true;
   playBtn.textContent = "Running...";
   appendScenarioLog("Backend run started");
+  resetScenarioTimeline(state.activeScenarioId);
+  timelineFor(state.activeScenarioId).autoFollow = true;
   state.activeRuntime = null;
   state.stepIndex = 0;
   render();
@@ -123,10 +138,6 @@ function runScenario() {
         ? { keyStrategy: keyStrategy.value }
         : {}
     })
-  }).then((runtime) => {
-    state.activeRuntime = runtime;
-    state.stepIndex = runtime.currentStepIndex;
-    render();
   }).catch(() => {
     appendScenarioLog("Backend run failed");
     renderRuntimeLog();
@@ -144,6 +155,7 @@ function stopScenario() {
   }
 
   stopBtn.disabled = true;
+  pauseTimeline(scenarioId);
   appendScenarioLog("Backend stop requested");
   fetchJson(`/api/scenarios/${scenarioId}/environment/stop`, {
     method: "POST"
@@ -171,7 +183,7 @@ function pollRuntimeUpdates() {
       }
 
       state.runtimeRevision = update.revision;
-      return applyRuntimeUpdate(update.runtime);
+      receiveTimelineEvents(update.events || []);
     })
     .then(pollRuntimeUpdates)
     .catch(() => {
@@ -179,33 +191,106 @@ function pollRuntimeUpdates() {
     });
 }
 
-function applyRuntimeUpdate(runtime) {
-  if (!runtime || !runtime.scenarioId) {
-    const hadRuntime = state.activeRuntime !== null;
-    state.activeRuntime = null;
-    if (hadRuntime) {
-      render();
+function receiveTimelineEvents(events) {
+  events.forEach((event) => {
+    const eventScenarioId = event.after?.scenarioId || event.before?.scenarioId;
+    if (!eventScenarioId) return;
+    const timeline = timelineFor(eventScenarioId);
+    if (!timeline.events.some((existing) => existing.sequence === event.sequence)) {
+      timeline.events.push(event);
     }
-    return;
+  });
+
+  renderTimeline();
+  continueTimelinePlayback(state.activeScenarioId);
+}
+
+function timelineFor(targetScenarioId) {
+  if (!state.timelinesByScenario[targetScenarioId]) {
+    state.timelinesByScenario[targetScenarioId] = {
+      events: [],
+      currentIndex: -1,
+      autoFollow: false,
+      timer: null,
+      renderToken: 0
+    };
   }
+  return state.timelinesByScenario[targetScenarioId];
+}
 
-  const runtimeIsDrivingScreen = runtime.active || runtime.scenarioId === state.activeScenarioId;
-  state.activeRuntime = runtime;
+function resetScenarioTimeline(targetScenarioId) {
+  const timeline = timelineFor(targetScenarioId);
+  window.clearTimeout(timeline.timer);
+  timeline.events = [];
+  timeline.currentIndex = -1;
+  timeline.autoFollow = false;
+  timeline.timer = null;
+  timeline.renderToken += 1;
+  renderTimeline();
+}
 
-  if (!runtimeIsDrivingScreen) {
-    return;
-  }
+function continueTimelinePlayback(targetScenarioId) {
+  const timeline = timelineFor(targetScenarioId);
+  if (!timeline.autoFollow || timeline.timer || timeline.currentIndex >= timeline.events.length - 1) return;
+  showTimelineStep(targetScenarioId, timeline.currentIndex + 1, true);
+}
 
-  if (runtime.scenarioId !== state.activeScenarioId) {
-    return fetchJson(`/api/scenarios/${runtime.scenarioId}`).then((scenario) => {
-      applyScenario(scenario);
-      state.stepIndex = runtime.currentStepIndex;
-      render();
-    });
-  }
+function showTimelineStep(targetScenarioId, index, continuePlaying = false) {
+  const timeline = timelineFor(targetScenarioId);
+  const event = timeline.events[index];
+  if (!event) return;
 
-  state.stepIndex = runtime.currentStepIndex;
+  window.clearTimeout(timeline.timer);
+  timeline.timer = null;
+  timeline.autoFollow = continuePlaying;
+  timeline.currentIndex = index;
+  timeline.renderToken += 1;
+  const renderToken = timeline.renderToken;
+  state.activeRuntime = event.before?.scenarioId === targetScenarioId ? event.before : null;
+  if (state.activeRuntime) state.stepIndex = state.activeRuntime.currentStepIndex;
   render();
+
+  window.requestAnimationFrame(() => {
+    if (timeline.renderToken !== renderToken) return;
+    state.activeRuntime = event.after?.scenarioId === targetScenarioId ? event.after : null;
+    if (state.activeRuntime) state.stepIndex = state.activeRuntime.currentStepIndex;
+    render();
+    const hasSignal = (event.after?.activeSignals || []).length > 0;
+    if (timeline.autoFollow) {
+      timeline.timer = window.setTimeout(() => {
+        timeline.timer = null;
+        continueTimelinePlayback(targetScenarioId);
+      }, hasSignal ? SIGNAL_PLAYBACK_MS : STATE_PLAYBACK_MS);
+    }
+  });
+}
+
+function pauseTimeline(targetScenarioId) {
+  if (!targetScenarioId) return;
+  const timeline = timelineFor(targetScenarioId);
+  window.clearTimeout(timeline.timer);
+  timeline.timer = null;
+  timeline.autoFollow = false;
+  timeline.renderToken += 1;
+}
+
+function navigateTimeline(delta) {
+  const timeline = timelineFor(state.activeScenarioId);
+  const targetIndex = Math.max(0, Math.min(timeline.events.length - 1, timeline.currentIndex + delta));
+  showTimelineStep(state.activeScenarioId, targetIndex, false);
+}
+
+function replayTimelineStep() {
+  const timeline = timelineFor(state.activeScenarioId);
+  showTimelineStep(state.activeScenarioId, timeline.currentIndex, false);
+}
+
+function playTimelineToEnd() {
+  const timeline = timelineFor(state.activeScenarioId);
+  timeline.autoFollow = true;
+  if (timeline.currentIndex >= timeline.events.length - 1) timeline.currentIndex = -1;
+  continueTimelinePlayback(state.activeScenarioId);
+  renderTimeline();
 }
 
 function fetchJson(url, options) {
@@ -241,6 +326,7 @@ function render() {
   stepTitle.textContent = currentTitle();
   stepDescription.textContent = currentDescription();
   renderRuntimeLog();
+  renderTimeline();
   graph.innerHTML = `
     <defs>
       <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
@@ -252,6 +338,37 @@ function render() {
     ${renderSignals(layout, stepView)}
   `;
   attachDragHandlers();
+}
+
+function renderTimeline() {
+  if (!scenarioTimeline || !state.activeScenarioId) return;
+  const timeline = timelineFor(state.activeScenarioId);
+  scenarioTimeline.innerHTML = timeline.events.length === 0
+    ? `<li class="timeline-empty">Run the scenario to record its transitions.</li>`
+    : timeline.events.map((event, index) => `
+      <li class="timeline-step ${index === timeline.currentIndex ? "current" : ""}">
+        <button type="button" data-timeline-index="${index}">
+          <span class="timeline-step-sequence">${String(index + 1).padStart(3, "0")}</span>
+          <span class="timeline-step-title">${escapeXml(timelineEventTitle(event))}</span>
+        </button>
+      </li>
+    `).join("");
+  scenarioTimeline.querySelectorAll("[data-timeline-index]").forEach((button) => {
+    button.addEventListener("click", () => showTimelineStep(
+      state.activeScenarioId,
+      Number(button.dataset.timelineIndex),
+      false
+    ));
+  });
+  timelinePrevious.disabled = timeline.currentIndex <= 0;
+  timelineReplay.disabled = timeline.currentIndex < 0;
+  timelineNext.disabled = timeline.currentIndex >= timeline.events.length - 1;
+  timelinePlayAll.disabled = timeline.events.length === 0 || timeline.autoFollow;
+}
+
+function timelineEventTitle(event) {
+  const runtime = event.after || {};
+  return runtime.lastEventLabel || runtime.lastEventType || "Runtime transition";
 }
 
 function renderRuntimeLog() {
@@ -298,6 +415,7 @@ function selectScenario(nextScenarioId) {
     return;
   }
 
+  pauseTimeline(state.activeScenarioId);
   scenarioId = nextScenarioId;
   fetchJson(`/api/scenarios/${nextScenarioId}`)
     .then((scenario) => Promise.all([
