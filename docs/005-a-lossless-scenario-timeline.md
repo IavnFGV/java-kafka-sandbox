@@ -9,6 +9,8 @@
   `before` и `after`; long polling возвращает все сохранённые события после cursor.
 - UI: `ee84560` — браузер складывает переходы в очередь, проигрывает их с учебной
   скоростью и позволяет вернуться к любому шагу.
+- Refinement: `d2a38f2` — backend отличает учебные кадры от технических updates,
+  timeline закреплена снизу, а log и legend открываются только по запросу.
 
 ## Как обнаружилась проблема
 
@@ -59,12 +61,12 @@ context второй раз.
 [`ScenarioRuntimeService`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L34).
 При публикации нового состояния сервис запоминает предыдущий snapshot, увеличивает
 revision и добавляет событие в timeline. Запись выполняется атомарно в
-[`publishRuntime()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L263),
+[`publishRuntime()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L274),
 чтобы клиент не увидел новую sequence раньше, чем соответствующее событие окажется
 в журнале.
 
 Long polling сохранился, но изменился смысл ответа. Метод
-[`runtimeUpdateAfter()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L278)
+[`runtimeUpdateAfter()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L294)
 выбирает все события, у которых `sequence > afterRevision`. Контракт ответа теперь
 содержит список `events` и последний runtime snapshot, что видно в
 [`ScenarioRuntimeUpdate`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeUpdate.java#L5).
@@ -96,15 +98,15 @@ Backend-журнал живёт дольше одной вкладки брау�
 Frontend хранит отдельную timeline для каждого сценария. В ней есть список событий,
 текущий индекс, режим автоматического продолжения, timer и token для отмены устаревшей
 анимации. Структура создаётся в
-[`timelineFor()`](../src/main/resources/static/app.js#L208).
+[`timelineFor()`](../src/main/resources/static/app.js#L236).
 
 Long polling получает пакет и добавляет события без дубликатов в
-[`receiveTimelineEvents()`](../src/main/resources/static/app.js#L194). Backend при этом
+[`receiveTimelineEvents()`](../src/main/resources/static/app.js#L208). Backend при этом
 не замедляется: Kafka experiment может уже завершиться, пока UI ещё спокойно показывает
 первые transitions.
 
 Основная логика находится в
-[`showTimelineStep()`](../src/main/resources/static/app.js#L238). Сначала функция
+[`showTimelineStep()`](../src/main/resources/static/app.js#L269). Сначала функция
 устанавливает snapshot `before` и рисует исходное состояние. На следующем animation
 frame она применяет `after`, после чего SVG-сигнал начинает движение. Для шага с
 активным сигналом выделено 3200 мс, для обычного изменения состояния — 700 мс.
@@ -116,8 +118,8 @@ consumer или Kafka. Это принципиально: эксперимент
 ## Навигация по истории
 
 Под графом появился список записанных переходов и четыре команды. Разметка находится
-в [`index.html`](../src/main/resources/static/index.html#L79), а карточки строятся в
-[`renderTimeline()`](../src/main/resources/static/app.js#L343).
+в [`index.html`](../src/main/resources/static/index.html#L81), а карточки строятся в
+[`renderTimeline()`](../src/main/resources/static/app.js#L375).
 
 - `Previous` воспроизводит предыдущий переход.
 - `Replay` снова показывает текущий переход от `before` к `after`.
@@ -134,7 +136,7 @@ consumer или Kafka. Это принципиально: эксперимент
 
 ## Как проверяется отсутствие пропусков
 
-Unit-тест [`shouldReturnEveryRuntimeTransitionAfterSequenceCursor()`](../src/test/java/io/drozda/sandbox/visualization/ScenarioRuntimeServiceTest.java#L141)
+Unit-тест [`shouldReturnEveryRuntimeTransitionAfterSequenceCursor()`](../src/test/java/io/drozda/sandbox/visualization/ScenarioRuntimeServiceTest.java#L186)
 запоминает cursor, затем выполняет три изменения runtime до чтения ответа. Проверка
 требует получить ровно три события с последовательными номерами и правильными типами
 начала и завершения сессии. Таким образом тест покрывает именно исходную проблему:
@@ -150,10 +152,25 @@ backend успел сделать больше одного шага между 
 Следующее улучшение должно возвращать явный признак cursor gap, чтобы UI не изображал
 неполную историю как полную.
 
-Сейчас timeline также содержит все публикации runtime, включая технические обновления
-деталей нод. Следующий шаг — явно различать учебные transitions и внутреннюю телеметрию
-на backend. Фильтровать их по тексту в JavaScript не стоит: смысл события должен задавать
-сценарий, который его создаёт.
+Во второй итерации backend-событие получило признаки `visibleInTimeline` и `animated`.
+Начало движущегося сигнала становится нумерованным кадром; завершение сигнала,
+обновление текста ноды и служебные изменения остаются техническими. Статические
+назначения partition и изменения состояния показываются как `STATE`, но не занимают
+номер в последовательности анимаций.
+
+Frontend не выбрасывает скрытые updates. Он присоединяет их к итоговому `after`
+предыдущего видимого кадра. Поэтому после завершения красной точки пользователь видит
+уже обновлённую подпись partition и финальные статусы компонентов. Переключатель
+`Technical events` раскрывает исходную последовательность backend revisions для
+отладки, не смешивая её с основной учебной нумерацией.
+
+Timeline закреплена снизу экрана и напоминает монтажную дорожку. Runtime log и legend
+перенесены в modal dialogs, чтобы редко используемая диагностика не занимала постоянное
+место рядом с графом.
+
+Классификация пока основана на типе runtime-события и его статусе. Если будущему
+сценарию понадобится другой смысл одинакового технического события, следующим шагом
+станет явное задание этих флагов самим сценарием.
 
 Практический вывод шире конкретного visualizer: если клиенту важна история изменений,
 API последнего состояния недостаточно. Snapshot отвечает на вопрос «что сейчас?», а

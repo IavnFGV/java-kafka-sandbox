@@ -222,8 +222,9 @@ The visualizer should eventually be able to show:
   of Kafka execution speed. Selecting a step restores its preceding state, animates the
   transition, and pauses on its resulting state; `Previous`, `Replay`, `Next`, and
   `Play all` navigate the captured run.
-- Timeline follow-up: classify explicitly which runtime updates are meaningful learning
-  steps and hide incidental technical telemetry from the visible timeline.
+- Implemented in `d2a38f2`: backend flags distinguish visible and animated transitions; the primary
+  track numbers only animated frames, folds technical updates into their final state,
+  and can reveal the raw technical sequence on demand.
 - Timeline follow-up: report an explicit cursor gap if a client falls behind the bounded
   backend retention window of 1,000 transitions.
 - Add an explicit `Clean` action separate from `Stop`.

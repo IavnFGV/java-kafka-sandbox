@@ -90,6 +90,9 @@
 - Verification: `ScenarioRuntimeServiceTest` proves that three backend transitions produced before the request is read are returned in order; the complete Gradle test suite passed
 - Remaining refinement: visible cards currently include all runtime publications, including node-detail updates; later add an explicit learning-step classification rather than guessing in JavaScript
 - Retention boundary: the in-memory backend journal keeps 1,000 transitions; later expose an explicit gap indicator when a stale cursor falls behind that window
+- Timeline refinement implemented in `d2a38f2`: backend events now carry `visibleInTimeline` and `animated`; only animated learning frames receive `001`, `002`, ... numbers, while important static transitions use `STATE`
+- Technical updates are retained and folded into the preceding frame's final `after` state; the UI can reveal their raw sequence with `Technical events`
+- Layout refinement: the timeline is fixed to the bottom like a video editor track; runtime log and legend moved to modal dialogs to keep the graph workspace focused
 
 ## ETL Mapping
 

@@ -90,6 +90,7 @@ Visualizer timeline implemented:
 - UI commit `ee84560` queues transitions per scenario and supports step selection plus `Previous`, `Replay`, `Next`, and `Play all`
 - selecting a step restores its preceding state, animates that transition, and pauses on its resulting state
 - a new browser page starts at the current journal head, so timeline history is intentionally local to that page lifetime
-- follow-up: classify learning steps explicitly so incidental node-detail updates do not create noisy timeline cards
+- timeline refinement commit `d2a38f2`: events carry backend `visibleInTimeline` and `animated` flags; technical updates are hidden by default but can be revealed, and only animated frames receive numeric labels
+- timeline is fixed at the bottom like an editor track; runtime log and legend open as dialogs
 - follow-up: expose a cursor-gap response if a browser falls behind the 1,000-event backend retention window
 ```
