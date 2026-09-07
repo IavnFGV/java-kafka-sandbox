@@ -18,8 +18,8 @@ import io.drozda.sandbox.scenario.parallelorderswithoutglobalordering.producer.G
 
 public class GlobalOrderingExperiment {
     private static final long TIMEOUT_SECONDS = 15;
-    private static final long FAST_DELAY_MS = 80;
-    private static final long SLOW_DELAY_MS = 280;
+    private static final long FAST_DELAY_MS = 50;
+    private static final long SLOW_DELAY_MS = 500;
 
     private final GlobalOrderPublisher publisher;
     private final GlobalOrderTracker tracker;
