@@ -172,3 +172,11 @@
 - Records published before and after join verify that delivery follows the ownership map in each phase.
 - Rebalance enables scaling but introduces a coordination pause and can become operationally expensive when triggered repeatedly.
 - Scenario package: `io.drozda.sandbox.scenario.rebalancewhensecondconsumerjoins`.
+
+## Scenario 012: Consumer Failure and Partition Takeover
+
+- Two consumers initially own one partition each; after one listener stops, the survivor owns both.
+- A record appended while its partition has no stable owner remains in Kafka and is consumed after reassignment.
+- The controlled listener stop demonstrates takeover but is faster than crash detection based on missing heartbeats.
+- Rebalance can create temporary lag and at-least-once delivery means idempotent processing remains important.
+- Scenario package: `io.drozda.sandbox.scenario.consumerfailureandpartitiontakeover`.

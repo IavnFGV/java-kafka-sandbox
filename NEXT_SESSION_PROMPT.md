@@ -35,7 +35,7 @@ Important context:
 - Do not forget to suggest or make small meaningful commits as progress is completed.
 
 Session goals:
-1. Review completed scenario `011`, then implement consumer failure and partition takeover (backlog #13, #41, and #97)
+1. Review completed scenario `012`, then choose the next consolidated learning block from the roadmap
 2. Explain why it matters in practical systems and interviews
 3. For Kafka/Java code, guide me through implementing it in the repository with tests first or test-driven enough
 4. If useful, extend the visualizer so the scenario can be seen, not just asserted
@@ -76,7 +76,8 @@ Current agreed learning route:
 - `009` multiple independent consumer groups (#15) is implemented
 - `010` earliest vs latest (#16) is implemented
 - `011` rebalance when a second consumer joins (#41, #94) is implemented
-- next: consumer failure and partition takeover (#13, #41, #97)
+- `012` consumer failure and partition takeover (#13, #41, #97) is implemented
+- next: begin the producer durability block or the commits and delivery block
 - `010` earliest vs latest (#16)
 - `011` rebalance when a consumer joins (#41, #94)
 - `012` consumer failure and takeover (#13, #41, #97)
