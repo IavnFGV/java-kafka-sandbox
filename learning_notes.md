@@ -11,6 +11,13 @@
 - Reason: catalog order may change, while a semantic package name keeps ownership obvious in code and avoids mass renumbering
 - Isolation fix: scenarios 002-005 now create unique topics as well as unique groups, so historical JSON type headers cannot break runs after Java package refactoring
 
+#### 2026-09-07 — Code-Guided Nodes Direction
+
+- Future UX: clicking a topology node opens its relevant source locations and practical implementation notes
+- Architecture decision: add structured backend `sourceReferences` to scenario nodes instead of guessing Java paths from UI labels
+- Preferred flow: inspect a short source snippet in a side panel, then optionally follow a stable repository permalink
+- Scenario definition of done should eventually link the producer, listener, experiment, tracker, and integration test
+
 #### 2026-07-07
 
 - Topic: consumer groups and rebalance

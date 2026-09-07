@@ -215,6 +215,17 @@ The visualizer should eventually be able to show:
 
 ## Playground Infrastructure Backlog
 
+- Add code-guided scenario nodes: clicking a graph node should open a compact source panel
+  with practical guidance and explicit `sourceReferences` supplied by the backend.
+- Keep source navigation structured rather than deriving paths from node labels. Each reference
+  should contain a label, repository-relative path, optional line anchor, and a short explanation
+  of why that code matters in the current scenario.
+- Let the source panel offer two actions: inspect a small backend-served snippet without leaving
+  the experiment, and open the repository permalink when one is configured. Avoid depending on
+  browser-specific local IDE URL schemes as the only navigation mechanism.
+- Add source references incrementally when a scenario is completed; at minimum link producer,
+  listener, experiment/orchestrator, tracker, and the integration test.
+
 - Implemented in `a86c50b`: the backend retains scenario transitions instead of exposing
   only the latest runtime snapshot. Every event has a monotonic sequence and immutable
   `before`/`after` states; long polling returns all retained events after the client cursor.
