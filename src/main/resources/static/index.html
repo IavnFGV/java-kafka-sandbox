@@ -76,51 +76,64 @@
                         <svg id="graph" viewBox="0 0 980 520" role="img" aria-label="System integration graph"></svg>
                     </div>
 
-                    <section class="timeline-panel" aria-label="Scenario timeline">
-                        <div class="timeline-heading">
-                            <div>
-                                <p class="section-label">Recorded Timeline</p>
-                                <p class="timeline-copy">Select a transition to restore its previous state and replay it.</p>
-                            </div>
-                            <div class="timeline-controls">
-                                <button id="timeline-previous" type="button">Previous</button>
-                                <button id="timeline-replay" type="button">Replay</button>
-                                <button id="timeline-next" type="button">Next</button>
-                                <button id="timeline-play-all" type="button">Play all</button>
-                            </div>
+                </section>
+
+                <section class="timeline-panel" aria-label="Scenario timeline">
+                    <div class="timeline-heading">
+                        <div class="timeline-current">
+                            <p class="section-label">Recorded Timeline</p>
+                            <strong id="step-title">Loading...</strong>
+                            <span id="step-description"></span>
                         </div>
-                        <ol id="scenario-timeline" class="scenario-timeline"></ol>
-                    </section>
-                </section>
-
-                <section class="panel details">
-                    <div class="step-card">
-                        <p class="section-label">Current Step</p>
-                        <h2 id="step-title">Loading...</h2>
-                        <p id="step-description" class="section-copy"></p>
+                        <div class="timeline-actions">
+                            <label class="technical-toggle">
+                                <input id="timeline-technical" type="checkbox">
+                                Technical events
+                            </label>
+                            <button id="open-runtime-log" class="secondary-control" type="button">Log</button>
+                            <button id="open-legend" class="secondary-control" type="button">Legend</button>
+                        </div>
                     </div>
-
-                    <div class="legend">
-                        <p class="section-label">Legend</p>
-                        <ul>
-                            <li><span class="legend-dot external"></span>External actor</li>
-                            <li><span class="legend-dot container"></span>Application/container</li>
-                            <li><span class="legend-dot service"></span>Application service</li>
-                            <li><span class="legend-dot broker"></span>Kafka broker/topic</li>
-                            <li><span class="legend-dot consumer"></span>Consumer/listener</li>
-                            <li><span class="legend-dot monitor"></span>Monitoring/observability</li>
-                        </ul>
+                    <ol id="scenario-timeline" class="scenario-timeline"></ol>
+                    <div class="timeline-transport">
+                        <button id="timeline-previous" type="button">Previous</button>
+                        <button id="timeline-replay" type="button">Replay</button>
+                        <button id="timeline-next" type="button">Next</button>
+                        <button id="timeline-play-all" type="button">Play all</button>
                     </div>
-                </div>
-                </section>
-
-                <section class="panel runtime-log-panel">
-                    <p class="section-label">Runtime Log</p>
-                    <div id="runtime-log" class="runtime-log"></div>
                 </section>
             </div>
         </section>
     </main>
+
+    <dialog id="runtime-log-dialog" class="overlay-dialog">
+        <div class="dialog-heading">
+            <div>
+                <p class="section-label">Runtime Log</p>
+                <h2>Backend activity</h2>
+            </div>
+            <button type="button" data-close-dialog>Close</button>
+        </div>
+        <div id="runtime-log" class="runtime-log"></div>
+    </dialog>
+
+    <dialog id="legend-dialog" class="overlay-dialog">
+        <div class="dialog-heading">
+            <div>
+                <p class="section-label">Legend</p>
+                <h2>Graph elements</h2>
+            </div>
+            <button type="button" data-close-dialog>Close</button>
+        </div>
+        <ul class="dialog-legend">
+            <li><span class="legend-dot external"></span>External actor</li>
+            <li><span class="legend-dot container"></span>Application/container</li>
+            <li><span class="legend-dot service"></span>Application service</li>
+            <li><span class="legend-dot broker"></span>Kafka broker/topic</li>
+            <li><span class="legend-dot consumer"></span>Consumer/listener</li>
+            <li><span class="legend-dot monitor"></span>Monitoring/observability</li>
+        </ul>
+    </dialog>
 
     <script src="/app.js"></script>
 </body>

@@ -133,9 +133,53 @@ class ScenarioRuntimeServiceTest {
         assertEquals(currentRevision + 1, update.revision());
         assertEquals(1, update.events().size());
         assertEquals(currentRevision + 1, update.events().get(0).sequence());
+        assertFalse(update.events().get(0).visibleInTimeline());
+        assertFalse(update.events().get(0).animated());
         assertNull(update.events().get(0).before().scenarioId());
         assertEquals("system-ready", update.events().get(0).after().scenarioId());
         assertEquals("system-ready", update.runtime().scenarioId());
+    }
+
+    @Test
+    void shouldClassifyAnimatedAndTechnicalTimelineEventsOnBackend() {
+        ScenarioGraph scenario = scenarioCatalog.systemReadyScenario();
+        runtimeService.startActiveSession(scenario, "classification-test");
+        long cursor = runtimeService.currentRuntimeUpdate().revision();
+
+        runtimeService.applyRuntimeEvent(scenario, new RuntimeEventRequest(
+                scenario.id(), "signal-started", null, "publisher-kafka", "TradeEvent",
+                "publisher", "kafka", null));
+        runtimeService.applyRuntimeEvent(scenario, new RuntimeEventRequest(
+                scenario.id(), "signal-delivered", null, "publisher-kafka", "TradeEvent",
+                "publisher", "kafka", null));
+        runtimeService.updateNodeDetail(scenario, "publisher", "sent");
+
+        ScenarioRuntimeUpdate update = (ScenarioRuntimeUpdate) runtimeService
+                .awaitRuntimeUpdate(cursor, 5_000).getResult();
+
+        assertEquals(3, update.events().size());
+        assertTrue(update.events().get(0).visibleInTimeline());
+        assertTrue(update.events().get(0).animated());
+        assertFalse(update.events().get(1).visibleInTimeline());
+        assertFalse(update.events().get(1).animated());
+        assertFalse(update.events().get(2).visibleInTimeline());
+    }
+
+    @Test
+    void shouldKeepReadyAssignmentVisibleButNotAnimated() {
+        ScenarioGraph scenario = scenarioCatalog.systemReadyScenario();
+        runtimeService.startActiveSession(scenario, "assignment-test");
+        long cursor = runtimeService.currentRuntimeUpdate().revision();
+
+        runtimeService.applyRuntimeEvent(scenario, new RuntimeEventRequest(
+                scenario.id(), "signal-started", null, null, "partition assigned",
+                "kafka", "listener", "READY"));
+
+        ScenarioRuntimeUpdate update = (ScenarioRuntimeUpdate) runtimeService
+                .awaitRuntimeUpdate(cursor, 5_000).getResult();
+
+        assertTrue(update.events().get(0).visibleInTimeline());
+        assertFalse(update.events().get(0).animated());
     }
 
     @Test

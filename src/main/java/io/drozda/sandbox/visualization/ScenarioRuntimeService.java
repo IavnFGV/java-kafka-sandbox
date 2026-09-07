@@ -113,7 +113,7 @@ public class ScenarioRuntimeService {
                 eventLog,
                 "session-started",
                 testName
-        ));
+        ), false, false);
     }
 
     public ActiveScenarioRuntimeState updateActiveStep(ScenarioGraph scenario, int stepIndex) {
@@ -136,7 +136,7 @@ public class ScenarioRuntimeService {
                 eventLog,
                 "step-changed",
                 "Step " + clamped
-        ));
+        ), false, false);
     }
 
     public ActiveScenarioRuntimeState completeActiveSession(ScenarioGraph scenario) {
@@ -156,7 +156,7 @@ public class ScenarioRuntimeService {
                 eventLog,
                 "session-completed",
                 activeRuntime.testName()
-        ));
+        ), false, false);
     }
 
     public ActiveScenarioRuntimeState applyRuntimeEvent(ScenarioGraph scenario, RuntimeEventRequest request) {
@@ -219,6 +219,13 @@ public class ScenarioRuntimeService {
             appendLog(eventLog, describeEvent(request, eventType, status));
         }
 
+        boolean signalStarted = EVENT_SIGNAL_STARTED.equals(eventType);
+        boolean animated = signalStarted && !STATUS_READY.equals(status);
+        boolean visibleInTimeline = signalStarted
+                || EVENT_COMPONENT_READY.equals(eventType)
+                || EVENT_COMPONENT_BUSY.equals(eventType)
+                || EVENT_COMPONENT_WAITING.equals(eventType)
+                || EVENT_COMPONENT_FAILED.equals(eventType);
         return publishRuntime(new ActiveScenarioRuntimeState(
                 scenario.id(),
                 currentStepByScenario.getOrDefault(scenario.id(), 0),
@@ -232,7 +239,7 @@ public class ScenarioRuntimeService {
                 eventLog,
                 request.type(),
                 request.label()
-        ));
+        ), visibleInTimeline, animated);
     }
 
     public ActiveScenarioRuntimeState updateNodeDetail(ScenarioGraph scenario, String nodeId, String detail) {
@@ -261,11 +268,20 @@ public class ScenarioRuntimeService {
     }
 
     private synchronized ActiveScenarioRuntimeState publishRuntime(ActiveScenarioRuntimeState runtime) {
+        return publishRuntime(runtime, false, false);
+    }
+
+    private synchronized ActiveScenarioRuntimeState publishRuntime(
+            ActiveScenarioRuntimeState runtime,
+            boolean visibleInTimeline,
+            boolean animated
+    ) {
         ActiveScenarioRuntimeState before = activeRuntime;
         activeRuntime = runtime;
         long revision = runtimeRevision.incrementAndGet();
         synchronized (runtimeTimeline) {
-            runtimeTimeline.add(new ScenarioTimelineEvent(revision, before, runtime));
+            runtimeTimeline.add(new ScenarioTimelineEvent(
+                    revision, before, runtime, visibleInTimeline, animated));
             if (runtimeTimeline.size() > MAX_TIMELINE_EVENTS) {
                 runtimeTimeline.remove(0);
             }

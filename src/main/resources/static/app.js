@@ -38,6 +38,11 @@ const timelinePrevious = document.getElementById("timeline-previous");
 const timelineReplay = document.getElementById("timeline-replay");
 const timelineNext = document.getElementById("timeline-next");
 const timelinePlayAll = document.getElementById("timeline-play-all");
+const timelineTechnical = document.getElementById("timeline-technical");
+const openRuntimeLog = document.getElementById("open-runtime-log");
+const openLegend = document.getElementById("open-legend");
+const runtimeLogDialog = document.getElementById("runtime-log-dialog");
+const legendDialog = document.getElementById("legend-dialog");
 const scenarioInputs = document.getElementById("scenario-inputs");
 const keyStrategy = document.getElementById("key-strategy");
 const themeToggle = document.getElementById("theme-toggle");
@@ -112,6 +117,15 @@ function bindControlEvents() {
   timelineReplay.addEventListener("click", replayTimelineStep);
   timelineNext.addEventListener("click", () => navigateTimeline(1));
   timelinePlayAll.addEventListener("click", playTimelineToEnd);
+  timelineTechnical.addEventListener("change", () => {
+    timelineFor(state.activeScenarioId).showTechnical = timelineTechnical.checked;
+    renderTimeline();
+  });
+  openRuntimeLog.addEventListener("click", () => runtimeLogDialog.showModal());
+  openLegend.addEventListener("click", () => legendDialog.showModal());
+  document.querySelectorAll("[data-close-dialog]").forEach((button) => {
+    button.addEventListener("click", () => button.closest("dialog").close());
+  });
 }
 
 function runScenario() {
@@ -196,8 +210,22 @@ function receiveTimelineEvents(events) {
     const eventScenarioId = event.after?.scenarioId || event.before?.scenarioId;
     if (!eventScenarioId) return;
     const timeline = timelineFor(eventScenarioId);
-    if (!timeline.events.some((existing) => existing.sequence === event.sequence)) {
-      timeline.events.push(event);
+    if (timeline.events.some((existing) => existing.sequence === event.sequence)) return;
+    timeline.events.push(event);
+    if (event.visibleInTimeline) {
+      timeline.frames.push({
+        event,
+        before: event.before,
+        transition: event.after,
+        after: event.after,
+        technicalEvents: []
+      });
+      return;
+    }
+    const previousFrame = timeline.frames[timeline.frames.length - 1];
+    if (previousFrame) {
+      previousFrame.after = event.after;
+      previousFrame.technicalEvents.push(event);
     }
   });
 
@@ -209,8 +237,10 @@ function timelineFor(targetScenarioId) {
   if (!state.timelinesByScenario[targetScenarioId]) {
     state.timelinesByScenario[targetScenarioId] = {
       events: [],
+      frames: [],
       currentIndex: -1,
       autoFollow: false,
+      showTechnical: false,
       timer: null,
       renderToken: 0
     };
@@ -222,6 +252,7 @@ function resetScenarioTimeline(targetScenarioId) {
   const timeline = timelineFor(targetScenarioId);
   window.clearTimeout(timeline.timer);
   timeline.events = [];
+  timeline.frames = [];
   timeline.currentIndex = -1;
   timeline.autoFollow = false;
   timeline.timer = null;
@@ -231,14 +262,14 @@ function resetScenarioTimeline(targetScenarioId) {
 
 function continueTimelinePlayback(targetScenarioId) {
   const timeline = timelineFor(targetScenarioId);
-  if (!timeline.autoFollow || timeline.timer || timeline.currentIndex >= timeline.events.length - 1) return;
+  if (!timeline.autoFollow || timeline.timer || timeline.currentIndex >= timeline.frames.length - 1) return;
   showTimelineStep(targetScenarioId, timeline.currentIndex + 1, true);
 }
 
 function showTimelineStep(targetScenarioId, index, continuePlaying = false) {
   const timeline = timelineFor(targetScenarioId);
-  const event = timeline.events[index];
-  if (!event) return;
+  const frame = timeline.frames[index];
+  if (!frame) return;
 
   window.clearTimeout(timeline.timer);
   timeline.timer = null;
@@ -246,22 +277,23 @@ function showTimelineStep(targetScenarioId, index, continuePlaying = false) {
   timeline.currentIndex = index;
   timeline.renderToken += 1;
   const renderToken = timeline.renderToken;
-  state.activeRuntime = event.before?.scenarioId === targetScenarioId ? event.before : null;
+  state.activeRuntime = frame.before?.scenarioId === targetScenarioId ? frame.before : null;
   if (state.activeRuntime) state.stepIndex = state.activeRuntime.currentStepIndex;
   render();
 
   window.requestAnimationFrame(() => {
     if (timeline.renderToken !== renderToken) return;
-    state.activeRuntime = event.after?.scenarioId === targetScenarioId ? event.after : null;
+    state.activeRuntime = frame.transition?.scenarioId === targetScenarioId ? frame.transition : null;
     if (state.activeRuntime) state.stepIndex = state.activeRuntime.currentStepIndex;
     render();
-    const hasSignal = (event.after?.activeSignals || []).length > 0;
-    if (timeline.autoFollow) {
-      timeline.timer = window.setTimeout(() => {
-        timeline.timer = null;
-        continueTimelinePlayback(targetScenarioId);
-      }, hasSignal ? SIGNAL_PLAYBACK_MS : STATE_PLAYBACK_MS);
-    }
+    timeline.timer = window.setTimeout(() => {
+      timeline.timer = null;
+      if (timeline.renderToken !== renderToken) return;
+      state.activeRuntime = frame.after?.scenarioId === targetScenarioId ? frame.after : null;
+      if (state.activeRuntime) state.stepIndex = state.activeRuntime.currentStepIndex;
+      render();
+      continueTimelinePlayback(targetScenarioId);
+    }, frame.event.animated ? SIGNAL_PLAYBACK_MS : STATE_PLAYBACK_MS);
   });
 }
 
@@ -276,7 +308,7 @@ function pauseTimeline(targetScenarioId) {
 
 function navigateTimeline(delta) {
   const timeline = timelineFor(state.activeScenarioId);
-  const targetIndex = Math.max(0, Math.min(timeline.events.length - 1, timeline.currentIndex + delta));
+  const targetIndex = Math.max(0, Math.min(timeline.frames.length - 1, timeline.currentIndex + delta));
   showTimelineStep(state.activeScenarioId, targetIndex, false);
 }
 
@@ -288,7 +320,7 @@ function replayTimelineStep() {
 function playTimelineToEnd() {
   const timeline = timelineFor(state.activeScenarioId);
   timeline.autoFollow = true;
-  if (timeline.currentIndex >= timeline.events.length - 1) timeline.currentIndex = -1;
+  if (timeline.currentIndex >= timeline.frames.length - 1) timeline.currentIndex = -1;
   continueTimelinePlayback(state.activeScenarioId);
   renderTimeline();
 }
@@ -343,16 +375,30 @@ function render() {
 function renderTimeline() {
   if (!scenarioTimeline || !state.activeScenarioId) return;
   const timeline = timelineFor(state.activeScenarioId);
-  scenarioTimeline.innerHTML = timeline.events.length === 0
+  let animatedSequence = 0;
+  const frameIndexBySequence = new Map(timeline.frames
+    .map((frame, index) => [frame.event.sequence, index]));
+  scenarioTimeline.innerHTML = timeline.frames.length === 0
     ? `<li class="timeline-empty">Run the scenario to record its transitions.</li>`
-    : timeline.events.map((event, index) => `
+    : timeline.events.map((event) => {
+      if (!event.visibleInTimeline) {
+        return timeline.showTechnical ? `
+          <li class="timeline-technical-event" title="Backend sequence ${event.sequence}">
+            <span>TECH ${event.sequence}</span>${escapeXml(timelineEventTitle(event))}
+          </li>
+        ` : "";
+      }
+      const index = frameIndexBySequence.get(event.sequence);
+      const frameNumber = event.animated ? String(++animatedSequence).padStart(3, "0") : "STATE";
+      return `
       <li class="timeline-step ${index === timeline.currentIndex ? "current" : ""}">
         <button type="button" data-timeline-index="${index}">
-          <span class="timeline-step-sequence">${String(index + 1).padStart(3, "0")}</span>
+          <span class="timeline-step-sequence">${frameNumber}</span>
           <span class="timeline-step-title">${escapeXml(timelineEventTitle(event))}</span>
         </button>
       </li>
-    `).join("");
+      `;
+    }).join("");
   scenarioTimeline.querySelectorAll("[data-timeline-index]").forEach((button) => {
     button.addEventListener("click", () => showTimelineStep(
       state.activeScenarioId,
@@ -362,8 +408,9 @@ function renderTimeline() {
   });
   timelinePrevious.disabled = timeline.currentIndex <= 0;
   timelineReplay.disabled = timeline.currentIndex < 0;
-  timelineNext.disabled = timeline.currentIndex >= timeline.events.length - 1;
-  timelinePlayAll.disabled = timeline.events.length === 0 || timeline.autoFollow;
+  timelineNext.disabled = timeline.currentIndex >= timeline.frames.length - 1;
+  timelinePlayAll.disabled = timeline.frames.length === 0 || timeline.autoFollow;
+  timelineTechnical.checked = timeline.showTechnical;
 }
 
 function timelineEventTitle(event) {
