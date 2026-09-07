@@ -5,6 +5,10 @@ This guide describes the implemented architecture on `main`. The
 articles; [the roadmap](KAFKA_100_PROBLEMS_AND_PATTERNS.md) separates implemented
 coverage from future experiments.
 
+For a step-by-step code walkthrough using scenarios 001 and 002, read
+[How the platform works (RU)](docs/platform-architecture.ru.md) /
+[English](docs/platform-architecture.en.md), also accessible from the site header.
+
 ## Execution path
 
 1. The browser loads the catalog and selected scenario from `/api/scenarios`.
@@ -51,7 +55,10 @@ Topic cleanup and external orchestration remain backlog work.
 [ScenarioGraph](src/main/java/io/drozda/sandbox/visualization/ScenarioGraph.java)
 contains topology, legacy steps, practical purpose, backlog IDs, and `sourceRoot`.
 The [catalog](src/main/java/io/drozda/sandbox/visualization/ScenarioCatalog.java)
-builds these graphs in Java. Nodes describe components, edges describe connections,
+builds these graphs in Java. Nodes describe components and carry explicit `sourceReferences` (label, file path,
+line, and explanation). [ScenarioSourceCatalog](src/main/java/io/drozda/sandbox/visualization/ScenarioSourceCatalog.java)
+binds these references to stable scenario/node IDs; UI labels are not used to guess paths.
+Edges describe connections,
 and steps provide the initial/scripted view.
 
 There are two runtime models:
@@ -104,10 +111,18 @@ backend head and discards the old local history. Stop pauses playback and clears
 client state after stopping the environment. The UI disables Play/Stop while its
 run request is in flight, but the backend does not isolate concurrent callers.
 
+The title’s **Show description on GitHub** link opens the selected scenario’s English
+article in a new tab; the article includes a Russian-language link. The frontend
+maps stable scenario IDs to document filenames in `scenarioDescriptionPath()`.
+
 Nodes can be dragged, container nodes resized, and child positions constrained
-inside containers. Clicking a node opens its description and a GitHub link to
-`sourceRoot` on `main`. This is a package-level branch link, not a commit-pinned
-file/line permalink or an embedded source viewer. Articles provide finer source links.
+inside containers. Clicking a node opens its description and a list of concrete source references.
+Each reference opens a file on GitHub `main` at the configured line, with its path
+and a short explanation. Publishers link to send code; consumers link to their
+listener and tracker; broker nodes link to configuration; verification nodes link
+to experiments and tests. Shared listener implementations deliberately share links.
+These are branch-relative links, not commit-pinned permalinks. Source snippets are
+not embedded in the application.
 
 The hue picker stores its theme in `localStorage`. Component type colors identify
 nodes; runtime highlights indicate ready, busy, waiting, and failed states.
@@ -145,11 +160,12 @@ map. Scenario 004 uses `keyStrategy`; 006 uses `topology`.
 [ScenarioCatalogTest](src/test/java/io/drozda/sandbox/visualization/ScenarioCatalogTest.java)
 checks purpose, backlog IDs, and unique scenario order.
 [ScenarioSourceReferenceTest](src/test/java/io/drozda/sandbox/visualization/ScenarioSourceReferenceTest.java)
-checks source directories.
+checks source directories, every node’s file/line references, distinct consumer
+bindings, and JSON serialization of the API metadata.
 [ScenarioRuntimeServiceTest](src/test/java/io/drozda/sandbox/visualization/ScenarioRuntimeServiceTest.java)
 checks runtime transitions, waiting, and timeline behavior. Scenario integration
 tests require a reachable Kafka broker; see [README](README.md) for commands.
 
 Pending work includes explicit cursor-gap detection, independent sessions,
-node-level source references, topic cleanup, and external process/container control.
+embedded source snippets, topic cleanup, and external process/container control.
 Kafka learning priorities are recorded in the roadmap rather than repeated here.

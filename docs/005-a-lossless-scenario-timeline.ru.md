@@ -101,15 +101,15 @@ Backend-журнал живёт дольше одной вкладки брау�
 Frontend хранит отдельную timeline для каждого сценария. В ней есть список событий,
 текущий индекс, режим автоматического продолжения, timer и token для отмены устаревшей
 анимации. Структура создаётся в
-[`timelineFor()`](../src/main/resources/static/app.js#L249).
+[`timelineFor()`](../src/main/resources/static/app.js#L248).
 
 Long polling получает пакет и добавляет события без дубликатов в
-[`receiveTimelineEvents()`](../src/main/resources/static/app.js#L214). Backend при этом
+[`receiveTimelineEvents()`](../src/main/resources/static/app.js#L213). Backend при этом
 не замедляется: Kafka experiment может уже завершиться, пока UI ещё спокойно показывает
 первые transitions.
 
 Основная логика находится в
-[`showTimelineStep()`](../src/main/resources/static/app.js#L282). Сначала функция
+[`showTimelineStep()`](../src/main/resources/static/app.js#L281). Сначала функция
 устанавливает snapshot `before` и рисует исходное состояние. На следующем animation
 frame она применяет `after`, после чего SVG-сигнал начинает движение. Для шага с
 активным сигналом выделено 3200 мс, для обычного изменения состояния — 700 мс.
@@ -121,8 +121,8 @@ consumer или Kafka. Это принципиально: эксперимент
 ## Навигация по истории
 
 Под графом появился список записанных переходов и четыре команды. Разметка находится
-в [`index.html`](../src/main/resources/static/index.html#L89), а карточки строятся в
-[`renderTimeline()`](../src/main/resources/static/app.js#L399).
+в [`index.html`](../src/main/resources/static/index.html#L96), а карточки строятся в
+[`renderTimeline()`](../src/main/resources/static/app.js#L407).
 
 - `Previous` воспроизводит предыдущий переход.
 - `Replay` снова показывает текущий переход от `before` к `after`.

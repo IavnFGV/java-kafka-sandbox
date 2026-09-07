@@ -47,8 +47,7 @@ const legendDialog = document.getElementById("legend-dialog");
 const sourceDialog = document.getElementById("source-dialog");
 const sourceNodeTitle = document.getElementById("source-node-title");
 const sourceNodeDescription = document.getElementById("source-node-description");
-const sourcePath = document.getElementById("source-path");
-const sourceGithubLink = document.getElementById("source-github-link");
+const sourceReferences = document.getElementById("source-references");
 const scenarioInputs = document.getElementById("scenario-inputs");
 const keyStrategy = document.getElementById("key-strategy");
 const globalOrderingInputs = document.getElementById("global-ordering-inputs");
@@ -356,6 +355,15 @@ function applyScenario(scenario) {
   state.scenario = scenario;
   state.activeScenarioId = scenario.id;
   title.textContent = scenario.title;
+  const descriptionLink = document.getElementById("scenario-description-link");
+  const descriptionPath = scenarioDescriptionPath(scenario.id);
+  descriptionLink.hidden = !descriptionPath;
+  if (descriptionPath) {
+    descriptionLink.href = "https://github.com/IavnFGV/java-kafka-sandbox/blob/main/docs/" + descriptionPath;
+    descriptionLink.setAttribute("aria-label", `Show description of ${scenario.title} on GitHub (opens in a new tab)`);
+  } else {
+    descriptionLink.removeAttribute("href");
+  }
   summary.textContent = scenario.summary;
   purposeText.textContent = scenario.practicalPurpose;
   backlogItems.innerHTML = scenario.backlogItems.length > 0
@@ -1011,11 +1019,33 @@ function attachDragHandlers() {
 
 function openSourceGuide(nodeId) {
   const node = state.scenario.nodes.find((candidate) => candidate.id === nodeId);
-  if (!node || !state.scenario.sourceRoot) return;
+  if (!node) return;
   sourceNodeTitle.textContent = node.label;
   sourceNodeDescription.textContent = node.description || "Inspect the source code behind this scenario element.";
-  sourcePath.textContent = state.scenario.sourceRoot;
-  sourceGithubLink.href = GITHUB_SOURCE_ROOT + state.scenario.sourceRoot;
+  sourceReferences.replaceChildren();
+  (node.sourceReferences || []).forEach((reference) => {
+    const item = document.createElement("li");
+    const link = document.createElement("a");
+    link.className = "source-github-link";
+    link.href = GITHUB_SOURCE_ROOT.replace("/tree/", "/blob/")
+      + reference.path.split("/").map(encodeURIComponent).join("/") + `#L${reference.line}`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = `${reference.label} ↗`;
+    link.setAttribute("aria-label", `${reference.label}, line ${reference.line} (opens in a new tab)`);
+    const path = document.createElement("code");
+    path.className = "source-path";
+    path.textContent = `${reference.path}:${reference.line}`;
+    const description = document.createElement("p");
+    description.textContent = reference.description;
+    item.append(link, path, description);
+    sourceReferences.append(item);
+  });
+  if (!sourceReferences.children.length) {
+    const item = document.createElement("li");
+    item.textContent = "No implementation references are available for this node.";
+    sourceReferences.append(item);
+  }
   sourceDialog.showModal();
 }
 
@@ -1231,4 +1261,22 @@ function escapeXml(text) {
     .replaceAll(">", "&gt;")
     .replaceAll("\"", "&quot;")
     .replaceAll("'", "&apos;");
+}
+
+function scenarioDescriptionPath(scenarioId) {
+  const articles = {
+    "system-ready": "001-system-ready",
+    "trade-flow": "002-trade-event-flow",
+    "topic-partition-offsets": "003-topic-partition-offset",
+    "key-partitioning": "004-message-key-partition-selection",
+    "partition-ordering": "005-ordering-within-one-partition",
+    "global-ordering": "006-no-global-ordering-across-partitions",
+    "consumer-group-single-partition": "007-one-partition-two-consumers",
+    "consumer-group-two-partitions": "008-two-partitions-two-consumers",
+    "multiple-consumer-groups": "009-multiple-consumer-groups",
+    "earliest-vs-latest": "010-earliest-vs-latest",
+    "consumer-group-rebalance-join": "011-rebalance-when-second-consumer-joins",
+    "consumer-group-consumer-failure": "012-consumer-failure-partition-takeover"
+  };
+  return Object.hasOwn(articles, scenarioId) ? `${articles[scenarioId]}.en.md` : null;
 }

@@ -11,6 +11,10 @@
         <section class="hero">
             <p class="eyebrow">Integration Learning Surface</p>
             <h1>Sandbox Integration Visualizer</h1>
+            <nav class="platform-guide" aria-label="Platform architecture">
+                <a class="scenario-description-link" href="https://github.com/IavnFGV/java-kafka-sandbox/blob/main/docs/platform-architecture.ru.md" target="_blank" rel="noopener noreferrer">How the platform works ↗ (RU)</a>
+                <a class="scenario-description-link" href="https://github.com/IavnFGV/java-kafka-sandbox/blob/main/docs/platform-architecture.en.md" target="_blank" rel="noopener noreferrer" aria-label="Read platform architecture in English on GitHub">EN ↗</a>
+            </nav>
             <p class="hero-copy">
                 A visual layer for understanding how events move through the system.
             </p>
@@ -47,7 +51,10 @@
                     <div class="panel-header">
                         <div>
                             <p class="section-label">Scenario</p>
-                            <h2 id="scenario-title">Loading...</h2>
+                            <div class="scenario-heading">
+                                <h2 id="scenario-title">Loading...</h2>
+                                <a id="scenario-description-link" class="scenario-description-link" target="_blank" rel="noopener noreferrer" hidden>Show description on GitHub ↗</a>
+                            </div>
                             <p id="scenario-summary" class="section-copy"></p>
                             <div class="scenario-purpose">
                                 <span class="scenario-purpose-label">Why it matters</span>
@@ -152,10 +159,7 @@
             <button type="button" data-close-dialog>Close</button>
         </div>
         <p id="source-node-description" class="source-node-description"></p>
-        <code id="source-path" class="source-path"></code>
-        <a id="source-github-link" class="source-github-link" target="_blank" rel="noopener noreferrer">
-            Open source on GitHub
-        </a>
+        <ul id="source-references" class="source-references" aria-label="Implementation references"></ul>
     </dialog>
 
     <script src="/app.js"></script>

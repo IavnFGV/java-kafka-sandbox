@@ -11,7 +11,8 @@ For current scope and remaining work, use [README](README.md), the
 - Scenarios 001–012 are implemented; articles and source links are available in
   [Russian and English](docs/README.md).
 - Timeline replay, visible/technical frames, parallel signals, and package-level
-  source navigation are implemented. Per-node snippets and cursor-gap detection remain planned.
+  source navigation are implemented, including concrete node-level file/line links.
+  Embedded snippets and cursor-gap detection remain planned.
 - Consumer shutdown is graceful; measured broker lag and process-crash detection
   are not demonstrated by scenario 012.
 - The following dated entries retain the implementation history.
@@ -206,3 +207,14 @@ For current scope and remaining work, use [README](README.md), the
 - Drag and click are distinguished by pointer movement so rearranging the graph does not open the source dialog.
 - `ScenarioSourceReferenceTest` verifies that every configured source directory exists after package refactoring.
 - Future refinement: add node-level file and line references for producer, listener, tracker, and experiment classes.
+
+## Node-level source navigation
+
+- Replaced the shared package link in the node dialog with explicit references for
+  all 92 nodes across 12 scenarios, including configuration and verification code.
+- The backend owns file paths, line anchors, and explanations through
+  `ScenarioSourceCatalog` and `ScenarioNode.sourceReferences`.
+- The browser lists the references and opens each file on GitHub in a new tab.
+- External broker nodes point to Compose/client configuration; they do not imply
+  that the broker itself is implemented by an application class.
+- Tests check reference targets, line bounds, consumer identity, and API serialization.

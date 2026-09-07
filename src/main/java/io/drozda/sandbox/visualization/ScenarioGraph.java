@@ -28,6 +28,8 @@ public record ScenarioGraph(
 
     public ScenarioGraph withSourceRoot(String path) {
         return new ScenarioGraph(id, order, title, summary, practicalPurpose, backlogItems,
-                viewportWidth, viewportHeight, nodes, edges, steps, events, path);
+                viewportWidth, viewportHeight, nodes.stream()
+                        .map(node -> node.withSourceReferences(ScenarioSourceCatalog.references(id, node.id())))
+                        .toList(), edges, steps, events, path);
     }
 }

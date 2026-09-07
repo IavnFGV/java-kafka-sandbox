@@ -95,15 +95,15 @@ This distinction matters:
 The frontend maintains a separate timeline for each scenario. It contains an
 event list, current index, automatic continuation mode, timer, and token for
 cancelling stale animation. The structure is created in
-[`timelineFor()`](../src/main/resources/static/app.js#L249).
+[`timelineFor()`](../src/main/resources/static/app.js#L248).
 
 Long polling receives a batch and adds events without duplicates in
-[`receiveTimelineEvents()`](../src/main/resources/static/app.js#L214). The backend
+[`receiveTimelineEvents()`](../src/main/resources/static/app.js#L213). The backend
 is not slowed down: the Kafka experiment may already have finished while the UI
 is still calmly showing the first transitions.
 
 The main logic is in
-[`showTimelineStep()`](../src/main/resources/static/app.js#L282). It first sets the
+[`showTimelineStep()`](../src/main/resources/static/app.js#L281). It first sets the
 `before` snapshot and renders the initial state. On the next animation frame,
 it applies the transition state so the SVG signal starts moving. A step with an
 active signal gets 3200 ms; an ordinary state change gets 700 ms.
@@ -115,8 +115,8 @@ a comfortable speed for a person.
 ## Navigating history
 
 A list of recorded transitions and four commands appear below the graph. The
-markup is in [`index.html`](../src/main/resources/static/index.html#L89), and cards
-are built in [`renderTimeline()`](../src/main/resources/static/app.js#L399).
+markup is in [`index.html`](../src/main/resources/static/index.html#L96), and cards
+are built in [`renderTimeline()`](../src/main/resources/static/app.js#L407).
 
 - `Previous` plays the preceding transition.
 - `Replay` shows the current transition again, from `before` to `after`.
