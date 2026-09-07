@@ -48,4 +48,4 @@ actually changes.
 - [`awaitRuntimeUpdate()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L72) registers a `DeferredResult`, handles timeout, and returns an already available revision.
 - [`publishRuntime()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L282) stores the transition and completes waiting requests.
 - [`runtimeUpdates()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioGraphController.java#L111) bounds the HTTP request timeout.
-- [`pollRuntimeUpdates()`](../src/main/resources/static/app.js#L194) sends the cursor, receives events, and opens the next request.
+- [`pollRuntimeUpdates()`](../src/main/resources/static/app.js#L193) sends the cursor, receives events, and opens the next request.

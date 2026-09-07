@@ -70,13 +70,13 @@ covering message delivery, partitions/offsets, key-based routing, ordering,
 consumer groups, offset reset, rebalance, and graceful consumer takeover.
 
 The browser records backend transitions and supports local timeline replay,
-simultaneous signal frames, technical-event inspection, and package-level source
+simultaneous signal frames, technical-event inspection, and node-level source
 navigation. All 14 scenario and supplementary articles are available in
 [Russian and English](docs/README.md), with implementation line links.
 
 The current experience does not enforce prediction questions or an interactive
-quiz. Source navigation opens a scenario package on `main`; per-node file/line
-references and embedded source snippets remain planned. History is bounded in
+quiz. Source navigation opens concrete per-node classes/configuration on `main` with
+line anchors; embedded source snippets remain planned. History is bounded in
 backend memory and local to the browser page, rather than durable per-user sessions.
 
 The next learning blocks are producer durability or commits, delivery, and

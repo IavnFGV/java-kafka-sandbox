@@ -22,6 +22,13 @@ before/after notes; completed changes in those sections are not a current task l
 implementation using repository-relative paths and `#L` line anchors. Update these anchors
 when the referenced code moves. `README.en.md` is the explicitly suffixed English copy of this index.
 
+## Platform walkthrough
+
+[How the platform works (RU)](platform-architecture.ru.md) /
+[English](platform-architecture.en.md): follow Play through the mediator, create and
+close a scenario Spring context inside the main JVM, and trace events into the UI.
+These platform guides are separate from the 14 numbered scenario articles.
+
 ## Articles
 
 | Article | Russian | English |

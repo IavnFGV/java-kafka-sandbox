@@ -46,4 +46,4 @@
 - [`awaitRuntimeUpdate()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L72) регистрирует `DeferredResult`, обрабатывает timeout и возвращает уже доступную revision.
 - [`publishRuntime()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L282) сохраняет переход и завершает ожидающие запросы.
 - [`runtimeUpdates()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioGraphController.java#L111) ограничивает timeout HTTP-запроса.
-- [`pollRuntimeUpdates()`](../src/main/resources/static/app.js#L194) передаёт cursor, принимает события и открывает следующий запрос.
+- [`pollRuntimeUpdates()`](../src/main/resources/static/app.js#L193) передаёт cursor, принимает события и открывает следующий запрос.

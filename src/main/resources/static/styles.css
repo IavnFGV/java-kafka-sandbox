@@ -880,3 +880,58 @@ button:disabled {
         width: auto;
     }
 }
+
+.scenario-heading {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.scenario-description-link {
+    color: var(--ink);
+    font-size: 0.85rem;
+    text-underline-offset: 3px;
+}
+
+.scenario-description-link:hover {
+    text-decoration-thickness: 2px;
+}
+
+.scenario-description-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
+    border-radius: 2px;
+}
+
+.source-references {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 16px;
+}
+
+.source-references li {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.source-references .source-path {
+    display: block;
+    margin: 10px 0;
+    overflow-wrap: anywhere;
+}
+
+.source-references p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.platform-guide {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 12px;
+}

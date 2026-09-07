@@ -64,7 +64,10 @@ in Kafka metadata. Restart the affected services after changing their configurat
 - **Stop** closes the scenario's Spring context and resets the visual state. It does
   not delete Kafka topics or stop the broker. Play and Stop are disabled while a run is in flight.
 - **Technical events** reveals backend revisions hidden from the teaching sequence.
-- Click a node to read its description and open the scenario's source package on GitHub.
+- **Show description on GitHub** beside the scenario title opens its English article
+  in a new tab; each article links to its Russian translation.
+- Click a node to see its concrete implementation references: classes, configuration,
+  and tests, with explanations and GitHub line links.
   Drag nodes or resize containers to adjust the graph.
 
 Browser history is local to the page and disappears on reload. The backend retains
@@ -106,6 +109,8 @@ detection or prove exactly-once processing. Replication, commit strategies, retr
 DLT, and transactions remain learning backlog items.
 
 ## Project documentation
+
+- [How the platform works: RU](docs/platform-architecture.ru.md) / [EN](docs/platform-architecture.en.md) — interfaces, call flow, nested Spring context lifecycle, and UI event delivery; also linked from the site header.
 
 - [Scenario articles: RU / EN](docs/README.md)
 - [Architecture and API](VISUALIZER_CONTEXT.md)

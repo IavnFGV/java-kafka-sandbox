@@ -265,15 +265,13 @@ Retry/DLT events and measured consumer lag remain future extensions. Target voca
 
 ## Playground Infrastructure Backlog
 
-- Implemented: clicking a graph node opens a compact source panel with its description and a
-  GitHub link to the backend-supplied source package for that scenario. Dragging a node does not
-  trigger navigation.
-- Refine code-guided nodes with explicit per-node `sourceReferences` instead of only the scenario
-  package. Each reference should point to the concrete producer, listener, orchestrator, tracker,
-  or integration test involved in that node.
-- Keep source navigation structured rather than deriving paths from node labels. Each reference
-  should contain a label, repository-relative path, optional line anchor, and a short explanation
-  of why that code matters in the current scenario.
+- Implemented: clicking a graph node opens its description and concrete file/line
+  references on GitHub. Dragging a node does not trigger navigation.
+- Implemented: backend `ScenarioNode.sourceReferences` are assigned explicitly by
+  scenario and node ID in `ScenarioSourceCatalog`. References cover publishers,
+  listeners, experiments, trackers, configuration, and relevant integration tests.
+- Each reference contains a label, repository-relative file path, line anchor, and
+  explanation. Tests check every node’s references against files in the checkout.
 - Let the source panel offer two actions: inspect a small backend-served snippet without leaving
   the experiment, and open the repository permalink when one is configured. Avoid depending on
   browser-specific local IDE URL schemes as the only navigation mechanism.
