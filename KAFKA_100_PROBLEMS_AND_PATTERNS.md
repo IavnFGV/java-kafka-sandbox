@@ -26,7 +26,7 @@ How to use this list:
 | `005 Ordering Within One Partition` | Implemented | Preserve the order of related events | #11 |
 | `006 Parallel Orders Without Global Ordering` | Implemented | Remove head-of-line blocking while preserving per-order sequence | #12 |
 | `007 One Partition, Two Consumers` | Implemented | Observe one active owner, one idle member, and takeover after owner shutdown | #13, #14 |
-| `008 Two Partitions, Two Consumers` | Static UI | Scale one service by distributing partitions across its instances | #13, #14 |
+| `008 Two Partitions, Two Consumers` | Implemented | Scale one service by distributing two partition owners across two group members | #13, #14 |
 | `009 Multiple Consumer Groups` | Planned | Let independent services process the same event stream | #15 |
 | `010 Earliest vs Latest` | Planned | Control where a new group begins reading | #16 |
 | `011 Rebalance on Join` | Static UI | Understand ownership changes during deploys and autoscaling | #41, #94 |
@@ -35,6 +35,28 @@ How to use this list:
 The mapping is many-to-many: one scenario may cover several backlog questions,
 and one question may require several scenarios. Keep `ScenarioGraph.backlogItems`
 and this table synchronized when scenarios are implemented or reordered.
+
+## Consolidated Scenario Route
+
+Backlog numbers remain a knowledge index, not a one-scenario-per-question plan.
+Build one experiment when several questions describe one causal chain:
+
+| Laboratory series | Candidate experiments | Backlog coverage |
+|---|---:|---|
+| Complete core group route | 4 | #15, #16, #41, #42, #94, #97 |
+| Producer durability and throughput | 5 | #3-9, #21-30, #91-93, #99 |
+| Commits, delivery, and idempotency | 5 | #31-37, #42-45, #59-60 |
+| Retry, poison records, and DLT | 5 | #38-40, #46-58 |
+| Transactions and exactly-once boundaries | 4 | #61-70, #81-82 |
+| Retention and compacted state | 3 | #17-20, #87-90 |
+| Schema evolution | 4 | #71-80 |
+| Distributed workflows | 4 | #81-90 |
+| Operations and cluster behavior | 4 | #91-100 |
+
+This route is intentionally approximate and overlapping. A scenario is complete
+only when it has a practical problem, real execution, assertions, visualization,
+failure boundary, and article. Prefer extending a coherent experiment over adding
+a nearly identical card solely to claim another backlog number.
 
 Suggested priority:
 - `P1` = core foundations, do first

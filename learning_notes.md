@@ -18,6 +18,17 @@
 - Preferred flow: inspect a short source snippet in a side panel, then optionally follow a stable repository permalink
 - Scenario definition of done should eventually link the producer, listener, experiment, tracker, and integration test
 
+#### 2026-09-07 — Scenario 008
+
+- Topic: two partitions assigned across two consumers in one group
+- Behavior reproduced: real assignment gave P0 and P1 different owners; six records were consumed only by the owner of their partition
+- Practical takeaway: partitions are the group parallelism slots, while consumer count alone does not create work
+- Boundary: equal partition and consumer counts do not guarantee balanced traffic or processing cost
+- Files to revisit: `ParallelGroupExperiment`, `ParallelGroupTracker`, `ParallelGroupConsumerA`, `ParallelGroupConsumerB`, `ParallelGroupScenarioStarter`
+- Implementation commit: `4b9f5bc`
+- Route decision: group the remaining 100-question backlog into causal laboratory series rather than creating one card per question
+- Next scenario: multiple consumer groups reading the same topic, covering backlog #15
+
 #### 2026-07-07
 
 - Topic: consumer groups and rebalance

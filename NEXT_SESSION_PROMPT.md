@@ -35,7 +35,7 @@ Important context:
 - Do not forget to suggest or make small meaningful commits as progress is completed.
 
 Session goals:
-1. Review completed scenario `007`, then continue with `008 Two Partitions, Two Consumers` (backlog #13, #14)
+1. Review completed scenario `008`, then continue with multiple consumer groups reading one topic (backlog #15)
 2. Explain why it matters in practical systems and interviews
 3. For Kafka/Java code, guide me through implementing it in the repository with tests first or test-driven enough
 4. If useful, extend the visualizer so the scenario can be seen, not just asserted
@@ -90,6 +90,9 @@ Current scenario 004 state:
 - scenario 007 is implemented in `f04011c`: two separately controlled listeners join one group for a one-partition topic
 - scenario 007 observes the real owner, proves the other consumer is idle, stops the owner through `KafkaListenerEndpointRegistry`, and verifies takeover after rebalance
 - scenario 007 article: `docs/007-one-partition-two-consumers.md`
+- scenario 008 is implemented in `4b9f5bc`: two real consumers receive different owners for a two-partition topic and process only their assigned shards
+- scenario 008 article: `docs/008-two-partitions-two-consumers.md`
+- roadmap is now consolidated into causal laboratory series; backlog numbers remain an index, not a requirement for one scenario per question
 
 Visualizer timeline implemented:
 - backend commit `a86c50b` stores sequenced `before`/`after` transitions and long polling returns every retained event after the browser cursor
