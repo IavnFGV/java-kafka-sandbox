@@ -16,6 +16,7 @@ public class ScenarioCatalog {
                 consumerGroupSinglePartitionScenario(),
                 consumerGroupTwoPartitionsScenario(),
                 multipleConsumerGroupsScenario(),
+                earliestVsLatestScenario(),
                 consumerGroupRebalanceOnJoinScenario(),
                 consumerGroupConsumerFailureScenario(),
                 tradeFlowScenario(),
@@ -416,6 +417,38 @@ public class ScenarioCatalog {
                 ),
                 List.of()
         );
+    }
+
+    public ScenarioGraph earliestVsLatestScenario() {
+        return new ScenarioGraph(
+                "earliest-vs-latest", 10, "Earliest vs Latest",
+                "Two brand-new consumer groups join after history already exists and start reading from different positions.",
+                "Choose whether a new service must replay existing history or begin only with records produced after it subscribes.",
+                List.of(16), 1400, 800,
+                List.of(
+                        new ScenarioNode("producer", "Event Producer", "service", 55, 345, 190, 96, null,
+                                "Publishes three historical records, then two live records."),
+                        new ScenarioNode("topic-box", "events Topic", "container", 330, 180, 330, 400, null,
+                                "One partition makes the offset positions easy to compare."),
+                        new ScenarioNode("partition-0", "Partition 0", "broker", 65, 130, 200, 130, "topic-box",
+                                "Contains history before either new group subscribes."),
+                        new ScenarioNode("earliest-group", "New Group: earliest", "container", 770, 70, 450, 280, null,
+                                "With no committed offset, starts at the beginning of the log."),
+                        new ScenarioNode("earliest-consumer", "Earliest Consumer", "consumer", 105, 105, 240, 96, "earliest-group",
+                                "Receives historical and live records."),
+                        new ScenarioNode("latest-group", "New Group: latest", "container", 770, 420, 450, 280, null,
+                                "With no committed offset, starts at the end visible when it joins."),
+                        new ScenarioNode("latest-consumer", "Latest Consumer", "consumer", 105, 105, 240, 96, "latest-group",
+                                "Receives only records published after assignment."),
+                        new ScenarioNode("observer", "Offset Reset Check", "monitor", 1040, 710, 270, 75, null,
+                                "Compares the offsets actually observed by both groups.")),
+                List.of(new ScenarioEdge("publish", "producer", "partition-0", "append")),
+                List.of(
+                        new ScenarioStep("step-1", "Create history", "Publish offsets 0..2 before consumers start.", List.of()),
+                        new ScenarioStep("step-2", "Start new groups", "Start consumers with earliest and latest reset policies.", List.of()),
+                        new ScenarioStep("step-3", "Publish live records", "Append offsets 3..4 after both groups are assigned.", List.of()),
+                        new ScenarioStep("step-4", "Compare positions", "Earliest reads 0..4; latest reads only 3..4.", List.of())),
+                List.of());
     }
 
     public ScenarioGraph consumerGroupRebalanceOnJoinScenario() {
