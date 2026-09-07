@@ -382,9 +382,10 @@ button:disabled {
 .timeline-panel {
     position: fixed;
     z-index: 30;
-    right: max(16px, calc((100vw - 1180px) / 2));
+    right: 16px;
+    left: 16px;
     bottom: 12px;
-    width: min(876px, calc(100vw - 336px));
+    width: auto;
     padding: 13px 15px 11px;
     border: 1px solid var(--line);
     border-radius: 20px;
