@@ -84,4 +84,12 @@ Current scenario 004 state:
 - scenario 004 now uses ten related events: for independently hashed unique keys, accidental one-partition placement is `(1/3)^9 ≈ 0.0051%`; no-key sticky partitioning needs separate reasoning
 - assignment lines are generated from the real rebalance result and rebuilt on each run
 - scenario 005 is implemented: it compares payload sequence, increasing offsets, and actual callback order inside one partition
+
+Visualizer improvement recorded but not implemented:
+- replace latest-only runtime snapshots with a lossless backend scenario timeline
+- return all events after a sequence cursor through long polling
+- queue and replay transitions in the UI at teaching speed
+- support step selection plus `Previous`, `Replay`, `Next`, and `Play all`
+- selecting a step restores its preceding state, animates that transition, and pauses on its resulting state
+- implement backend capture first because a frontend queue cannot recover skipped snapshots
 ```

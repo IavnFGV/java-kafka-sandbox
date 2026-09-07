@@ -215,6 +215,18 @@ The visualizer should eventually be able to show:
 
 ## Playground Infrastructure Backlog
 
+- Add a lossless scenario timeline instead of exposing only the latest runtime snapshot.
+- Record every meaningful learning transition on the backend with a monotonic sequence,
+  title, state before the transition, animated signal, and state after the transition.
+- Let long polling return every timeline event after the client's sequence cursor so a
+  fast Spring/Kafka experiment cannot skip steps that the browser has not rendered yet.
+- Queue timeline events in the browser and replay them at a human-readable speed without
+  slowing down the real Kafka experiment.
+- Add step navigation: selecting a step restores the preceding state, replays that one
+  transition, and pauses on its resulting state; also provide `Previous`, `Replay`,
+  `Next`, and `Play all` controls.
+- Keep technical runtime updates out of the learning timeline unless they explain a
+  meaningful Kafka or application transition.
 - Add an explicit `Clean` action separate from `Stop`.
 - `Stop` must only close the scenario Spring context and keep Kafka data intact.
 - `Clean` should stop the scenario, delete its owned topics through Kafka Admin API,

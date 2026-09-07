@@ -642,8 +642,8 @@ function renderSignal(layout, signal, index) {
     <g class="signal">
       <text class="signal-label" x="${midX}" y="${midY}" text-anchor="middle">${escapeXml(label)}</text>
       <circle class="signal-dot" r="8">
-        <animate attributeName="cx" from="${endpoints.from.x}" to="${endpoints.to.x}" dur="1.4s" repeatCount="indefinite"></animate>
-        <animate attributeName="cy" from="${endpoints.from.y}" to="${endpoints.to.y}" dur="1.4s" repeatCount="indefinite"></animate>
+        <animate attributeName="cx" from="${endpoints.from.x}" to="${endpoints.to.x}" dur="3s" repeatCount="indefinite"></animate>
+        <animate attributeName="cy" from="${endpoints.from.y}" to="${endpoints.to.y}" dur="3s" repeatCount="indefinite"></animate>
       </circle>
     </g>
   `;

@@ -74,6 +74,17 @@
 - Boundary: Kafka preserves partition/poll order, not completion order after application-level parallel dispatch
 - Files to revisit: `PartitionOrderingExperiment`, `OrderedEventTracker`, `OrderedEventListener`, `PartitionOrderingScenarioStarter`
 
+#### 2026-09-06 — Visualizer Timeline Improvement
+
+- Problem found: every long-poll update currently triggers a complete SVG render, so an active signal animation restarts; if the backend advances through several states quickly, a latest-snapshot API can also hide intermediate learning steps entirely
+- Goal: preserve every meaningful scenario transition while allowing Kafka and Spring to run at their real speed and the browser to replay the result at a slower teaching speed
+- Backend direction: append immutable timeline events with a monotonic `sequence`, explanatory title, `stateBefore`, transition/signals, and `stateAfter`; long polling must return all events after the client's sequence cursor rather than only the newest snapshot
+- UI direction: queue received events, restore `stateBefore`, animate the transition, stop on `stateAfter`, and retain the completed timeline until page reload
+- Planned controls: clicking a step replays only that transition and pauses; `Previous`, `Replay`, `Next`, and `Play all` navigate the captured run
+- Important boundary: a frontend queue alone cannot recover states that the backend never returned; lossless capture must therefore be implemented backend-first
+- Scope rule: only pedagogically meaningful transitions belong in the timeline; internal polling and incidental status changes remain technical telemetry
+- Current temporary adjustment: moving signal dots take `3s` instead of `1.4s`, but full SVG rerenders can still restart them until timeline playback is implemented
+
 ## ETL Mapping
 
 ## AWS Basics
