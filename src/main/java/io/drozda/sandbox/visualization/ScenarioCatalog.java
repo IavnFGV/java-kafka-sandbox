@@ -481,11 +481,7 @@ public class ScenarioCatalog {
                 ),
                 List.of(
                         new ScenarioEdge("producer-p0", "producer", "partition-0", "append"),
-                        new ScenarioEdge("producer-p1", "producer", "partition-1", "append"),
-                        new ScenarioEdge("p0-a", "partition-0", "consumer-a", "owned by A"),
-                        new ScenarioEdge("p1-a", "partition-1", "consumer-a", "owned by A"),
-                        new ScenarioEdge("p1-b", "partition-1", "consumer-b", "moves to B"),
-                        new ScenarioEdge("coordinator-group", "coordinator", "group-box", "rebalance")
+                        new ScenarioEdge("producer-p1", "producer", "partition-1", "append")
                 ),
                 List.of(
                         new ScenarioStep("step-1", "Initial topology",
@@ -504,20 +500,7 @@ public class ScenarioCatalog {
                                 "The group resumes with a new stable assignment and both consumers can work.",
                                 List.of("event-post-rebalance"))
                 ),
-                List.of(
-                        new VisualizationEvent("event-a-owns-both", "assignment", "A owns p0 and p1",
-                                "With only one consumer present, both partitions belong to Consumer A.", List.of("partition-0", "partition-1", "consumer-a"),
-                                List.of("p0-a", "p1-a"), "partition-0", "consumer-a"),
-                        new VisualizationEvent("event-b-joins", "rebalance", "Consumer B joined",
-                                "The group coordinator detects a membership change and triggers rebalance.", List.of("consumer-a", "consumer-b", "coordinator", "group-box"),
-                                List.of("coordinator-group"), "coordinator", "group-box"),
-                        new VisualizationEvent("event-rebalanced", "assignment", "p1 moved to B",
-                                "Partition 1 is reassigned to Consumer B, which is the core visual of rebalance.", List.of("partition-0", "partition-1", "consumer-a", "consumer-b", "coordinator"),
-                                List.of("p0-a", "p1-b", "coordinator-group"), "partition-1", "consumer-b"),
-                        new VisualizationEvent("event-post-rebalance", "consume", "Stable after rebalance",
-                                "The new assignment is now stable and both consumers can continue independently.", List.of("producer", "partition-0", "partition-1", "consumer-a", "consumer-b"),
-                                List.of("producer-p0", "producer-p1", "p0-a", "p1-b"), "partition-0", "consumer-a")
-                )
+                List.of()
         );
     }
 
