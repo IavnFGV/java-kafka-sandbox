@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandbox Integration Visualizer</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <p class="eyebrow">Integration Learning Surface</p>
+            <h1>Sandbox Integration Visualizer</h1>
+            <p class="hero-copy">
+                A visual layer for understanding how events move through the system.
+            </p>
+            <div class="theme-picker">
+                <button id="theme-toggle" class="theme-toggle" type="button" aria-expanded="false" aria-controls="theme-panel">
+                    Palette
+                </button>
+                <div id="theme-panel" class="theme-panel" hidden>
+                    <div id="color-wheel" class="color-wheel" role="slider" aria-label="Base palette hue" aria-valuemin="0" aria-valuemax="359" tabindex="0">
+                        <span class="harmony-marker" style="--offset: 0deg; --marker-hue: 0"></span>
+                        <span class="harmony-marker" style="--offset: 90deg; --marker-hue: 90"></span>
+                        <span class="harmony-marker" style="--offset: 180deg; --marker-hue: 180"></span>
+                        <span class="harmony-marker" style="--offset: 270deg; --marker-hue: 270"></span>
+                    </div>
+                    <div>
+                        <strong>Tetradic harmony</strong>
+                        <p>Four colors spaced 90° apart.</p>
+                        <label for="theme-hue">Base hue</label>
+                        <input id="theme-hue" type="range" min="0" max="359" value="32">
+                        <button id="theme-reset" class="theme-reset" type="button">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="workspace">
+            <aside class="panel scenario-list-panel">
+                <p class="section-label">Scenarios</p>
+                <div id="scenario-list" class="scenario-list" aria-label="Scenario list"></div>
+            </aside>
+
+            <div class="visualizer-column">
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="section-label">Scenario</p>
+                            <h2 id="scenario-title">Loading...</h2>
+                            <p id="scenario-summary" class="section-copy"></p>
+                            <div class="scenario-purpose">
+                                <span class="scenario-purpose-label">Why it matters</span>
+                                <p id="scenario-purpose-text"></p>
+                                <div id="scenario-backlog-items" class="scenario-backlog-items"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="scenario-inputs" class="scenario-inputs" hidden>
+                        <label for="key-strategy">What should be used as the Kafka message key?</label>
+                        <select id="key-strategy">
+                            <option value="NO_KEY" selected>No key</option>
+                            <option value="EVENT_ID">Unique eventId</option>
+                            <option value="ORDER_ID">Order ID</option>
+                        </select>
+                        <span>Choose a strategy, then run the same events through Kafka.</span>
+                    </div>
+
+                    <div id="global-ordering-inputs" class="scenario-inputs" hidden>
+                        <label for="global-ordering-topology">Processing topology</label>
+                        <select id="global-ordering-topology">
+                            <option value="SINGLE" selected>1 partition / 1 consumer</option>
+                            <option value="PARALLEL">2 partitions / 2 consumers</option>
+                        </select>
+                        <span>Run both modes and compare when the Fast Order reaches COMPLETED.</span>
+                    </div>
+
+                    <div class="graph-shell">
+                        <div class="controls graph-controls">
+                            <button id="play-btn" type="button">Play</button>
+                            <button id="stop-btn" type="button">Stop</button>
+                        </div>
+                        <svg id="graph" viewBox="0 0 980 520" role="img" aria-label="System integration graph"></svg>
+                    </div>
+
+                </section>
+
+                <section class="timeline-panel" aria-label="Scenario timeline">
+                    <div class="timeline-heading">
+                        <div class="timeline-current">
+                            <p class="section-label">Recorded Timeline</p>
+                            <strong id="step-title">Loading...</strong>
+                            <span id="step-description"></span>
+                        </div>
+                        <div class="timeline-actions">
+                            <label class="technical-toggle">
+                                <input id="timeline-technical" type="checkbox">
+                                Technical events
+                            </label>
+                            <button id="open-runtime-log" class="secondary-control" type="button">Log</button>
+                            <button id="open-legend" class="secondary-control" type="button">Legend</button>
+                        </div>
+                    </div>
+                    <ol id="scenario-timeline" class="scenario-timeline"></ol>
+                    <div class="timeline-transport">
+                        <button id="timeline-previous" type="button">Previous</button>
+                        <button id="timeline-replay" type="button">Replay</button>
+                        <button id="timeline-next" type="button">Next</button>
+                        <button id="timeline-play-all" type="button">Play all</button>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <dialog id="runtime-log-dialog" class="overlay-dialog">
+        <div class="dialog-heading">
+            <div>
+                <p class="section-label">Runtime Log</p>
+                <h2>Backend activity</h2>
+            </div>
+            <button type="button" data-close-dialog>Close</button>
+        </div>
+        <div id="runtime-log" class="runtime-log"></div>
+    </dialog>
+
+    <dialog id="legend-dialog" class="overlay-dialog">
+        <div class="dialog-heading">
+            <div>
+                <p class="section-label">Legend</p>
+                <h2>Graph elements</h2>
+            </div>
+            <button type="button" data-close-dialog>Close</button>
+        </div>
+        <ul class="dialog-legend">
+            <li><span class="legend-dot external"></span>External actor</li>
+            <li><span class="legend-dot container"></span>Application/container</li>
+            <li><span class="legend-dot service"></span>Application service</li>
+            <li><span class="legend-dot broker"></span>Kafka broker/topic</li>
+            <li><span class="legend-dot consumer"></span>Consumer/listener</li>
+            <li><span class="legend-dot monitor"></span>Monitoring/observability</li>
+        </ul>
+    </dialog>
+
+    <dialog id="source-dialog" class="overlay-dialog source-dialog">
+        <div class="dialog-heading">
+            <div>
+                <p class="section-label">Source Guide</p>
+                <h2 id="source-node-title">Scenario source</h2>
+            </div>
+            <button type="button" data-close-dialog>Close</button>
+        </div>
+        <p id="source-node-description" class="source-node-description"></p>
+        <code id="source-path" class="source-path"></code>
+        <a id="source-github-link" class="source-github-link" target="_blank" rel="noopener noreferrer">
+            Open source on GitHub
+        </a>
+    </dialog>
+
+    <script src="/app.js"></script>
+</body>
+</html>

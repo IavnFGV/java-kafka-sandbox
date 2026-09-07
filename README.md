@@ -1,19 +1,30 @@
-# Java Integration Sandbox Template
+# Java Kafka Sandbox
 
-Reusable GitHub template repository for local Java/Spring Boot integration learning and experiments.
+Reusable Spring Boot sandbox repository for learning Kafka locally with a clean, devcontainer-friendly setup.
 
-This template is for:
+The long-term goal is an interactive Kafka scenario lab: instead of only reading
+theory, a Java developer can run focused experiments, observe Kafka behavior, and
+refresh interview-ready mental models. See `PRODUCT_VISION.md` for the intended
+learning experience and `KAFKA_100_PROBLEMS_AND_PATTERNS.md` for the scenario backlog.
 
-- Starting from a clean Spring Boot base with Java 17, Gradle, tests, and devcontainer support.
-- Creating focused sandboxes for Kafka, PostgreSQL, LocalStack/AWS mocks, Redis, Testcontainers, ETL mapping, and other integrations.
-- Keeping a repeatable devcontainer setup for local sandbox work.
+Scenario notes:
 
-This template is not for:
+- `docs/001-system-ready.md`
+- `docs/001-a-from-polling-to-long-polling.md`
+- `docs/002-trade-event-flow.md`
+
+This sandbox is for:
+
+- Practicing Kafka concepts with small Spring Boot exercises.
+- Running one local Kafka broker for development and experiments.
+- Keeping Java 17, Gradle wrapper, tests, and devcontainer support ready to use.
+
+This sandbox is not currently:
 
 - Coding-challenge jar submissions.
-- A complete demo application.
-- A prebuilt integration demo for any specific technology.
+- A completed training application.
 - Production-ready infrastructure, security, or cloud setup.
+- A full event-driven architecture example out of the box.
 
 ## Open In VS Code Dev Containers
 
@@ -32,19 +43,25 @@ Run the smoke test:
 ./gradlew test
 ```
 
+Start local Kafka:
+
+```bash
+docker compose up -d kafka
+```
+
 Run the Spring Boot app:
 
 ```bash
 ./gradlew bootRun
 ```
 
-Validate the placeholder Docker Compose file:
+Validate the Docker Compose file:
 
 ```bash
 docker compose config
 ```
 
-Use `docker-compose.yml` as the place to add local infrastructure later, for example Kafka, PostgreSQL, Redis, or LocalStack.
+Kafka is exposed on `localhost:9092` for simple local learning. If the Spring app later runs in another container instead of inside the devcontainer, advertised listeners may need adjustment.
 
 ## Teacher-Agent Rule
 
@@ -52,9 +69,10 @@ When using Codex for learning, ask it to explain, ask questions, give small task
 
 ## Suggested First Exercise
 
-Turn this base template into a focused sandbox:
+Build a tiny end-to-end Kafka learning flow:
 
-- Pick one integration technology.
-- Add only the dependencies and containers you need.
-- Keep the first exercise intentionally small.
-- Ask Codex to explain each step rather than generating the whole project at once.
+- Create a `TradeEvent` DTO.
+- Add `POST /events/trade`.
+- Publish accepted events with `KafkaTemplate`.
+- Consume them with `@KafkaListener`.
+- Add a simple in-memory idempotency check using `eventId`.

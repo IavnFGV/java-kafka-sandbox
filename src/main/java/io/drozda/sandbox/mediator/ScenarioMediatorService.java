@@ -1,0 +1,88 @@
+package io.drozda.sandbox.mediator;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import io.drozda.sandbox.scenario.spi.ScenarioEnvironment;
+import io.drozda.sandbox.scenario.spi.ScenarioStarter;
+import io.drozda.sandbox.visualization.ActiveScenarioRuntimeState;
+
+@Service
+public class ScenarioMediatorService {
+
+    private final List<ScenarioStarter> scenarioStarters;
+    private final List<ScenarioEnvironment> scenarioEnvironments;
+
+    public ScenarioMediatorService(List<ScenarioStarter> scenarioStarters, List<ScenarioEnvironment> scenarioEnvironments) {
+        this.scenarioStarters = scenarioStarters;
+        this.scenarioEnvironments = scenarioEnvironments;
+    }
+
+    public List<ScenarioCommand> commandsFor(String scenarioId) {
+        return starterFor(scenarioId).commands();
+    }
+
+    public ScenarioEnvironmentStatus environmentStatus(String scenarioId) {
+        return environmentFor(scenarioId).status();
+    }
+
+    public ScenarioEnvironmentStatus startEnvironment(String scenarioId) {
+        return environmentFor(scenarioId).start();
+    }
+
+    public ScenarioEnvironmentStatus stopEnvironment(String scenarioId) {
+        return environmentFor(scenarioId).stop();
+    }
+
+    public ScenarioEnvironmentStatus resetEnvironment(String scenarioId) {
+        return environmentFor(scenarioId).reset();
+    }
+
+    public ActiveScenarioRuntimeState execute(String scenarioId, String commandId, String invocationName) {
+        return execute(scenarioId, commandId, invocationName, Map.of());
+    }
+
+    public ActiveScenarioRuntimeState execute(
+            String scenarioId,
+            String commandId,
+            String invocationName,
+            Map<String, String> parameters
+    ) {
+        startEnvironment(scenarioId);
+        return starterFor(scenarioId).execute(commandId, invocationName,
+                parameters != null ? parameters : Map.of());
+    }
+
+    public ActiveScenarioRuntimeState runDefault(String scenarioId, String invocationName) {
+        return runDefault(scenarioId, invocationName, Map.of());
+    }
+
+    public ActiveScenarioRuntimeState runDefault(
+            String scenarioId,
+            String invocationName,
+            Map<String, String> parameters
+    ) {
+        List<ScenarioCommand> commands = commandsFor(scenarioId);
+        if (commands.isEmpty()) {
+            throw new IllegalArgumentException("No commands registered for scenario: " + scenarioId);
+        }
+
+        return execute(scenarioId, commands.get(0).id(), invocationName, parameters);
+    }
+
+    private ScenarioStarter starterFor(String scenarioId) {
+        return scenarioStarters.stream()
+                .filter(starter -> starter.scenarioId().equals(scenarioId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No scenario starter registered for scenario: " + scenarioId));
+    }
+
+    private ScenarioEnvironment environmentFor(String scenarioId) {
+        return scenarioEnvironments.stream()
+                .filter(environment -> environment.scenarioId().equals(scenarioId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No scenario environment registered for scenario: " + scenarioId));
+    }
+}
