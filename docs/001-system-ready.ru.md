@@ -1,13 +1,15 @@
 # 001. Что значит «Spring Boot приложение готово к работе с Kafka»
 
+[English](001-system-ready.en.md)
+
 ## Было / стало
 
 - Было: `11d56e5` — broker подсвечивался как доступный по факту создания `KafkaTemplate`.
 - Стало: `8dc0d2b` — сценарий честно проверяет только Spring wiring, а broker остаётся внешней непроверенной зависимостью.
 
 Перед отправкой первого сообщения полезно проверить базовую конструкцию приложения.
-Внутри Spring Boot находятся два наших компонента: `TradeEventPublisher` и
-`TradeEventListener`. Publisher использует созданный Spring объект `KafkaTemplate`,
+Внутри Spring Boot находятся два наших компонента: [`TradeEventPublisher`](../src/main/java/io/drozda/sandbox/TradeEventPublisher.java#L21) и
+[`TradeEventListener`](../src/main/java/io/drozda/sandbox/TradeEventListener.java#L20). Publisher использует созданный Spring объект `KafkaTemplate`,
 а listener объявляет метод с `@KafkaListener`.
 
 Снаружи расположен Kafka broker. Он хранит записи в partitions и отдаёт их
@@ -33,3 +35,8 @@ topic, сериализация, consumer group и offsets.
 а не подтверждение работоспособности Kafka. Настоящую end-to-end готовность можно
 доказать только реальной отправкой и получением сообщения. Этим займётся сценарий
 `002 Trade Event Flow`.
+
+## Основная логика в коде
+
+- [`SystemReadyProbe`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java#L27) — Проверка наличия внедрённых компонентов.
+- [`SystemReadyScenarioStarter`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyScenarioStarter.java#L51) — Отображение результата проверки Spring wiring.

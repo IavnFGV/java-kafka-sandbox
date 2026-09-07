@@ -1,5 +1,7 @@
 # 005. Ordering within one partition
 
+[English](005-ordering-within-one-partition.en.md)
+
 ## Было / стало
 
 - Базовая модель: `553a11f` - событие получило явный бизнес-номер `sequence`.
@@ -47,7 +49,7 @@ Experiment проверяет три свойства:
 3. Порядок callback-ов содержит `sequence 0..5` без перестановок.
 
 Проверки находятся в
-[PartitionOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/orderingwithinonepartition/app/PartitionOrderingExperiment.java#L49).
+[PartitionOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/orderingwithinonepartition/app/PartitionOrderingExperiment.java#L51).
 Producer metadata дополнительно сопоставляется с полученными `ConsumerRecord` по
 `eventId`, а не по позиции списка. Поэтому проверка координат не может случайно
 скрыть нарушение callback-order.

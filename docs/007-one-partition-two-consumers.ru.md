@@ -1,5 +1,7 @@
 # 007. One partition, two consumers, one group
 
+[English](007-one-partition-two-consumers.en.md)
+
 ## Было / стало
 
 - До сценария: `1f8d3dd` - сценарий 006 показал параллелизм независимых partitions.

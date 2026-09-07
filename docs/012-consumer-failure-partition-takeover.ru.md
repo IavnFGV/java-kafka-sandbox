@@ -1,5 +1,7 @@
 # 012. Consumer Failure and Partition Takeover
 
+[English](012-consumer-failure-partition-takeover.en.md)
+
 ## Что проверяем
 
 Сценарий покрывает вопросы #13, #41 и #97: что происходит с partition после исчезновения ее consumer, почему сообщения не теряются и откуда возникает временный lag.
@@ -10,7 +12,7 @@
 
 ## Как устроен опыт
 
-[`TakeoverTracker`](../src/main/java/io/drozda/sandbox/scenario/consumerfailureandpartitiontakeover/app/TakeoverTracker.java) хранит реальные assignment/revoke callbacks и ожидает записи по уникальным `eventId`. [`TakeoverExperiment`](../src/main/java/io/drozda/sandbox/scenario/consumerfailureandpartitiontakeover/app/TakeoverExperiment.java) выполняет последовательность:
+[`TakeoverTracker`](../src/main/java/io/drozda/sandbox/scenario/consumerfailureandpartitiontakeover/app/TakeoverTracker.java#L7) хранит реальные assignment/revoke callbacks и ожидает записи по уникальным `eventId`. [`TakeoverExperiment`](../src/main/java/io/drozda/sandbox/scenario/consumerfailureandpartitiontakeover/app/TakeoverExperiment.java#L6) выполняет последовательность:
 
 1. Запускает оба управляемых consumer.
 2. Ждет стабильного распределения с двумя владельцами.
@@ -36,3 +38,7 @@ Kafka хранит записи в partition независимо от теку�
 До реализации: `d977767`.
 
 После реализации: `6d5d278`.
+
+## Основная логика в коде
+
+- [`TakeoverConsumerControl`](../src/main/java/io/drozda/sandbox/scenario/consumerfailureandpartitiontakeover/app/TakeoverConsumerControl.java#L3) — Адресная остановка listener-контейнера.

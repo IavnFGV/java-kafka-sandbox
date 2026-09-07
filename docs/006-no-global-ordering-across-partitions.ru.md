@@ -1,5 +1,7 @@
 # 006. Parallel orders without global ordering
 
+[English](006-no-global-ordering-across-partitions.en.md)
+
 ## Было / стало
 
 - До сценария: `601fbc3` - завершена общая timeline-визуализация предыдущих экспериментов.
@@ -56,7 +58,7 @@ UI по умолчанию выбирает `1 partition / 1 consumer`. Все �
 
 В режиме `2 partitions / 2 consumers` Fast Order направляется в partition 0, а
 Slow Order в partition 1. Выбор сделан явно в
-[GlobalOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/app/GlobalOrderingExperiment.java#L52),
+[GlobalOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/app/GlobalOrderingExperiment.java#L55),
 чтобы эксперимент был детерминированным. В обычном producer стабильный
 `orderId` можно передать как key и позволить partitioner выбрать shard. Важно не
 конкретное число partition, а контракт: один order всегда использует один key.
@@ -123,3 +125,7 @@ status, offset и время завершения.
 механизм координации, принимая потерю масштабируемости и рост сложности.
 
 Сценарий покрывает backlog `#12 Why global ordering does not exist across partitions`.
+
+## Дополнительные ссылки на реализацию
+
+- [the returned list](../src/main/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/app/GlobalOrderingExperiment.java#L85)

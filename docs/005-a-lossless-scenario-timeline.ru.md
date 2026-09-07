@@ -1,5 +1,7 @@
 # 005-a. Как не потерять быстрые события между Kafka и визуализатором
 
+[English](005-a-lossless-scenario-timeline.en.md)
+
 ## Было / стало
 
 - Было: `64aea0d` — идея timeline была записана в backlog, но backend по-прежнему
@@ -19,7 +21,7 @@
 секунды. Визуализатор при этом должен показать цепочку действий: отправку сообщения,
 выбор partition, доставку consumer и итоговую проверку.
 
-Первое решение хранило только актуальный `ActiveScenarioRuntimeState`. Каждое
+Первое решение хранило только актуальный [`ActiveScenarioRuntimeState`](../src/main/java/io/drozda/sandbox/visualization/ActiveScenarioRuntimeState.java#L6). Каждое
 изменение увеличивало revision и будило long-poll запрос. Однако между двумя
 запросами backend мог выполнить несколько логических переходов:
 
@@ -41,7 +43,7 @@ revision 22: consumer received message
 ## Backend как журнал переходов
 
 Теперь единицей обмена является не только последнее состояние, а переход
-`before -> after`. Его минимальная модель находится в
+`before -> after`. Его основа показана ниже в сокращённом виде; полная модель находится в
 [`ScenarioTimelineEvent`](../src/main/java/io/drozda/sandbox/visualization/ScenarioTimelineEvent.java#L3):
 
 ```java
@@ -58,15 +60,15 @@ public record ScenarioTimelineEvent(
 context второй раз.
 
 Журнал хранится рядом с текущим runtime в
-[`ScenarioRuntimeService`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L34).
+[`ScenarioRuntimeService`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L36).
 При публикации нового состояния сервис запоминает предыдущий snapshot, увеличивает
 revision и добавляет событие в timeline. Запись выполняется атомарно в
-[`publishRuntime()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L274),
+[`publishRuntime()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L282),
 чтобы клиент не увидел новую sequence раньше, чем соответствующее событие окажется
 в журнале.
 
 Long polling сохранился, но изменился смысл ответа. Метод
-[`runtimeUpdateAfter()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L294)
+[`runtimeUpdateAfter()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L303)
 выбирает все события, у которых `sequence > afterRevision`. Контракт ответа теперь
 содержит список `events` и последний runtime snapshot, что видно в
 [`ScenarioRuntimeUpdate`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeUpdate.java#L5).
@@ -98,15 +100,15 @@ Backend-журнал живёт дольше одной вкладки брау�
 Frontend хранит отдельную timeline для каждого сценария. В ней есть список событий,
 текущий индекс, режим автоматического продолжения, timer и token для отмены устаревшей
 анимации. Структура создаётся в
-[`timelineFor()`](../src/main/resources/static/app.js#L236).
+[`timelineFor()`](../src/main/resources/static/app.js#L249).
 
 Long polling получает пакет и добавляет события без дубликатов в
-[`receiveTimelineEvents()`](../src/main/resources/static/app.js#L208). Backend при этом
+[`receiveTimelineEvents()`](../src/main/resources/static/app.js#L214). Backend при этом
 не замедляется: Kafka experiment может уже завершиться, пока UI ещё спокойно показывает
 первые transitions.
 
 Основная логика находится в
-[`showTimelineStep()`](../src/main/resources/static/app.js#L269). Сначала функция
+[`showTimelineStep()`](../src/main/resources/static/app.js#L282). Сначала функция
 устанавливает snapshot `before` и рисует исходное состояние. На следующем animation
 frame она применяет `after`, после чего SVG-сигнал начинает движение. Для шага с
 активным сигналом выделено 3200 мс, для обычного изменения состояния — 700 мс.
@@ -118,8 +120,8 @@ consumer или Kafka. Это принципиально: эксперимент
 ## Навигация по истории
 
 Под графом появился список записанных переходов и четыре команды. Разметка находится
-в [`index.html`](../src/main/resources/static/index.html#L81), а карточки строятся в
-[`renderTimeline()`](../src/main/resources/static/app.js#L375).
+в [`index.html`](../src/main/resources/static/index.html#L89), а карточки строятся в
+[`renderTimeline()`](../src/main/resources/static/app.js#L399).
 
 - `Previous` воспроизводит предыдущий переход.
 - `Replay` снова показывает текущий переход от `before` к `after`.
@@ -136,7 +138,7 @@ consumer или Kafka. Это принципиально: эксперимент
 
 ## Как проверяется отсутствие пропусков
 
-Unit-тест [`shouldReturnEveryRuntimeTransitionAfterSequenceCursor()`](../src/test/java/io/drozda/sandbox/visualization/ScenarioRuntimeServiceTest.java#L186)
+Unit-тест [`shouldReturnEveryRuntimeTransitionAfterSequenceCursor()`](../src/test/java/io/drozda/sandbox/visualization/ScenarioRuntimeServiceTest.java#L203)
 запоминает cursor, затем выполняет три изменения runtime до чтения ответа. Проверка
 требует получить ровно три события с последовательными номерами и правильными типами
 начала и завершения сессии. Таким образом тест покрывает именно исходную проблему:

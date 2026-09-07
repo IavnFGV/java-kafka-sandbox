@@ -1,5 +1,7 @@
 # 001-a. Почему визуализатор постоянно опрашивал backend
 
+[English](001-a-from-polling-to-long-polling.en.md)
+
 ## Было / стало
 
 - Было: `f8fdc4d` — браузер каждые 500 мс запрашивал runtime и повторно создавал SVG.
@@ -38,3 +40,10 @@
 Практический вывод: polling удобен для прототипа, но частота запросов не должна
 подменять модель событий. Интерфейс стоит обновлять тогда, когда состояние
 действительно изменилось.
+
+## Основная логика в коде
+
+- [`awaitRuntimeUpdate()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L72) регистрирует `DeferredResult`, обрабатывает timeout и возвращает уже доступную revision.
+- [`publishRuntime()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L282) сохраняет переход и завершает ожидающие запросы.
+- [`runtimeUpdates()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioGraphController.java#L111) ограничивает timeout HTTP-запроса.
+- [`pollRuntimeUpdates()`](../src/main/resources/static/app.js#L194) передаёт cursor, принимает события и открывает следующий запрос.
