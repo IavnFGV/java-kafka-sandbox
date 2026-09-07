@@ -4,6 +4,13 @@
 
 ### Session Log
 
+#### 2026-09-07 — Scenario Package Naming
+
+- Decision: scenario package names follow the full learning scenario meaning, not catalog numbers or abbreviated implementation terms
+- Current packages: `systemready`, `tradeeventflow`, `topicpartitionoffsetbasics`, `messagekeypartitionselection`, `orderingwithinonepartition`, `parallelorderswithoutglobalordering`, `onepartitiontwoconsumersonegroup`
+- Reason: catalog order may change, while a semantic package name keeps ownership obvious in code and avoids mass renumbering
+- Isolation fix: scenarios 002-005 now create unique topics as well as unique groups, so historical JSON type headers cannot break runs after Java package refactoring
+
 #### 2026-07-07
 
 - Topic: consumer groups and rebalance

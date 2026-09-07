@@ -34,7 +34,7 @@ Slow:         CREATED -> VALIDATING -> RESERVED -> PACKING -> SHIPPED -> COMPLET
 
 У Fast Order три состояния и короткая имитация обработки. У Slow Order шесть
 состояний и более долгая обработка. События создаются в
-[GlobalOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/globalordering/app/GlobalOrderingExperiment.java#L78),
+[GlobalOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/app/GlobalOrderingExperiment.java#L78),
 а их единый порядок публикации явно задан на строках 85-88. Задержка находится в
 payload только ради наблюдаемого учебного эксперимента. В production обработчик
 не должен доверять клиентскому полю, задающему время работы.
@@ -56,12 +56,12 @@ UI по умолчанию выбирает `1 partition / 1 consumer`. Все �
 
 В режиме `2 partitions / 2 consumers` Fast Order направляется в partition 0, а
 Slow Order в partition 1. Выбор сделан явно в
-[GlobalOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/globalordering/app/GlobalOrderingExperiment.java#L52),
+[GlobalOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/app/GlobalOrderingExperiment.java#L52),
 чтобы эксперимент был детерминированным. В обычном producer стабильный
 `orderId` можно передать как key и позволить partitioner выбрать shard. Важно не
 конкретное число partition, а контракт: один order всегда использует один key.
 
-[GlobalOrderListener](../src/main/java/io/drozda/sandbox/scenario/globalordering/consumer/GlobalOrderListener.java#L21)
+[GlobalOrderListener](../src/main/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/consumer/GlobalOrderListener.java#L21)
 содержит две учебные подписки. Первая имеет `concurrency = 1` для single-topic.
 Вторая имеет `concurrency = 2` для parallel-topic. Spring Kafka создаёт два child
 containers, то есть два реальных Kafka consumers одной group. После assignment
@@ -77,7 +77,7 @@ partitions**. Она не означает случайный порядок в�
 
 ## Что измеряет приложение
 
-[GlobalOrderTracker](../src/main/java/io/drozda/sandbox/scenario/globalordering/app/GlobalOrderTracker.java#L25)
+[GlobalOrderTracker](../src/main/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/app/GlobalOrderTracker.java#L25)
 регистрирует ожидаемые event IDs и время начала запуска. Listener имитирует
 работу, затем tracker сохраняет record в фактический момент завершения вместе с
 consumer id и elapsed time. Поэтому результирующий список отражает completion
@@ -93,11 +93,11 @@ Experiment проверяет:
 
 В parallel-режиме ожидается, что Fast завершится раньше Slow и раньше, чем Fast
 завершался в single-режиме. Эти свойства закреплены интеграционным тестом
-[GlobalOrderingScenarioTest](../src/test/java/io/drozda/sandbox/scenario/globalordering/GlobalOrderingScenarioTest.java#L23).
+[GlobalOrderingScenarioTest](../src/test/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/GlobalOrderingScenarioTest.java#L23).
 
 ## Почему здесь отдельное Spring Boot приложение
 
-[GlobalOrderingEnvironment](../src/main/java/io/drozda/sandbox/scenario/globalordering/GlobalOrderingEnvironment.java#L31)
+[GlobalOrderingEnvironment](../src/main/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/GlobalOrderingEnvironment.java#L31)
 поднимает изолированный Spring context сценария. Для каждого старта создаются
 уникальные topic и group names. Это не даёт старым offsets и records изменить
 результат нового учебного запуска. Кнопка Stop закрывает context и все listener
@@ -105,7 +105,7 @@ containers вместе с ним.
 
 Медиатор не воспроизводит придуманную Kafka-анимацию. Он получает observations
 из сценарного приложения, а
-[GlobalOrderingScenarioStarter](../src/main/java/io/drozda/sandbox/scenario/globalordering/GlobalOrderingScenarioStarter.java#L54)
+[GlobalOrderingScenarioStarter](../src/main/java/io/drozda/sandbox/scenario/parallelorderswithoutglobalordering/GlobalOrderingScenarioStarter.java#L54)
 переводит их в timeline: publisher, фактическая partition, назначенный consumer,
 status, offset и время завершения.
 

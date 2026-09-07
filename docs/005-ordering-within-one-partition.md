@@ -30,13 +30,13 @@ sequence 5 SHIPPED   -> offset N+5
 
 ## Реальный эксперимент
 
-[OrderedEventPublisher](../src/main/java/io/drozda/sandbox/scenario/partitionordering/producer/OrderedEventPublisher.java#L19)
+[OrderedEventPublisher](../src/main/java/io/drozda/sandbox/scenario/orderingwithinonepartition/producer/OrderedEventPublisher.java#L19)
 отправляет каждый event с `orderId` как key. Отправки выполняются последовательно
 с ожиданием broker acknowledgement в
-[PartitionOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/partitionordering/app/PartitionOrderingExperiment.java#L44).
+[PartitionOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/orderingwithinonepartition/app/PartitionOrderingExperiment.java#L44).
 
 Topic имеет три partitions, а listener запускает три consumers одной group через
-[`concurrency = "3"`](../src/main/java/io/drozda/sandbox/scenario/partitionordering/consumer/OrderedEventListener.java#L21).
+[`concurrency = "3"`](../src/main/java/io/drozda/sandbox/scenario/orderingwithinonepartition/consumer/OrderedEventListener.java#L21).
 После rebalance каждому consumer назначается одна partition. Все шесть событий
 одного key попадают в одну partition и обрабатываются её текущим владельцем.
 
@@ -47,7 +47,7 @@ Experiment проверяет три свойства:
 3. Порядок callback-ов содержит `sequence 0..5` без перестановок.
 
 Проверки находятся в
-[PartitionOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/partitionordering/app/PartitionOrderingExperiment.java#L49).
+[PartitionOrderingExperiment](../src/main/java/io/drozda/sandbox/scenario/orderingwithinonepartition/app/PartitionOrderingExperiment.java#L49).
 Producer metadata дополнительно сопоставляется с полученными `ConsumerRecord` по
 `eventId`, а не по позиции списка. Поэтому проверка координат не может случайно
 скрыть нарушение callback-order.
@@ -59,7 +59,7 @@ Producer metadata дополнительно сопоставляется с п�
 вернуть результаты в заранее заданном порядке независимо от реальной очередности
 callback-ов.
 
-В `005` [OrderedEventTracker](../src/main/java/io/drozda/sandbox/scenario/partitionordering/app/OrderedEventTracker.java#L28)
+В `005` [OrderedEventTracker](../src/main/java/io/drozda/sandbox/scenario/orderingwithinonepartition/app/OrderedEventTracker.java#L28)
 сначала регистрирует ожидаемый набор IDs. Каждый реальный вызов listener добавляет
 record в общий `receivedInCallbackOrder` именно в момент получения:
 
@@ -74,12 +74,12 @@ receivedInCallbackOrder.add(new TrackedOrderedRecord(
 listener callback-ов.
 
 Tracker также ждёт стабильного assignment `3 consumers x 1 partition` в
-[awaitStableAssignments](../src/main/java/io/drozda/sandbox/scenario/partitionordering/app/OrderedEventTracker.java#L63),
+[awaitStableAssignments](../src/main/java/io/drozda/sandbox/scenario/orderingwithinonepartition/app/OrderedEventTracker.java#L63),
 чтобы не принять промежуточную фазу стартового rebalance за итоговую topology.
 
 ## Визуализация
 
-[PartitionOrderingScenarioStarter](../src/main/java/io/drozda/sandbox/scenario/partitionordering/PartitionOrderingScenarioStarter.java#L56)
+[PartitionOrderingScenarioStarter](../src/main/java/io/drozda/sandbox/scenario/orderingwithinonepartition/PartitionOrderingScenarioStarter.java#L56)
 строит реальные assignment-связи. Затем каждый record анимируется по пути
 `publisher -> partition -> consumer`, а partition показывает последний sequence
 и offset. Нода `Order Verification` зеленеет только при выполнении всех трёх

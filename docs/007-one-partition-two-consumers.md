@@ -48,19 +48,19 @@ detection; здесь мы фиксируем базовый контракт ow
 
 В сценарии нет `concurrency = 2` на одном методе, потому что нам нужно отдельно
 управлять каждым участником. Созданы два listener beans. Например,
-[ConsumerGroupMemberA](../src/main/java/io/drozda/sandbox/scenario/singlepartitiongroup/consumer/ConsumerGroupMemberA.java#L14)
+[ConsumerGroupMemberA](../src/main/java/io/drozda/sandbox/scenario/onepartitiontwoconsumersonegroup/consumer/ConsumerGroupMemberA.java#L14)
 имеет стабильные `ID` и `LABEL`, а его `@KafkaListener` подписан на тот же topic и
 тот же group id, что и Consumer B.
 
 Оба реализуют `ConsumerSeekAware`. Callback
-[`onPartitionsAssigned`](../src/main/java/io/drozda/sandbox/scenario/singlepartitiongroup/consumer/ConsumerGroupMemberA.java#L30)
+[`onPartitionsAssigned`](../src/main/java/io/drozda/sandbox/scenario/onepartitiontwoconsumersonegroup/consumer/ConsumerGroupMemberA.java#L30)
 сообщает tracker фактический assignment, а `onPartitionsRevoked` убирает старое
 владение. Эти callbacks приходят от Spring Kafka listener container в ответ на
 реальный consumer-group protocol.
 
 Нельзя заранее утверждать, что Partition 0 получит именно Consumer A. Результат
 зависит от момента join, выбранного assignor и текущего состояния group. Поэтому
-[SinglePartitionGroupTracker](../src/main/java/io/drozda/sandbox/scenario/singlepartitiongroup/app/SinglePartitionGroupTracker.java#L50)
+[SinglePartitionGroupTracker](../src/main/java/io/drozda/sandbox/scenario/onepartitiontwoconsumersonegroup/app/SinglePartitionGroupTracker.java#L50)
 ждёт состояние, в котором у partition ровно один owner, и возвращает его label.
 Второй участник вычисляется как idle consumer только после наблюдения assignment.
 
@@ -68,7 +68,7 @@ detection; здесь мы фиксируем базовый контракт ow
 
 Остановка всего scenario application не подходит: вместе с owner исчез бы и
 standby consumer. Для адресного управления используется
-[ConsumerMemberControl](../src/main/java/io/drozda/sandbox/scenario/singlepartitiongroup/app/ConsumerMemberControl.java#L9).
+[ConsumerMemberControl](../src/main/java/io/drozda/sandbox/scenario/onepartitiontwoconsumersonegroup/app/ConsumerMemberControl.java#L9).
 
 Spring Kafka регистрирует containers по значениям `@KafkaListener(id=...)` в
 `KafkaListenerEndpointRegistry`. Control находит container текущего owner и
@@ -82,7 +82,7 @@ Spring Kafka регистрирует containers по значениям `@Kafka
 ## Последовательность эксперимента
 
 Основная оркестрация находится в
-[SinglePartitionGroupExperiment](../src/main/java/io/drozda/sandbox/scenario/singlepartitiongroup/app/SinglePartitionGroupExperiment.java#L36):
+[SinglePartitionGroupExperiment](../src/main/java/io/drozda/sandbox/scenario/onepartitiontwoconsumersonegroup/app/SinglePartitionGroupExperiment.java#L36):
 
 1. Запускаются оба listener containers.
 2. Tracker ждёт единственного owner Partition 0.
@@ -100,7 +100,7 @@ Spring Kafka регистрирует containers по значениям `@Kafka
 
 Сценарий использует уникальные topic и group names при каждом старте отдельного
 Spring context в
-[SinglePartitionGroupEnvironment](../src/main/java/io/drozda/sandbox/scenario/singlepartitiongroup/SinglePartitionGroupEnvironment.java#L30).
+[SinglePartitionGroupEnvironment](../src/main/java/io/drozda/sandbox/scenario/onepartitiontwoconsumersonegroup/SinglePartitionGroupEnvironment.java#L30).
 Старые records и committed offsets не вмешиваются в новый запуск.
 
 ## Что показывает UI
@@ -116,7 +116,7 @@ assignment только owner получает связь от Partition 0 и з
 
 ## Что проверяет тест
 
-[SinglePartitionGroupScenarioTest](../src/test/java/io/drozda/sandbox/scenario/singlepartitiongroup/SinglePartitionGroupScenarioTest.java#L20)
+[SinglePartitionGroupScenarioTest](../src/test/java/io/drozda/sandbox/scenario/onepartitiontwoconsumersonegroup/SinglePartitionGroupScenarioTest.java#L20)
 закрепляет наблюдаемые свойства:
 
 - initial owner и idle consumer различаются;

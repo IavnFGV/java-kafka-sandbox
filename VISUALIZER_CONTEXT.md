@@ -218,8 +218,8 @@ Files:
 - `src/main/java/io/drozda/sandbox/scenario/spi/ScenarioEnvironment.java`
 - `src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyEnvironment.java`
 - `src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyScenarioStarter.java`
-- `src/main/java/io/drozda/sandbox/scenario/tradeflow/TradeFlowEnvironment.java`
-- `src/main/java/io/drozda/sandbox/scenario/tradeflow/TradeFlowScenarioStarter.java`
+- `src/main/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowEnvironment.java`
+- `src/main/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowScenarioStarter.java`
 
 How it works:
 - Play calls the mediator's default command for the selected scenario
