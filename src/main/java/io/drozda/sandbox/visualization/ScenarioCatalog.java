@@ -347,43 +347,26 @@ public class ScenarioCatalog {
                                 "The first consumer joins and can own the partition."),
                         new ScenarioNode("consumer-b", "Consumer B", "consumer", 248, 300, 170, 96, "group-box",
                                 "The second consumer is healthy but has nothing to do while there is only one partition."),
-                        new ScenarioNode("observer", "Assignment View", "monitor", 1060, 660, 190, 90, null,
-                                "We use the observer to narrate which consumer owns the partition.")
+                        new ScenarioNode("observer", "Assignment and Takeover", "monitor", 1020, 660, 270, 90, null,
+                                "Shows the real initial owner, idle member, and owner after rebalance.")
                 ),
                 List.of(
-                        new ScenarioEdge("producer-to-partition", "producer", "single-partition", "append"),
-                        new ScenarioEdge("partition-to-consumer-a", "single-partition", "consumer-a", "assigned"),
-                        new ScenarioEdge("partition-to-consumer-b", "single-partition", "consumer-b", "would like work"),
-                        new ScenarioEdge("consumer-a-to-observer", "consumer-a", "observer", "active"),
-                        new ScenarioEdge("consumer-b-to-observer", "consumer-b", "observer", "idle")
+                        new ScenarioEdge("producer-to-partition", "producer", "single-partition", "append")
                 ),
                 List.of(
                         new ScenarioStep("step-1", "Initial topology",
-                                "We start with one topic partition and two consumers inside the same group. The key question is not who is faster, but how many partitions exist.",
+                                "A real one-partition topic and two separately controlled consumers start in one group.",
                                 List.of()),
-                        new ScenarioStep("step-2", "Consumer A joins first",
-                                "The group coordinator can assign the only partition to Consumer A, so work begins there.",
-                                List.of("event-consumer-a-assigned")),
-                        new ScenarioStep("step-3", "Consumer B joins the same group",
-                                "Consumer B is part of the group, but there is still only one partition to assign.",
-                                List.of("event-consumer-b-joins")),
-                        new ScenarioStep("step-4", "Only one consumer gets records",
-                                "Kafka does not alternate records between consumers in the same group when there is only one partition. Consumer A keeps the entire partition.",
-                                List.of("event-only-a-consumes"))
+                        new ScenarioStep("step-2", "Observe the assignment",
+                                "Kafka assigns Partition 0 to one real group member; the other remains healthy but idle.", List.of()),
+                        new ScenarioStep("step-3", "Consume through one owner",
+                                "The first record batch is delivered only to the current partition owner.", List.of()),
+                        new ScenarioStep("step-4", "Stop the owner",
+                                "Stopping the active listener changes group membership and triggers a rebalance.", List.of()),
+                        new ScenarioStep("step-5", "Standby takes over",
+                                "The formerly idle consumer receives Partition 0 and processes the next records from their Kafka offsets.", List.of())
                 ),
-                List.of(
-                        new VisualizationEvent("event-consumer-a-assigned", "assignment", "p0 -> Consumer A",
-                                "The single partition is assigned to Consumer A.", List.of("single-partition", "consumer-a", "observer"),
-                                List.of("partition-to-consumer-a", "consumer-a-to-observer"), "single-partition", "consumer-a"),
-                        new VisualizationEvent("event-consumer-b-joins", "membership", "Consumer B joined",
-                                "Consumer B joins the same group, but Kafka cannot split one partition across two active consumers in the same group.",
-                                List.of("consumer-a", "consumer-b", "group-box", "observer"),
-                                List.of("consumer-b-to-observer"), null, null),
-                        new VisualizationEvent("event-only-a-consumes", "consume", "Consumer B is idle",
-                                "Records continue to flow only through Consumer A because partition ownership is whole, not message by message.",
-                                List.of("producer", "single-partition", "consumer-a", "consumer-b", "observer"),
-                                List.of("producer-to-partition", "partition-to-consumer-a", "consumer-a-to-observer"), "single-partition", "consumer-a")
-                )
+                List.of()
         );
     }
 
