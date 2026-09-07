@@ -187,3 +187,11 @@
 - Covered IDs: #1, #2, #10-#16, #41, #94, #97.
 - Remaining: 88 questions, split into 31 P1, 49 P2, and 8 P3 items.
 - Coverage is counted only from implemented roadmap mappings, not from incidental mentions.
+
+## GitHub Source Navigation
+
+- Every implemented `ScenarioGraph` exposes a repository-relative `sourceRoot` owned by the backend catalog.
+- Clicking a graph node opens its description and a stable GitHub link to the scenario package on `main`.
+- Drag and click are distinguished by pointer movement so rearranging the graph does not open the source dialog.
+- A catalog test verifies that every configured source directory exists after package refactoring.
+- Future refinement: add node-level file and line references for producer, listener, tracker, and experiment classes.

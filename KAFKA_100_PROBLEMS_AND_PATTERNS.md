@@ -256,8 +256,12 @@ The visualizer should eventually be able to show:
 
 ## Playground Infrastructure Backlog
 
-- Add code-guided scenario nodes: clicking a graph node should open a compact source panel
-  with practical guidance and explicit `sourceReferences` supplied by the backend.
+- Implemented: clicking a graph node opens a compact source panel with its description and a
+  GitHub link to the backend-supplied source package for that scenario. Dragging a node does not
+  trigger navigation.
+- Refine code-guided nodes with explicit per-node `sourceReferences` instead of only the scenario
+  package. Each reference should point to the concrete producer, listener, orchestrator, tracker,
+  or integration test involved in that node.
 - Keep source navigation structured rather than deriving paths from node labels. Each reference
   should contain a label, repository-relative path, optional line anchor, and a short explanation
   of why that code matters in the current scenario.

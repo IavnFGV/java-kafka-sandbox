@@ -604,6 +604,35 @@ button:disabled {
     line-height: 1.4;
 }
 
+.source-node-description {
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.source-path {
+    display: block;
+    margin: 16px 0;
+    padding: 12px 14px;
+    overflow-wrap: anywhere;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(95, 107, 122, 0.07);
+}
+
+.source-github-link {
+    display: inline-flex;
+    padding: 11px 17px;
+    border-radius: 999px;
+    color: white;
+    background: var(--accent);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.node:not(.dragging) {
+    cursor: pointer;
+}
+
 @media (max-width: 760px) {
     .timeline-heading {
         align-items: flex-start;

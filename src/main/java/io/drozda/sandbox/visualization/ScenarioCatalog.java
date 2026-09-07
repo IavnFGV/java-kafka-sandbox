@@ -22,8 +22,27 @@ public class ScenarioCatalog {
                 tradeFlowScenario(),
                 systemReadyScenario()
         ).stream()
+                .map(scenario -> scenario.withSourceRoot(sourceRoot(scenario.id())))
                 .sorted((left, right) -> Integer.compare(left.order(), right.order()))
                 .toList();
+    }
+
+    private String sourceRoot(String scenarioId) {
+        return "src/main/java/io/drozda/sandbox/scenario/" + switch (scenarioId) {
+            case "system-ready" -> "systemready";
+            case "trade-flow" -> "tradeeventflow";
+            case "topic-partition-offsets" -> "topicpartitionoffsetbasics";
+            case "key-partitioning" -> "messagekeypartitionselection";
+            case "partition-ordering" -> "orderingwithinonepartition";
+            case "global-ordering" -> "parallelorderswithoutglobalordering";
+            case "consumer-group-single-partition" -> "onepartitiontwoconsumersonegroup";
+            case "consumer-group-two-partitions" -> "twopartitionstwoconsumersonegroup";
+            case "multiple-consumer-groups" -> "multipleconsumergroups";
+            case "earliest-vs-latest" -> "earliestvslatest";
+            case "consumer-group-rebalance-join" -> "rebalancewhensecondconsumerjoins";
+            case "consumer-group-consumer-failure" -> "consumerfailureandpartitiontakeover";
+            default -> throw new IllegalArgumentException("No source root for scenario: " + scenarioId);
+        };
     }
 
     public ScenarioGraph scenarioById(String scenarioId) {

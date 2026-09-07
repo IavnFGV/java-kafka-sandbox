@@ -6,6 +6,7 @@ const MIN_CONTAINER_HEIGHT = 140;
 const DEFAULT_THEME_HUE = 32;
 const SIGNAL_PLAYBACK_MS = 3200;
 const STATE_PLAYBACK_MS = 700;
+const GITHUB_SOURCE_ROOT = "https://github.com/IavnFGV/java-kafka-sandbox/tree/main/";
 
 const state = {
   scenarios: [],
@@ -43,6 +44,11 @@ const openRuntimeLog = document.getElementById("open-runtime-log");
 const openLegend = document.getElementById("open-legend");
 const runtimeLogDialog = document.getElementById("runtime-log-dialog");
 const legendDialog = document.getElementById("legend-dialog");
+const sourceDialog = document.getElementById("source-dialog");
+const sourceNodeTitle = document.getElementById("source-node-title");
+const sourceNodeDescription = document.getElementById("source-node-description");
+const sourcePath = document.getElementById("source-path");
+const sourceGithubLink = document.getElementById("source-github-link");
 const scenarioInputs = document.getElementById("scenario-inputs");
 const keyStrategy = document.getElementById("key-strategy");
 const globalOrderingInputs = document.getElementById("global-ordering-inputs");
@@ -927,6 +933,11 @@ function bindDragEvents() {
     }
 
     const currentPoint = toSvgPoint(event);
+    const movedDistance = Math.hypot(
+      currentPoint.x - state.drag.startPoint.x,
+      currentPoint.y - state.drag.startPoint.y
+    );
+    state.drag.moved = state.drag.moved || movedDistance > 5;
 
     if (state.drag.mode === "resize") {
       resizeContainer(node, currentPoint);
@@ -940,7 +951,9 @@ function bindDragEvents() {
 
   graph.addEventListener("pointerup", (event) => {
     if (state.drag && state.drag.pointerId === event.pointerId) {
+      const clickedNodeId = state.drag.mode === "move" && !state.drag.moved ? state.drag.nodeId : null;
       finishDrag();
+      if (clickedNodeId) openSourceGuide(clickedNodeId);
     }
   });
 
@@ -968,7 +981,8 @@ function attachDragHandlers() {
         lastPoint: toSvgPoint(event),
         startPoint: toSvgPoint(event),
         startWidth: node.width,
-        startHeight: node.height
+        startHeight: node.height,
+        moved: false
       };
     });
   });
@@ -987,10 +1001,22 @@ function attachDragHandlers() {
         mode: "move",
         nodeId,
         pointerId: event.pointerId,
-        lastPoint: toSvgPoint(event)
+        lastPoint: toSvgPoint(event),
+        startPoint: toSvgPoint(event),
+        moved: false
       };
     });
   });
+}
+
+function openSourceGuide(nodeId) {
+  const node = state.scenario.nodes.find((candidate) => candidate.id === nodeId);
+  if (!node || !state.scenario.sourceRoot) return;
+  sourceNodeTitle.textContent = node.label;
+  sourceNodeDescription.textContent = node.description || "Inspect the source code behind this scenario element.";
+  sourcePath.textContent = state.scenario.sourceRoot;
+  sourceGithubLink.href = GITHUB_SOURCE_ROOT + state.scenario.sourceRoot;
+  sourceDialog.showModal();
 }
 
 function moveNode(node, currentPoint) {
