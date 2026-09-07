@@ -395,44 +395,25 @@ public class ScenarioCatalog {
                                 "Consumer A can own one or more partitions."),
                         new ScenarioNode("consumer-b", "Consumer B", "consumer", 286, 290, 170, 96, "group-box",
                                 "Consumer B can own the remaining partition."),
-                        new ScenarioNode("observer", "Lag / Assignment View", "monitor", 1070, 700, 220, 90, null,
-                                "The observer summarizes which consumer owns which partition.")
+                        new ScenarioNode("observer", "Parallel Assignment", "monitor", 1040, 700, 260, 90, null,
+                                "Summarizes the real partition owners and consumed records.")
                 ),
                 List.of(
                         new ScenarioEdge("producer-p0", "producer", "partition-0", "append to p0"),
-                        new ScenarioEdge("producer-p1", "producer", "partition-1", "append to p1"),
-                        new ScenarioEdge("p0-consumer-a", "partition-0", "consumer-a", "assigned"),
-                        new ScenarioEdge("p1-consumer-b", "partition-1", "consumer-b", "assigned"),
-                        new ScenarioEdge("a-observer", "consumer-a", "observer", "p0 owner"),
-                        new ScenarioEdge("b-observer", "consumer-b", "observer", "p1 owner")
+                        new ScenarioEdge("producer-p1", "producer", "partition-1", "append to p1")
                 ),
                 List.of(
                         new ScenarioStep("step-1", "Initial topology",
-                                "The topology is the same idea as before, but now the topic has two partitions and the group has enough work to share.",
+                                "A real two-partition topic and two consumers start in one group.",
                                 List.of()),
-                        new ScenarioStep("step-2", "Both consumers join the group",
-                                "The coordinator sees two consumers and two partitions, which is enough for real parallel work.",
-                                List.of("event-both-join")),
-                        new ScenarioStep("step-3", "Kafka distributes ownership",
-                                "Partition 0 goes to Consumer A while partition 1 goes to Consumer B.",
-                                List.of("event-split-assignment")),
-                        new ScenarioStep("step-4", "Consumers process independently",
-                                "Now both consumers are active at the same time, each advancing offsets only within its own partition.",
-                                List.of("event-parallel-consume"))
+                        new ScenarioStep("step-2", "Kafka distributes ownership",
+                                "The experiment observes which consumer actually owns each whole partition.", List.of()),
+                        new ScenarioStep("step-3", "Consumers process independent shards",
+                                "Records alternate between partitions while each partition is delivered only to its current owner.", List.of()),
+                        new ScenarioStep("step-4", "Verify useful parallelism",
+                                "Two partitions keep both group members active without sharing a partition between them.", List.of())
                 ),
-                List.of(
-                        new VisualizationEvent("event-both-join", "membership", "Two consumers in group",
-                                "The group has enough partitions to keep both consumers busy.", List.of("group-box", "consumer-a", "consumer-b", "observer"),
-                                List.of("a-observer", "b-observer"), null, null),
-                        new VisualizationEvent("event-split-assignment", "assignment", "p0 -> A, p1 -> B",
-                                "Kafka assigns whole partitions, not alternating records, so each consumer gets a full partition.",
-                                List.of("partition-0", "partition-1", "consumer-a", "consumer-b", "observer"),
-                                List.of("p0-consumer-a", "p1-consumer-b", "a-observer", "b-observer"), "partition-0", "consumer-a"),
-                        new VisualizationEvent("event-parallel-consume", "consume", "Parallel consumption",
-                                "Both consumers are active, but each keeps order only within its own partition.",
-                                List.of("producer", "partition-0", "partition-1", "consumer-a", "consumer-b"),
-                                List.of("producer-p0", "producer-p1", "p0-consumer-a", "p1-consumer-b"), "partition-1", "consumer-b")
-                )
+                List.of()
         );
     }
 
