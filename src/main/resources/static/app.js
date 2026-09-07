@@ -45,6 +45,8 @@ const runtimeLogDialog = document.getElementById("runtime-log-dialog");
 const legendDialog = document.getElementById("legend-dialog");
 const scenarioInputs = document.getElementById("scenario-inputs");
 const keyStrategy = document.getElementById("key-strategy");
+const globalOrderingInputs = document.getElementById("global-ordering-inputs");
+const globalOrderingTopology = document.getElementById("global-ordering-topology");
 const themeToggle = document.getElementById("theme-toggle");
 const themePanel = document.getElementById("theme-panel");
 const themeHue = document.getElementById("theme-hue");
@@ -148,9 +150,7 @@ function runScenario() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       invocationName: `${state.scenario.title} Run`,
-      parameters: state.scenario.id === "key-partitioning"
-        ? { keyStrategy: keyStrategy.value }
-        : {}
+      parameters: scenarioParameters()
     })
   }).catch(() => {
     appendScenarioLog("Backend run failed");
@@ -329,6 +329,16 @@ function fetchJson(url, options) {
   return fetch(url, options).then((response) => response.json());
 }
 
+function scenarioParameters() {
+  if (state.scenario.id === "key-partitioning") {
+    return { keyStrategy: keyStrategy.value };
+  }
+  if (state.scenario.id === "global-ordering") {
+    return { topology: globalOrderingTopology.value };
+  }
+  return {};
+}
+
 function applyScenario(scenario) {
   state.scenario = scenario;
   state.activeScenarioId = scenario.id;
@@ -341,6 +351,7 @@ function applyScenario(scenario) {
       .join("")}`
     : `<span class="backlog-caption">Foundation scenario</span>`;
   scenarioInputs.hidden = scenario.id !== "key-partitioning";
+  globalOrderingInputs.hidden = scenario.id !== "global-ordering";
   graph.setAttribute("viewBox", `0 0 ${scenario.viewportWidth} ${scenario.viewportHeight}`);
   renderScenarioList();
 }

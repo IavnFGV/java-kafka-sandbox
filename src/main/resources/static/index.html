@@ -68,6 +68,15 @@
                         <span>Choose a strategy, then run the same events through Kafka.</span>
                     </div>
 
+                    <div id="global-ordering-inputs" class="scenario-inputs" hidden>
+                        <label for="global-ordering-topology">Processing topology</label>
+                        <select id="global-ordering-topology">
+                            <option value="SINGLE" selected>1 partition / 1 consumer</option>
+                            <option value="PARALLEL">2 partitions / 2 consumers</option>
+                        </select>
+                        <span>Run both modes and compare when the Fast Order reaches COMPLETED.</span>
+                    </div>
+
                     <div class="graph-shell">
                         <div class="controls graph-controls">
                             <button id="play-btn" type="button">Play</button>

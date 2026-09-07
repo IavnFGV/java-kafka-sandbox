@@ -12,6 +12,7 @@ public class ScenarioCatalog {
                 topicPartitionOffsetsScenario(),
                 keyPartitioningScenario(),
                 partitionOrderingScenario(),
+                globalOrderingScenario(),
                 consumerGroupSinglePartitionScenario(),
                 consumerGroupTwoPartitionsScenario(),
                 consumerGroupRebalanceOnJoinScenario(),
@@ -266,6 +267,58 @@ public class ScenarioCatalog {
                                 "Records sequence 0..5 receive increasing offsets in one partition and reach its assigned consumer.", List.of()),
                         new ScenarioStep("step-3", "Compare the three orders",
                                 "The experiment compares producer sequence, partition offsets, and actual listener callback order.", List.of())
+                ),
+                List.of()
+        );
+    }
+
+    public ScenarioGraph globalOrderingScenario() {
+        return new ScenarioGraph(
+                "global-ordering",
+                6,
+                "Parallel Orders Without Global Ordering",
+                "Scenario 006 compares one ordered queue with two ordered shards: a short order can finish without waiting for an unrelated slow order.",
+                "Remove head-of-line blocking between independent entities while preserving the event sequence inside each order, accepting that the topic has no single global processing order.",
+                List.of(12),
+                1420,
+                820,
+                List.of(
+                        new ScenarioNode("publisher", "Interleaved Order Publisher", "service",
+                                30, 340, 250, 105, null,
+                                "Publishes the same interleaved Fast and Slow order events in both modes."),
+                        new ScenarioNode("kafka-broker", "Kafka Broker", "broker-container",
+                                390, 65, 500, 680, null,
+                                "The selected topic has either one ordered queue or two ordered shards."),
+                        new ScenarioNode("topic", "Selected Orders Topic", "topic-container",
+                                40, 80, 420, 510, "kafka-broker",
+                                "SINGLE uses a real one-partition topic; PARALLEL uses a real two-partition topic."),
+                        new ScenarioNode("partition-0", "Partition 0", "broker",
+                                90, 125, 240, 115, "topic", "Fast Order uses P0 in parallel mode."),
+                        new ScenarioNode("partition-1", "Partition 1", "broker",
+                                90, 300, 240, 115, "topic", "Slow Order uses P1 in parallel mode."),
+                        new ScenarioNode("single-consumer", "Single Consumer", "consumer",
+                                1030, 120, 245, 100, null,
+                                "Processes every event serially in SINGLE mode."),
+                        new ScenarioNode("fast-consumer", "Fast Consumer", "consumer",
+                                1030, 300, 245, 100, null,
+                                "Owns the Fast Order partition in PARALLEL mode."),
+                        new ScenarioNode("slow-consumer", "Slow Consumer", "consumer",
+                                1030, 475, 245, 100, null,
+                                "Owns the Slow Order partition in PARALLEL mode."),
+                        new ScenarioNode("result", "Completion Comparison", "monitor",
+                                1000, 650, 305, 115, null,
+                                "Shows measured completion time and ordering boundaries.")
+                ),
+                List.of(new ScenarioEdge("publish", "publisher", "topic", "same event stream")),
+                List.of(
+                        new ScenarioStep("step-1", "Choose the topology",
+                                "Run one real partition and consumer, or two real partitions and consumers.", List.of()),
+                        new ScenarioStep("step-2", "Assign ordered work",
+                                "SINGLE assigns one queue; PARALLEL assigns one order stream to each partition.", List.of()),
+                        new ScenarioStep("step-3", "Process both orders",
+                                "The short and long order preserve their own status sequence while completion timing changes.", List.of()),
+                        new ScenarioStep("step-4", "Compare completion",
+                                "Parallel partitions remove unrelated waiting, but no global completion order remains.", List.of())
                 ),
                 List.of()
         );
