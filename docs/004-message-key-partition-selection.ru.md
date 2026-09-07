@@ -1,5 +1,7 @@
 # 004. Message key и выбор partition
 
+[English](004-message-key-partition-selection.en.md)
+
 ## Было / стало
 
 - Было: `7516328` — key-based partitioning существовал только в учебном плане.
@@ -63,8 +65,10 @@ order-73 CREATED
 ```
 
 Experiment получает producer metadata, а listener — полные `ConsumerRecord`.
-Для каждой записи сравниваются key, partition и offset. Затем проверяется, что у
-десяти записей `order-42` ровно один distinct partition.
+Для каждой записи сравниваются key, partition и offset. Количество distinct partitions у записей `order-42` вычисляет
+[`KeyPartitioningScenarioStarter`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/KeyPartitioningScenarioStarter.java#L100)
+для отображения результата. Флаг гарантии задаётся стратегией `ORDER_ID`; отдельного
+assert на единственную partition в experiment нет.
 
 Почему записей десять? Если каждый уникальный `eventId` независимо и равномерно
 хешируется в одну из трёх partitions, вероятность случайно увидеть все десять в
@@ -131,14 +135,14 @@ String consumerId = consumerId(Thread.currentThread().getName());
 ```
 
 Один и тот же thread участвует и в callback назначения, и в обработке records.
-Так `KeyedEventTracker` связывает условный `Consumer A` с его partitions, а затем
+Так [`KeyedEventTracker`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/app/KeyedEventTracker.java#L53) связывает условный `Consumer A` с его partitions, а затем
 помечает им полученный `ConsumerRecord`. Это позволяет визуализатору провести
 record к фактическому consumer, хотя все consumers используют один Java-метод.
 
-Класс `KeyedOrderEventListener` реализует `ConsumerSeekAware`:
+Класс [`KeyedOrderEventListener`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/consumer/KeyedOrderEventListener.java#L17) реализует `ConsumerSeekAware`:
 `onPartitionsAssigned` передаёт назначения в `KeyedEventTracker`, а
 `onPartitionsRevoked` удаляет отозванные partitions. Затем
-`KeyPartitioningScenarioStarter` преобразует карту assignments в динамические
+[`KeyPartitioningScenarioStarter`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/KeyPartitioningScenarioStarter.java#L44) преобразует карту assignments в динамические
 связи `partition → consumer` на экране.
 
 Имя thread здесь является инструментом наблюдения учебного стенда, а не частью
@@ -162,3 +166,12 @@ rebalance рисует актуальные; движущиеся records ото
 соответствие key → partition. Саму гарантию порядка мы проверим в сценарии `005`.
 
 Сценарий покрывает backlog `#10 Message key and partition selection`.
+
+## Основная логика в коде
+
+- [`KeyedOrderEventPublisher`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/producer/KeyedOrderEventPublisher.java#L20) — Выбор key и отправка в Kafka.
+- [`KeyPartitioningExperiment`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/app/KeyPartitioningExperiment.java#L66) — Сравнение key и координат producer/consumer.
+
+## Дополнительные ссылки на реализацию
+
+- [`KeyPartitioningExperiment`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/app/KeyPartitioningExperiment.java#L29)

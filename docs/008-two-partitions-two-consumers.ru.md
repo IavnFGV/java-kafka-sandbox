@@ -1,5 +1,7 @@
 # 008. Two partitions, two consumers, one group
 
+[English](008-two-partitions-two-consumers.en.md)
+
 ## Было / стало
 
 - До сценария: `6c04ea9` - 007 доказал, что второй consumer простаивает при одной partition.
@@ -26,7 +28,7 @@ listener callbacks.
 
 ## Реальный эксперимент
 
-[ParallelGroupScenarioApplication](../src/main/java/io/drozda/sandbox/scenario/twopartitionstwoconsumersonegroup/app/ParallelGroupScenarioApplication.java#L19)
+[ParallelGroupScenarioApplication](../src/main/java/io/drozda/sandbox/scenario/twopartitionstwoconsumersonegroup/app/ParallelGroupScenarioApplication.java#L23)
 создаёт topic с двумя partitions и два listener beans с одинаковым group id.
 Отдельные beans нужны, чтобы в telemetry сохранялась понятная идентичность
 `Consumer A` и `Consumer B`.
@@ -36,7 +38,7 @@ listener callbacks.
 передаёт tracker как assignment, так и revocation. Tracker ждёт устойчивую карту,
 в которой P0 и P1 имеют разных owners.
 
-[ParallelGroupExperiment](../src/main/java/io/drozda/sandbox/scenario/twopartitionstwoconsumersonegroup/app/ParallelGroupExperiment.java#L27)
+[ParallelGroupExperiment](../src/main/java/io/drozda/sandbox/scenario/twopartitionstwoconsumersonegroup/app/ParallelGroupExperiment.java#L28)
 после assignment создаёт шесть records. Чётные sequence явно отправляются в P0,
 нечётные в P1. Явная partition здесь нужна для детерминированного учебного
 опыта. В production partition обычно выбирается из message key.
@@ -78,7 +80,7 @@ rebalance сможет владеть обеими partitions. Следующи�
 изменение membership отдельно.
 
 Интеграционный контракт находится в
-[ParallelGroupScenarioTest](../src/test/java/io/drozda/sandbox/scenario/twopartitionstwoconsumersonegroup/ParallelGroupScenarioTest.java#L19).
+[ParallelGroupScenarioTest](../src/test/java/io/drozda/sandbox/scenario/twopartitionstwoconsumersonegroup/ParallelGroupScenarioTest.java#L20).
 
 Сценарий закрепляет backlog `#13 Consumer group mechanics` и
 `#14 One partition assigned to one consumer in a group`.

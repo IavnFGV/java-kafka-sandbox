@@ -9,9 +9,9 @@ learning experience and `KAFKA_100_PROBLEMS_AND_PATTERNS.md` for the scenario ba
 
 Scenario notes:
 
-- `docs/001-system-ready.md`
-- `docs/001-a-from-polling-to-long-polling.md`
-- `docs/002-trade-event-flow.md`
+- `docs/001-system-ready.ru.md`
+- `docs/001-a-from-polling-to-long-polling.ru.md`
+- `docs/002-trade-event-flow.ru.md`
 
 This sandbox is for:
 

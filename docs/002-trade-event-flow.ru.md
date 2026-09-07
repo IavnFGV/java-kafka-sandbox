@@ -1,5 +1,7 @@
 # 002. Первое настоящее сообщение через Kafka
 
+[English](002-trade-event-flow.en.md)
+
 ## Было / стало
 
 - Было: `8132885` — Trade Event Flow существовал только как заранее описанная анимация.
@@ -24,8 +26,8 @@
 
 ### Жизненный цикл сценария
 
-`TradeFlowEnvironment` управляет отдельным Spring Boot-контекстом. При первом
-нажатии Play он запускает `TradeFlowScenarioApplication` на свободном HTTP-порту
+[`TradeFlowEnvironment`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowEnvironment.java#L19) управляет отдельным Spring Boot-контекстом. При первом
+нажатии Play он запускает [`TradeFlowScenarioApplication`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/app/TradeFlowScenarioApplication.java#L21) на свободном HTTP-порту
 и сохраняет ссылку на созданный context. Повторный Play **не создаёт ещё один
 context**: существующее приложение переиспользуется. Stop вызывает `close()`, и
 только следующий Play создаст новый context.
@@ -41,41 +43,41 @@ publisher, listener, tracker и experiment. Свойство
 `scenario.trade-flow.enabled=true` не позволяет этим бинам случайно попасть в
 основное приложение или другой сценарий.
 
-`TradeFlowScenarioController` предоставляет внутренние endpoints:
+[`TradeFlowScenarioController`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/app/TradeFlowScenarioController.java#L16) предоставляет внутренние endpoints:
 
 - `GET /status` сообщает, что компоненты созданы;
 - `POST /reset` очищает незавершённые ожидания;
 - `POST /commands/send-and-receive` запускает реальный эксперимент.
 
-`TradeFlowScenarioCommandRequest` содержит имя конкретного запуска, а
-`TradeFlowScenarioStatus` является снимком результата: readiness компонентов,
+[`TradeFlowScenarioCommandRequest`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/app/TradeFlowScenarioCommandRequest.java#L3) содержит имя конкретного запуска, а
+[`TradeFlowScenarioStatus`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/app/TradeFlowScenarioStatus.java#L3) является снимком результата: readiness компонентов,
 `eventId`, topic, partition, offset и возможная ошибка.
 
 ### Kafka-эксперимент
 
-`TradeFlowEvent` — отдельная модель сообщения сценария. У неё есть уникальный
+[`TradeFlowEvent`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/model/TradeFlowEvent.java#L3) — отдельная модель сообщения сценария. У неё есть уникальный
 `eventId`, бизнес-ключ `tradeId`, символ, тип события и время создания. В Kafka
 ключом записи становится `tradeId`; позднее на этом можно показать выбор
 partition и сохранение порядка для одинакового ключа.
 
-`TradeFlowPublisher` — тонкая обёртка над
+[`TradeFlowPublisher`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/producer/TradeFlowPublisher.java#L20) — тонкая обёртка над
 `KafkaTemplate<String, TradeFlowEvent>`. Он отправляет событие и возвращает
 `CompletableFuture<SendResult<...>>`. Завершение future подтверждает, что broker
 принял запись, и даёт metadata с partition и offset. Это ещё не означает, что
 consumer обработал сообщение.
 
-`TradeFlowListener` подписывается через `@KafkaListener`. Полученное сообщение он
+[`TradeFlowListener`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/consumer/TradeFlowListener.java#L16) подписывается через `@KafkaListener`. Полученное сообщение он
 передаёт tracker-у. Listener намеренно ничего не знает ни об HTTP, ни о
 визуализации.
 
-`TradeFlowEventTracker` связывает два асинхронных момента. Перед отправкой
+[`TradeFlowEventTracker`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/app/TradeFlowEventTracker.java#L13) связывает два асинхронных момента. Перед отправкой
 experiment регистрирует ожидание по `eventId` и получает `CompletableFuture`.
 Когда listener принимает сообщение, tracker ищет ожидание с тем же `eventId` и
 завершает future. `ConcurrentHashMap` нужен потому, что experiment и Kafka
 listener работают в разных потоках. Старое сообщение из topic не сможет ложно
 завершить новый запуск.
 
-`TradeFlowExperiment` координирует один прогон:
+[`TradeFlowExperiment`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/app/TradeFlowExperiment.java#L27) координирует один прогон:
 
 1. Создаёт событие с новым `eventId`.
 2. Регистрирует ожидание до отправки, чтобы не пропустить быстрый ответ.
@@ -85,14 +87,14 @@ listener работают в разных потоках. Старое сооб�
 
 ### От результата к экрану
 
-`TradeFlowScenarioStarter` реализует общий `ScenarioStarter`. Медиатор вызывает
+[`TradeFlowScenarioStarter`](../src/main/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowScenarioStarter.java#L51) реализует общий [`ScenarioStarter`](../src/main/java/io/drozda/sandbox/scenario/spi/ScenarioStarter.java#L15). Медиатор вызывает
 его команду `send-and-receive`. Starter просит environment выполнить experiment,
 а затем переводит результат в события визуализатора: подсвечивает request,
 publisher, broker, topic, consume edge и listener. Небольшие задержки нужны
 только для читаемой анимации; Kafka-проверка выполняется по настоящим ответам, а
 не по таймеру.
 
-`TradeFlowScenarioTest` проходит тот же публичный путь через медиатор и настоящую
+[`TradeFlowScenarioTest`](../src/test/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowScenarioTest.java#L21) проходит тот же публичный путь через медиатор и настоящую
 Kafka. Он проверяет READY-статусы узлов и связей, наличие partition в runtime log
 и завершение сессии. В `finally` окружение всегда останавливается, чтобы тест не
 оставлял вложенный Spring context.

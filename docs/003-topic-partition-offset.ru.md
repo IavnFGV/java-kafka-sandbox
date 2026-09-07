@@ -1,5 +1,7 @@
 # 003. Topic, partition и offset
 
+[English](003-topic-partition-offset.en.md)
+
 ## Было / стало
 
 - Было: `0fef6ba` — схема объясняла partitions заранее заданной анимацией.
@@ -23,7 +25,7 @@ Kafka topic — логическое имя потока, но записи фи
 ## Что делает эксперимент
 
 Сценарное приложение создаёт topic `scenario-003-partition-offsets` с двумя
-partitions. `PartitionedEventPublisher` выполняет три явные отправки:
+partitions. [`PartitionedEventPublisher`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/producer/PartitionedEventPublisher.java#L20) выполняет три явные отправки:
 
 1. Событие A в partition `0`.
 2. Событие B в partition `1`.
@@ -39,7 +41,7 @@ key и работа стандартного partitioner-а станут отд�
 
 ## Как подписан consumer
 
-`PartitionedEventListener` подписывается на весь topic через `@KafkaListener`, а
+[`PartitionedEventListener`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/consumer/PartitionedEventListener.java#L17) подписывается на весь topic через `@KafkaListener`, а
 не на конкретную partition. Поскольку consumer один, Kafka consumer group
 назначает ему обе partitions:
 
@@ -54,8 +56,8 @@ Listener принимает `ConsumerRecord`, а не только payload. По
 
 ## Как подтверждается результат
 
-Перед отправкой `TopicPartitionOffsetsExperiment` регистрирует в
-`PartitionedEventTracker` ожидание каждого уникального `eventId`. Это делается
+Перед отправкой [`TopicPartitionOffsetsExperiment`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/app/TopicPartitionOffsetsExperiment.java#L33) регистрирует в
+[`PartitionedEventTracker`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/app/PartitionedEventTracker.java#L16) ожидание каждого уникального `eventId`. Это делается
 заранее, чтобы быстрый listener не успел доставить запись раньше регистрации
 ожидания.
 
@@ -68,7 +70,7 @@ Producer возвращает `SendResult` с координатами сохр�
 - producer и consumer увидели одинаковые partition/offset;
 - offset второй записи partition `0` оказался больше первого.
 
-`TopicPartitionOffsetsScenarioStarter` переводит этот результат в события UI.
+[`TopicPartitionOffsetsScenarioStarter`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/TopicPartitionOffsetsScenarioStarter.java#L51) переводит этот результат в события UI.
 В runtime log появляются фактические значения, а broker, topic, partitions,
 producer и consumer подсвечиваются только после подтверждения. В самих узлах
 partitions остаётся содержимое текущего запуска: `A @ offset N`, `B @ offset M`
@@ -76,7 +78,7 @@ partitions остаётся содержимое текущего запуска
 
 ## Архитектурная граница
 
-Как и в `002`, `TopicPartitionOffsetsEnvironment` поднимает отдельный Spring
+Как и в `002`, [`TopicPartitionOffsetsEnvironment`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/TopicPartitionOffsetsEnvironment.java#L19) поднимает отдельный Spring
 context на случайном HTTP-порту. Повторный Play использует тот же context, но
 создаёт новые events; Stop закрывает context. Внутреннее HTTP API запускает
 эксперимент, но сами сообщения отправляются в Kafka через `KafkaTemplate`.
