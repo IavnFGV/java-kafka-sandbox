@@ -90,12 +90,12 @@ Current scenario 004 state:
 - scenario 005 is implemented: it compares payload sequence, increasing offsets, and actual callback order inside one partition
 - scenario 006 is implemented in `50cc164`: UI compares one partition/consumer with two partitions/consumers using the same interleaved Fast and Slow order stream
 - scenario 006 records real completion order and elapsed time; parallel shards preserve each order sequence while allowing Fast Order to complete before Slow Order
-- scenario 006 article: `docs/006-no-global-ordering-across-partitions.en.md`
+- scenario 006 article: `docs/006-no-global-ordering-across-partitions.ru.md`
 - scenario 007 is implemented in `f04011c`: two separately controlled listeners join one group for a one-partition topic
 - scenario 007 observes the real owner, proves the other consumer is idle, stops the owner through `KafkaListenerEndpointRegistry`, and verifies takeover after rebalance
-- scenario 007 article: `docs/007-one-partition-two-consumers.en.md`
+- scenario 007 article: `docs/007-one-partition-two-consumers.ru.md`
 - scenario 008 is implemented in `4b9f5bc`: two real consumers receive different owners for a two-partition topic and process only their assigned shards
-- scenario 008 article: `docs/008-two-partitions-two-consumers.en.md`
+- scenario 008 article: `docs/008-two-partitions-two-consumers.ru.md`
 - roadmap is now consolidated into causal laboratory series; backlog numbers remain an index, not a requirement for one scenario per question
 
 Visualizer timeline implemented:
