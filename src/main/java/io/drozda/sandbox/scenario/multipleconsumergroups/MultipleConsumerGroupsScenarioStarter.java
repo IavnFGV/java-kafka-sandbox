@@ -1,0 +1,96 @@
+package io.drozda.sandbox.scenario.multipleconsumergroups;
+
+import java.util.Comparator;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import io.drozda.sandbox.mediator.ScenarioCommand;
+import io.drozda.sandbox.scenario.multipleconsumergroups.app.ConsumerGroupObservation;
+import io.drozda.sandbox.scenario.multipleconsumergroups.app.MultipleConsumerGroupsScenarioStatus;
+import io.drozda.sandbox.scenario.spi.ScenarioStarter;
+import io.drozda.sandbox.visualization.ActiveScenarioRuntimeState;
+import io.drozda.sandbox.visualization.RuntimeEventRequest;
+import io.drozda.sandbox.visualization.ScenarioCatalog;
+import io.drozda.sandbox.visualization.ScenarioGraph;
+import io.drozda.sandbox.visualization.ScenarioRuntimeService;
+
+@Component
+public class MultipleConsumerGroupsScenarioStarter implements ScenarioStarter {
+    public static final String OBSERVE_INDEPENDENT_GROUPS = "observe-independent-groups";
+    private static final long STEP_DELAY_MS = 300;
+    private final ScenarioCatalog catalog;
+    private final ScenarioRuntimeService runtime;
+    private final MultipleConsumerGroupsEnvironment environment;
+
+    public MultipleConsumerGroupsScenarioStarter(
+            ScenarioCatalog catalog, ScenarioRuntimeService runtime,
+            MultipleConsumerGroupsEnvironment environment) {
+        this.catalog = catalog;
+        this.runtime = runtime;
+        this.environment = environment;
+    }
+
+    @Override public String scenarioId() { return "multiple-consumer-groups"; }
+    @Override public List<ScenarioCommand> commands() {
+        return List.of(new ScenarioCommand(OBSERVE_INDEPENDENT_GROUPS, "Observe Independent Groups",
+                "Publish one stream and verify that both consumer groups receive all records."));
+    }
+
+    @Override public ActiveScenarioRuntimeState execute(String commandId, String invocationName) {
+        if (!OBSERVE_INDEPENDENT_GROUPS.equals(commandId)) {
+            throw new IllegalArgumentException("Unknown command: " + commandId);
+        }
+        ScenarioGraph scenario = catalog.scenarioById(scenarioId());
+        runtime.startActiveSession(scenario, invocationName);
+        MultipleConsumerGroupsScenarioStatus result = environment.observe(invocationName);
+        if (!result.receivedByBothGroups()) {
+            event(scenario, "component-failed", "observer", result.error(), null, null, "FAILED");
+            return runtime.completeActiveSession(scenario);
+        }
+
+        runtime.updateActiveStep(scenario, 1);
+        event(scenario, "component-ready", "audit-consumer", "Member of audit-group", null, null, "READY");
+        event(scenario, "component-ready", "notification-consumer", "Member of notification-group", null, null, "READY");
+
+        runtime.updateActiveStep(scenario, 2);
+        result.observations().stream()
+                .filter(observation -> "audit-group".equals(observation.groupId()))
+                .sorted(Comparator.comparingInt(ConsumerGroupObservation::sequence))
+                .forEach(observation -> signal(scenario, "producer", "partition-0",
+                        "record " + observation.sequence() + " @" + observation.offset()));
+
+        runtime.updateActiveStep(scenario, 3);
+        result.observations().stream()
+                .sorted(Comparator.comparingInt(ConsumerGroupObservation::sequence)
+                        .thenComparing(ConsumerGroupObservation::groupId))
+                .forEach(observation -> signal(scenario, "partition-0", consumerNode(observation.groupId()),
+                        "record " + observation.sequence() + " @" + observation.offset()));
+
+        runtime.updateActiveStep(scenario, 4);
+        runtime.updateNodeDetail(scenario, "observer", "3 published | 3 audit | 3 notification | independent offsets");
+        event(scenario, "component-ready", "observer", "Both groups received the complete stream", null, null, "READY");
+        return runtime.completeActiveSession(scenario);
+    }
+
+    private String consumerNode(String groupId) {
+        return "audit-group".equals(groupId) ? "audit-consumer" : "notification-consumer";
+    }
+    private void signal(ScenarioGraph scenario, String from, String to, String label) {
+        event(scenario, "signal-started", null, label, from, to, "ACTIVE");
+        pause();
+        event(scenario, "signal-delivered", null, label, from, to, "READY");
+    }
+    private void event(ScenarioGraph scenario, String type, String node, String label,
+            String from, String to, String status) {
+        runtime.applyRuntimeEvent(scenario,
+                new RuntimeEventRequest(scenario.id(), type, node, null, label, from, to, status));
+    }
+    private void pause() {
+        try { Thread.sleep(STEP_DELAY_MS); }
+        catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Playback interrupted", exception);
+        }
+    }
+}

@@ -15,6 +15,7 @@ public class ScenarioCatalog {
                 globalOrderingScenario(),
                 consumerGroupSinglePartitionScenario(),
                 consumerGroupTwoPartitionsScenario(),
+                multipleConsumerGroupsScenario(),
                 consumerGroupRebalanceOnJoinScenario(),
                 consumerGroupConsumerFailureScenario(),
                 tradeFlowScenario(),
@@ -485,6 +486,46 @@ public class ScenarioCatalog {
                                 List.of("producer-p0", "producer-p1", "p0-a", "p1-b"), "partition-0", "consumer-a")
                 )
         );
+    }
+
+    public ScenarioGraph multipleConsumerGroupsScenario() {
+        return new ScenarioGraph(
+                "multiple-consumer-groups",
+                9,
+                "Multiple Consumer Groups",
+                "Two independent services subscribe to the same topic: Kafka delivers the complete event stream once to each consumer group.",
+                "Fan out one durable event stream to services with different responsibilities without coupling their processing or offsets.",
+                List.of(15),
+                1400,
+                820,
+                List.of(
+                        new ScenarioNode("producer", "Order Producer", "service", 55, 350, 190, 96, null,
+                                "Publishes three unique order events once."),
+                        new ScenarioNode("topic-box", "orders Topic", "container", 330, 210, 330, 330, null,
+                                "One partition stores one physical copy of each record."),
+                        new ScenarioNode("partition-0", "Partition 0", "broker", 70, 105, 190, 120, "topic-box",
+                                "Both groups maintain their own position in this log."),
+                        new ScenarioNode("audit-group", "Consumer Group audit-group", "container", 770, 80, 440, 270, null,
+                                "The audit service independently reads every order event."),
+                        new ScenarioNode("audit-consumer", "Audit Consumer", "consumer", 110, 100, 220, 96, "audit-group",
+                                "Owns Partition 0 for audit-group."),
+                        new ScenarioNode("notification-group", "Consumer Group notification-group", "container", 770, 430, 440, 270, null,
+                                "The notification service has separate offsets and also reads every event."),
+                        new ScenarioNode("notification-consumer", "Notification Consumer", "consumer", 110, 100, 220, 96, "notification-group",
+                                "Owns Partition 0 for notification-group."),
+                        new ScenarioNode("observer", "Independent Delivery Check", "monitor", 1040, 720, 290, 80, null,
+                                "Verifies that both groups received all records at the same Kafka coordinates.")),
+                List.of(new ScenarioEdge("publish", "producer", "partition-0", "publish once")),
+                List.of(
+                        new ScenarioStep("step-1", "Start independent subscribers",
+                                "One consumer joins audit-group and another joins notification-group.", List.of()),
+                        new ScenarioStep("step-2", "Publish one stream",
+                                "The producer appends three records once to Partition 0.", List.of()),
+                        new ScenarioStep("step-3", "Deliver to both groups",
+                                "Each group receives every record and advances its own offsets.", List.of()),
+                        new ScenarioStep("step-4", "Verify fan-out",
+                                "The same topic-partition-offset coordinates are observed independently by both services.", List.of())),
+                List.of());
     }
 
     public ScenarioGraph consumerGroupConsumerFailureScenario() {
