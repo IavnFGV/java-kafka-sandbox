@@ -1,5 +1,21 @@
 # Learning Notes
 
+This is a historical diary, not a current task list. “Next”, “planned”, and
+“temporary” statements below describe the stage of the project at that entry.
+For current scope and remaining work, use [README](README.md), the
+[architecture guide](VISUALIZER_CONTEXT.md), and the
+[roadmap](KAFKA_100_PROBLEMS_AND_PATTERNS.md).
+
+## Current checkpoint
+
+- Scenarios 001–012 are implemented; articles and source links are available in
+  [Russian and English](docs/README.md).
+- Timeline replay, visible/technical frames, parallel signals, and package-level
+  source navigation are implemented. Per-node snippets and cursor-gap detection remain planned.
+- Consumer shutdown is graceful; measured broker lag and process-crash detection
+  are not demonstrated by scenario 012.
+- The following dated entries retain the implementation history.
+
 ## Kafka
 
 ### Session Log
@@ -7,14 +23,14 @@
 #### 2026-09-07 — Scenario Package Naming
 
 - Decision: scenario package names follow the full learning scenario meaning, not catalog numbers or abbreviated implementation terms
-- Current packages: `systemready`, `tradeeventflow`, `topicpartitionoffsetbasics`, `messagekeypartitionselection`, `orderingwithinonepartition`, `parallelorderswithoutglobalordering`, `onepartitiontwoconsumersonegroup`
+- Packages recorded at that stage: `systemready`, `tradeeventflow`, `topicpartitionoffsetbasics`, `messagekeypartitionselection`, `orderingwithinonepartition`, `parallelorderswithoutglobalordering`, `onepartitiontwoconsumersonegroup`
 - Reason: catalog order may change, while a semantic package name keeps ownership obvious in code and avoids mass renumbering
 - Isolation fix: scenarios 002-005 now create unique topics as well as unique groups, so historical JSON type headers cannot break runs after Java package refactoring
 
 #### 2026-09-07 — Code-Guided Nodes Direction
 
-- Future UX: clicking a topology node opens its relevant source locations and practical implementation notes
-- Architecture decision: add structured backend `sourceReferences` to scenario nodes instead of guessing Java paths from UI labels
+- Initial UX proposal: clicking a topology node opens relevant source locations and implementation notes; package-level navigation was subsequently implemented (see the final entry)
+- Proposed refinement (not implemented): add structured backend `sourceReferences` to scenario nodes instead of guessing Java paths from UI labels
 - Preferred flow: inspect a short source snippet in a side panel, then optionally follow a stable repository permalink
 - Scenario definition of done should eventually link the producer, listener, experiment, tracker, and integration test
 
@@ -142,11 +158,6 @@
 - Technical updates are retained and folded into the preceding frame's final `after` state; the UI can reveal their raw sequence with `Technical events`
 - Layout refinement: the timeline is fixed to the bottom like a video editor track; runtime log and legend moved to modal dialogs to keep the graph workspace focused
 
-## ETL Mapping
-
-## AWS Basics
-
-## Adaptiq Pitch
 ## Scenario 009: Multiple Consumer Groups
 
 - One physical Kafka record can be consumed independently by multiple consumer groups.
@@ -154,7 +165,7 @@
 - Every group owns independent committed offsets, even though all groups observe the same topic-partition-offset coordinates.
 - Scenario package: `io.drozda.sandbox.scenario.multipleconsumergroups`.
 - Runtime events can share a `playbackGroup`; the browser combines them into one frame for simultaneous animation while retaining every backend event.
-- Next group-focused scenario: start one consumer with both partitions, add a second consumer, and observe the real rebalance.
+- Later implemented in scenario 011: start one consumer with both partitions, add a second consumer, and observe the real rebalance.
 
 ## Scenario 010: Earliest vs Latest
 
@@ -176,22 +187,22 @@
 ## Scenario 012: Consumer Failure and Partition Takeover
 
 - Two consumers initially own one partition each; after one listener stops, the survivor owns both.
-- A record appended while its partition has no stable owner remains in Kafka and is consumed after reassignment.
+- A record appended after stopping P1’s owner is consumed by the survivor; the code does not assert that reassignment is still pending at publication time.
 - The controlled listener stop demonstrates takeover but is faster than crash detection based on missing heartbeats.
 - Rebalance can create temporary lag and at-least-once delivery means idempotent processing remains important.
 - Scenario package: `io.drozda.sandbox.scenario.consumerfailureandpartitiontakeover`.
 
-## Coverage Checkpoint After Scenario 012
+## Catalog Mapping Checkpoint After Scenario 012
 
-- Explicit coverage: 12 of 100 unique Kafka backlog questions.
+- Explicit catalog mappings: 12 of 100 unique Kafka backlog questions. A mapping does not imply exhaustive coverage of the topic.
 - Covered IDs: #1, #2, #10-#16, #41, #94, #97.
-- Remaining: 88 questions, split into 31 P1, 49 P2, and 8 P3 items.
-- Coverage is counted only from implemented roadmap mappings, not from incidental mentions.
+- Unmapped: 88 questions, split into 31 P1, 49 P2, and 8 P3 items. Mapped #41, #94, and #97 still have unimplemented operational aspects.
+- Counts reflect implemented roadmap mappings, not incidental mentions or a completed production-readiness checklist.
 
 ## GitHub Source Navigation
 
 - Every implemented `ScenarioGraph` exposes a repository-relative `sourceRoot` owned by the backend catalog.
-- Clicking a graph node opens its description and a stable GitHub link to the scenario package on `main`.
+- Clicking a graph node opens its description and a GitHub branch link to the scenario package on `main` (not a commit-pinned permalink).
 - Drag and click are distinguished by pointer movement so rearranging the graph does not open the source dialog.
-- A catalog test verifies that every configured source directory exists after package refactoring.
+- `ScenarioSourceReferenceTest` verifies that every configured source directory exists after package refactoring.
 - Future refinement: add node-level file and line references for producer, listener, tracker, and experiment classes.

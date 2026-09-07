@@ -9,15 +9,15 @@ A user should be able to clone the repository, start the local environment, and
 work through increasingly difficult scenarios before an interview or while
 learning Kafka without production experience.
 
-## Scenario Experience
+## Scenario Experience (Target)
 
 Each completed scenario should:
 
 1. Show the initial system topology.
 2. State the practical problem this Kafka feature solves.
-3. Reference every related item from `KAFKA_100_PROBLEMS_AND_PATTERNS.md`.
+3. Reference every related item from [KAFKA_100_PROBLEMS_AND_PATTERNS.md](KAFKA_100_PROBLEMS_AND_PATTERNS.md).
 4. Let the user predict what will happen.
-5. Run a real Kafka-backed experiment.
+5. Run a real Kafka-backed experiment, except for the introductory Spring-wiring check.
 6. Visualize messages, component state, partition ownership, or failures.
 7. Explain why Kafka behaved that way.
 8. Include a failure or edge-case variant where it adds value.
@@ -50,7 +50,7 @@ Later scenarios cover operational and reliability behavior:
 - broker failures and consumer lag
 - transactions, outbox, schema evolution, and scaling
 
-The detailed backlog lives in `KAFKA_100_PROBLEMS_AND_PATTERNS.md`.
+The detailed backlog lives in [KAFKA_100_PROBLEMS_AND_PATTERNS.md](KAFKA_100_PROBLEMS_AND_PATTERNS.md).
 
 ## Architecture Direction
 
@@ -64,14 +64,23 @@ The detailed backlog lives in `KAFKA_100_PROBLEMS_AND_PATTERNS.md`.
 
 ## Current Milestone
 
-The repository currently has seven ordered visual scenarios. `001 System Ready`
-checks the Kafka-facing Spring wiring. `002 Trade Event Flow` starts its own
-isolated Spring Boot context, publishes a real record, captures Kafka partition
-and offset metadata, and confirms that its listener receives the matching event.
-`003 Topic, Partition, Offset` appends records to two explicit partitions and
-verifies their partition-local offsets on both producer and consumer sides.
-`004 Message Key and Partition Selection` sends related order events with the
-same key and verifies that Kafka routes them to one partition.
+All 12 scenarios from `001 System Ready` through `012 Consumer Failure` are
+implemented. `001` checks Spring wiring; `002–012` perform Kafka experiments
+covering message delivery, partitions/offsets, key-based routing, ordering,
+consumer groups, offset reset, rebalance, and graceful consumer takeover.
 
-The next milestone is `005 Ordering Within One Partition`: verify the ordering
-guarantee for related records after key-based routing.
+The browser records backend transitions and supports local timeline replay,
+simultaneous signal frames, technical-event inspection, and package-level source
+navigation. All 14 scenario and supplementary articles are available in
+[Russian and English](docs/README.md), with implementation line links.
+
+The current experience does not enforce prediction questions or an interactive
+quiz. Source navigation opens a scenario package on `main`; per-node file/line
+references and embedded source snippets remain planned. History is bounded in
+backend memory and local to the browser page, rather than durable per-user sessions.
+
+The next learning blocks are producer durability or commits, delivery, and
+idempotency; neither is implemented as a new scenario yet. The
+[roadmap](KAFKA_100_PROBLEMS_AND_PATTERNS.md) records the detailed candidates.
+See [README](README.md) for setup and
+[the architecture guide](VISUALIZER_CONTEXT.md) for implementation boundaries.

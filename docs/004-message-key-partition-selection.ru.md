@@ -65,7 +65,7 @@ order-73 CREATED
 ```
 
 Experiment получает producer metadata, а listener — полные `ConsumerRecord`.
-Для каждой записи сравниваются key, partition и offset. Количество distinct partitions у записей `order-42` вычисляет
+Для каждой записи сравниваются key, partition и offset. Для стратегий без гарантии маршрутизации количество distinct partitions у записей `order-42` вычисляет
 [`KeyPartitioningScenarioStarter`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/KeyPartitioningScenarioStarter.java#L100)
 для отображения результата. Флаг гарантии задаётся стратегией `ORDER_ID`; отдельного
 assert на единственную partition в experiment нет.

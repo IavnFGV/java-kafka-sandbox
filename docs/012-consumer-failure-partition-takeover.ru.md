@@ -8,14 +8,18 @@
 
 В начале два consumer одной группы делят две partition. Backend не предполагает конкретное распределение, а получает его из `onPartitionsAssigned`. Затем выбирается фактический владелец Partition 1 и останавливается его listener-контейнер.
 
-Пока ownership меняется, producer отправляет новую запись в освободившуюся partition. Запись уже надежно находится в Kafka, но consumer временно отсутствует. После rebalance оставшийся участник получает обе partition и читает ожидавшую запись с ее offset.
+После остановки owner producer отправляет новую запись в Partition 1. Backend
+ждёт, пока оставшийся участник получит обе partitions и прочитает запись. Код не
+проверяет, что в момент отправки partition ещё не имела owner: rebalance может
+успеть закончиться до публикации. Поэтому `Temporary Lag` — учебное представление
+перехода, а не измеренное окно отсутствия consumer или broker lag.
 
 ## Как устроен опыт
 
 [`TakeoverTracker`](../src/main/java/io/drozda/sandbox/scenario/consumerfailureandpartitiontakeover/app/TakeoverTracker.java#L7) хранит реальные assignment/revoke callbacks и ожидает записи по уникальным `eventId`. [`TakeoverExperiment`](../src/main/java/io/drozda/sandbox/scenario/consumerfailureandpartitiontakeover/app/TakeoverExperiment.java#L6) выполняет последовательность:
 
 1. Запускает оба управляемых consumer.
-2. Ждет стабильного распределения с двумя владельцами.
+2. Ждет наблюдаемого распределения с двумя владельцами.
 3. Проверяет обработку по одной записи из каждой partition.
 4. Останавливает владельца P1 и сразу публикует туда запись.
 5. Ждет, пока survivor получит обе partition.

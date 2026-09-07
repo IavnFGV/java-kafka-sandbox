@@ -36,24 +36,30 @@ The mapping is many-to-many: one scenario may cover several backlog questions,
 and one question may require several scenarios. Keep `ScenarioGraph.backlogItems`
 and this table synchronized when scenarios are implemented or reordered.
 
-## Coverage Snapshot After Scenario 012
+## Catalog Mapping Snapshot After Scenario 012
 
-Explicitly covered backlog items: **12 of 100**.
+Backlog items explicitly mapped to implemented scenarios: **12 of 100**.
 
-Covered: `#1`, `#2`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`, `#41`, `#94`, `#97`.
+Mapped: `#1`, `#2`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`, `#41`, `#94`, `#97`.
 
-Not yet covered: **88 of 100**.
+Not yet mapped: **88 of 100**.
 
-| Priority | Total items | Covered | Remaining |
+| Priority | Total items | Mapped | Unmapped |
 |---|---:|---:|---:|
 | `P1` | 40 | 9 | 31 |
 | `P2` | 52 | 3 | 49 |
 | `P3` | 8 | 0 | 8 |
 
-This snapshot counts only backlog numbers explicitly attached to an implemented
-scenario in the roadmap. A concept mentioned incidentally in a visualization or
-article is not considered covered until the scenario satisfies the Definition of
-Done and its `ScenarioGraph.backlogItems` mapping is updated.
+This snapshot counts explicit `ScenarioGraph.backlogItems` mappings, not exhaustive
+validation of every topic. The mappings are implemented, but #41 (rebalance during
+processing), #94 (rebalance storms), and #97 (stuck-consumer detection) are only
+introduced by the current join/takeover experiments. Those experiments do not
+reproduce a rebalance storm, a stuck poll loop, or process-crash detection latency.
+Lag is explained visually rather than measured from broker offsets. Further
+experiments are needed before treating those operational topics as complete.
+
+Implementation entry points are in the [catalog](src/main/java/io/drozda/sandbox/visualization/ScenarioCatalog.java#L30)
+and [bilingual scenario articles](docs/README.md).
 
 ## Consolidated Scenario Route
 
@@ -62,7 +68,7 @@ Build one experiment when several questions describe one causal chain:
 
 | Laboratory series | Candidate experiments | Backlog coverage |
 |---|---:|---|
-| Complete core group route | 4 | #15, #16, #41, #42, #94, #97 |
+| Core group route: 009–012 implemented; operational extensions pending | 4 existing | #15, #16; introduces #41, #94, #97; measured lag #42 pending |
 | Producer durability and throughput | 5 | #3-9, #21-30, #91-93, #99 |
 | Commits, delivery, and idempotency | 5 | #31-37, #42-45, #59-60 |
 | Retry, poison records, and DLT | 5 | #38-40, #46-58 |
@@ -215,9 +221,11 @@ Reference sources used to curate this list:
 99. `P3` Throughput tuning under pressure
 100. `P3` Designing Kafka for an interview system design round
 
-## Suggested First 20 to Build in This Repository
+## Initial 20-Topic Shortlist
 
-These are the best first scenarios for this project:
+This shortlist records the original priorities. Entries 1–4 and 14 already have
+implemented scenarios (003–009 and 011); use the roadmap table for current status.
+The remaining entries are candidate extensions, not implemented functionality:
 
 1. Topic, partition, offset
 2. Key-based partitioning
@@ -242,7 +250,8 @@ These are the best first scenarios for this project:
 
 ## Visualizer Mapping Ideas
 
-The visualizer should eventually be able to show:
+The runtime already shows component states, signals, and assignment changes.
+Retry/DLT events and measured consumer lag remain future extensions. Target vocabulary:
 - component ready
 - component busy
 - component failed
@@ -291,19 +300,12 @@ The visualizer should eventually be able to show:
 - Show the cleanup lifecycle and failures in the runtime log.
 - Add integration tests proving that a cleaned topic starts again with empty partition logs.
 
-## Build Order Recommendation
+## Next Implementation Blocks
 
-Phase 1:
-- items 1-10
-
-Phase 2:
-- items 11-20
-
-Phase 3:
-- items 21-60
-
-Phase 4:
-- items 61-100
+The initial partition/group route is implemented through scenario 012. Choose an
+unfinished consolidated block above: producer durability/throughput or commits,
+delivery, and idempotency. Preserve the causal experiment structure rather than
+restarting at backlog #1 or creating one card for every number.
 
 ## Definition of Done for One Topic
 
@@ -311,7 +313,8 @@ For each topic, try to leave behind:
 - one practical problem statement explaining why the behavior matters
 - explicit references to every covered backlog item
 - one integration test
-- one short note in `learning_notes.md`
+- one dated historical note in [learning_notes.md](learning_notes.md)
 - one visual scenario or runtime event sequence
+- paired `.ru.md` / `.en.md` articles with verified source file/line links
 - one “what can go wrong” note
 - one interview-style explanation in plain language

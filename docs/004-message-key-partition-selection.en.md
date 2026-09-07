@@ -66,7 +66,7 @@ order-73 CREATED
 [`KeyPartitioningExperiment`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/app/KeyPartitioningExperiment.java#L29) obtains producer metadata, while the listener receives
 complete `ConsumerRecord` objects. The key, partition, and offset are compared
 for every record. [`KeyPartitioningScenarioStarter`](../src/main/java/io/drozda/sandbox/scenario/messagekeypartitionselection/KeyPartitioningScenarioStarter.java#L44) computes the number of distinct
-partitions for `order-42` to display the result. The guarantee flag comes from the
+partitions for `order-42` when displaying a strategy without a routing guarantee. The guarantee flag comes from the
 `ORDER_ID` strategy; the experiment has no separate single-partition assertion.
 
 Why ten records? If each unique `eventId` hashes independently and uniformly to

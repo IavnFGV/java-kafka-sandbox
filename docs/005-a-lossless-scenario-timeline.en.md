@@ -87,7 +87,8 @@ This distinction matters:
 
 - the backend retains a small buffer for reliable delivery;
 - the browser timeline represents the current learning session's history;
-- reloading deliberately starts a new local history.
+- reloading deliberately starts a new local history;
+- a new Play also clears the selected scenario’s timeline before recording another run.
 
 ## Browser queue and playback
 

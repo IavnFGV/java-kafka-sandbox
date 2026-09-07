@@ -24,7 +24,7 @@ across partitions.
 
 ## What the experiment does
 
-The scenario application creates `scenario-003-partition-offsets` with two
+The scenario application creates `scenario-003-partition-offsets-<UUID>` with two
 partitions. [`PartitionedEventPublisher`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/producer/PartitionedEventPublisher.java#L20) makes three explicit sends:
 
 1. Event A to partition `0`.
@@ -36,8 +36,8 @@ selection and the default partitioner are separate topics.
 
 Let the first offset in partition `0` be `N`, and the offset in partition `1`
 be `M`. The third record must receive an offset greater than `N` in partition
-`0`. We deliberately do not assert absolute values of `0, 0, 1`: the topic
-persists between runs, so actual values might be `12, 7, 13`.
+`0`. We deliberately do not assert absolute values of `0, 0, 1`: repeated Play
+reuses the current context’s topic, so actual values might be `12, 7, 13`.
 
 ## How the consumer subscribes
 
@@ -79,7 +79,8 @@ The consumer displays its assigned partitions, `0, 1`.
 
 As in `002`, [`TopicPartitionOffsetsEnvironment`](../src/main/java/io/drozda/sandbox/scenario/topicpartitionoffsetbasics/TopicPartitionOffsetsEnvironment.java#L19) starts a separate Spring context
 on a random HTTP port. Repeated Play reuses the context but creates new events;
-Stop closes the context. The internal HTTP API starts the experiment, while the
+Stop closes the context. The next start creates a new UUID-suffixed topic; the
+old topic remains in Kafka until deletion or loss of broker data. The internal HTTP API starts the experiment, while the
 messages themselves are sent to Kafka through `KafkaTemplate`.
 
 Scenarios `001` and `002` do not reuse `003`'s Kafka beans. This allows the next

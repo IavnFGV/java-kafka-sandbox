@@ -43,13 +43,15 @@ to P0 and odd ones to P1. Explicit partition selection makes this learning
 experiment deterministic. In production, the partition is usually chosen from
 the message key.
 
-The experiment checks that:
+Assignment waiting establishes different owners for P0 and P1. The publication
+sequence creates three records per partition. Then `verify()` checks that:
 
-- each partition received three records;
-- P0 and P1 have different owners;
 - each record was processed by its partition's owner;
 - producer metadata matches `ConsumerRecord.partition()` and `offset()`;
-- exactly six expected event IDs were received in total.
+- six callbacks for registered event IDs were received in total.
+
+The tracker filters unrelated event IDs but does not assert uniqueness of every
+callback. These checks do not prove the absence of duplicate delivery.
 
 The visualization first builds actual assignment edges, then shows every record's
 path: `Producer -> Partition -> Consumer`. The `Parallel Assignment` node turns
