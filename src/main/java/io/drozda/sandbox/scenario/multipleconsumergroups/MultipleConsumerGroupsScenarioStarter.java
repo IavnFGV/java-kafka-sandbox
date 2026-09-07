@@ -58,7 +58,7 @@ public class MultipleConsumerGroupsScenarioStarter implements ScenarioStarter {
                 .filter(observation -> "audit-group".equals(observation.groupId()))
                 .sorted(Comparator.comparingInt(ConsumerGroupObservation::sequence))
                 .forEach(observation -> signal(scenario, "producer", "partition-0",
-                        "record " + observation.sequence() + " @" + observation.offset()));
+                        "append record " + observation.sequence() + " @" + observation.offset()));
 
         runtime.updateActiveStep(scenario, 3);
         result.observations().stream().map(ConsumerGroupObservation::sequence).distinct().sorted()
@@ -82,12 +82,12 @@ public class MultipleConsumerGroupsScenarioStarter implements ScenarioStarter {
         String playbackGroup = "record-" + sequence + "-fan-out";
         deliveries.forEach(observation -> event(
                 scenario, "signal-started", null,
-                "record " + observation.sequence() + " @" + observation.offset(),
+                "fan out record " + observation.sequence() + " @" + observation.offset() + " to 2 groups",
                 "partition-0", consumerNode(observation.groupId()), "ACTIVE", playbackGroup));
         pause();
         deliveries.forEach(observation -> event(
                 scenario, "signal-delivered", null,
-                "record " + observation.sequence() + " @" + observation.offset(),
+                "fan out record " + observation.sequence() + " @" + observation.offset() + " to 2 groups",
                 "partition-0", consumerNode(observation.groupId()), "READY", playbackGroup));
     }
     private void signal(ScenarioGraph scenario, String from, String to, String label) {

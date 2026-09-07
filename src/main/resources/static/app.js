@@ -407,11 +407,18 @@ function renderTimeline() {
         ` : "";
       }
       const index = frameIndexBySequence.get(event.sequence);
+      if (index === undefined) {
+        return timeline.showTechnical ? `
+          <li class="timeline-technical-event" title="Grouped backend sequence ${event.sequence}">
+            <span>GROUPED ${event.sequence}</span>${escapeXml(timelineEventTitle(event))}
+          </li>
+        ` : "";
+      }
       const frameNumber = event.animated ? String(++animatedSequence).padStart(3, "0") : "STATE";
       return `
       <li class="timeline-step ${index === timeline.currentIndex ? "current" : ""}">
         <button type="button" data-timeline-index="${index}">
-          <span class="timeline-step-sequence">${frameNumber}</span>
+          <span class="timeline-step-sequence">${frameNumber}${event.playbackGroup ? " · PARALLEL" : ""}</span>
           <span class="timeline-step-title">${escapeXml(timelineEventTitle(event))}</span>
         </button>
       </li>
