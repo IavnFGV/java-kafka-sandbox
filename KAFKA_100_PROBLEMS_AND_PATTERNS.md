@@ -25,7 +25,7 @@ How to use this list:
 | `004 Message Key and Partition Selection` | Implemented | Keep related entity events in the same ordered shard | #10 |
 | `005 Ordering Within One Partition` | Implemented | Preserve the order of related events | #11 |
 | `006 Parallel Orders Without Global Ordering` | Implemented | Remove head-of-line blocking while preserving per-order sequence | #12 |
-| `007 One Partition, Two Consumers` | Static UI | Detect why adding consumers may not increase throughput | #13, #14 |
+| `007 One Partition, Two Consumers` | Implemented | Observe one active owner, one idle member, and takeover after owner shutdown | #13, #14 |
 | `008 Two Partitions, Two Consumers` | Static UI | Scale one service by distributing partitions across its instances | #13, #14 |
 | `009 Multiple Consumer Groups` | Planned | Let independent services process the same event stream | #15 |
 | `010 Earliest vs Latest` | Planned | Control where a new group begins reading | #16 |
@@ -64,8 +64,8 @@ Reference sources used to curate this list:
 10. `P1` Message key and partition selection - route related entity events into one partition (`004`)
 11. `P1` Ordering guarantees within a partition - verify send order, offsets, and consume order (`005`)
 12. `P1` Why global ordering does not exist across partitions - compare one ordered queue with two parallel ordered shards (`006`)
-13. `P1` Consumer group mechanics
-14. `P1` One partition assigned to one consumer in a group
+13. `P1` Consumer group mechanics - observe assignment and takeover after membership changes (`007`)
+14. `P1` One partition assigned to one consumer in a group - prove that a second group member remains idle (`007`)
 15. `P1` Multiple consumer groups reading the same topic
 16. `P1` Auto offset reset: `earliest` vs `latest`
 17. `P1` Retention by time

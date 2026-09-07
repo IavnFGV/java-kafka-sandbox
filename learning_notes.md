@@ -85,6 +85,18 @@
 - Implementation commit: `50cc164`
 - Next scenario: `007 One Partition, Two Consumers`, demonstrating why consumer count above partition count does not add throughput
 
+#### 2026-09-07 — Scenario 007
+
+- Topic: one partition with two consumers in one group
+- Behavior reproduced: Kafka assigned Partition 0 to exactly one consumer while the other healthy member remained idle
+- Failure behavior: the experiment stopped the actual owner by listener-container ID; after rebalance the former idle member took over and processed the next batch
+- Practical takeaway: consumers beyond the partition count add no throughput, though they can provide warm standby capacity
+- Spring detail: separate `@KafkaListener` IDs plus `KafkaListenerEndpointRegistry` allow one group member to be stopped without closing the scenario application
+- Correctness detail: the experiment observes the real owner instead of assuming Consumer A wins startup assignment
+- Files to revisit: `SinglePartitionGroupExperiment`, `SinglePartitionGroupTracker`, `ConsumerMemberControl`, `ConsumerGroupMemberA`, `ConsumerGroupMemberB`
+- Implementation commit: `f04011c`
+- Next scenario: `008 Two Partitions, Two Consumers`, focusing on steady-state work distribution without the failure step
+
 #### 2026-09-06 — Visualizer Timeline Improvement
 
 - Problem found: every long-poll update currently triggers a complete SVG render, so an active signal animation restarts; if the backend advances through several states quickly, a latest-snapshot API can also hide intermediate learning steps entirely
