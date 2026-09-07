@@ -180,3 +180,10 @@
 - The controlled listener stop demonstrates takeover but is faster than crash detection based on missing heartbeats.
 - Rebalance can create temporary lag and at-least-once delivery means idempotent processing remains important.
 - Scenario package: `io.drozda.sandbox.scenario.consumerfailureandpartitiontakeover`.
+
+## Coverage Checkpoint After Scenario 012
+
+- Explicit coverage: 12 of 100 unique Kafka backlog questions.
+- Covered IDs: #1, #2, #10-#16, #41, #94, #97.
+- Remaining: 88 questions, split into 31 P1, 49 P2, and 8 P3 items.
+- Coverage is counted only from implemented roadmap mappings, not from incidental mentions.

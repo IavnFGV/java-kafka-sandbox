@@ -36,6 +36,25 @@ The mapping is many-to-many: one scenario may cover several backlog questions,
 and one question may require several scenarios. Keep `ScenarioGraph.backlogItems`
 and this table synchronized when scenarios are implemented or reordered.
 
+## Coverage Snapshot After Scenario 012
+
+Explicitly covered backlog items: **12 of 100**.
+
+Covered: `#1`, `#2`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`, `#41`, `#94`, `#97`.
+
+Not yet covered: **88 of 100**.
+
+| Priority | Total items | Covered | Remaining |
+|---|---:|---:|---:|
+| `P1` | 40 | 9 | 31 |
+| `P2` | 52 | 3 | 49 |
+| `P3` | 8 | 0 | 8 |
+
+This snapshot counts only backlog numbers explicitly attached to an implemented
+scenario in the roadmap. A concept mentioned incidentally in a visualization or
+article is not considered covered until the scenario satisfies the Definition of
+Done and its `ScenarioGraph.backlogItems` mapping is updated.
+
 ## Consolidated Scenario Route
 
 Backlog numbers remain a knowledge index, not a one-scenario-per-question plan.
