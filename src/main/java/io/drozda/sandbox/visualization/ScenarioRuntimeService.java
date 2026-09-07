@@ -14,6 +14,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 @Service
 public class ScenarioRuntimeService {
     private static final int MAX_LOG_LINES = 24;
+    private static final int MAX_TIMELINE_EVENTS = 1_000;
 
     private static final String STATUS_READY = "READY";
     private static final String STATUS_ACTIVE = "ACTIVE";
@@ -32,6 +33,7 @@ public class ScenarioRuntimeService {
 
     private final Map<String, Integer> currentStepByScenario = new ConcurrentHashMap<>();
     private final AtomicLong runtimeRevision = new AtomicLong();
+    private final List<ScenarioTimelineEvent> runtimeTimeline = new ArrayList<>();
     private final List<DeferredResult<ScenarioRuntimeUpdate>> runtimeWaiters = new CopyOnWriteArrayList<>();
     private volatile ActiveScenarioRuntimeState activeRuntime = emptyRuntime();
 
@@ -64,7 +66,7 @@ public class ScenarioRuntimeService {
     }
 
     public ScenarioRuntimeUpdate currentRuntimeUpdate() {
-        return new ScenarioRuntimeUpdate(runtimeRevision.get(), activeRuntime);
+        return runtimeUpdateAfter(runtimeRevision.get());
     }
 
     public DeferredResult<ScenarioRuntimeUpdate> awaitRuntimeUpdate(long afterRevision, long timeoutMillis) {
@@ -73,7 +75,7 @@ public class ScenarioRuntimeService {
         result.onCompletion(() -> runtimeWaiters.remove(result));
         result.onTimeout(() -> result.setResult(currentRuntimeUpdate()));
 
-        ScenarioRuntimeUpdate current = currentRuntimeUpdate();
+        ScenarioRuntimeUpdate current = runtimeUpdateAfter(afterRevision);
         if (current.revision() > afterRevision) {
             result.setResult(current);
         }
@@ -258,11 +260,30 @@ public class ScenarioRuntimeService {
         ));
     }
 
-    private ActiveScenarioRuntimeState publishRuntime(ActiveScenarioRuntimeState runtime) {
+    private synchronized ActiveScenarioRuntimeState publishRuntime(ActiveScenarioRuntimeState runtime) {
+        ActiveScenarioRuntimeState before = activeRuntime;
         activeRuntime = runtime;
-        ScenarioRuntimeUpdate update = new ScenarioRuntimeUpdate(runtimeRevision.incrementAndGet(), runtime);
+        long revision = runtimeRevision.incrementAndGet();
+        synchronized (runtimeTimeline) {
+            runtimeTimeline.add(new ScenarioTimelineEvent(revision, before, runtime));
+            if (runtimeTimeline.size() > MAX_TIMELINE_EVENTS) {
+                runtimeTimeline.remove(0);
+            }
+        }
+        ScenarioRuntimeUpdate update = runtimeUpdateAfter(revision - 1);
         runtimeWaiters.removeIf(waiter -> waiter.setResult(update));
         return runtime;
+    }
+
+    private synchronized ScenarioRuntimeUpdate runtimeUpdateAfter(long afterRevision) {
+        long currentRevision = runtimeRevision.get();
+        List<ScenarioTimelineEvent> events;
+        synchronized (runtimeTimeline) {
+            events = runtimeTimeline.stream()
+                    .filter(event -> event.sequence() > afterRevision)
+                    .toList();
+        }
+        return new ScenarioRuntimeUpdate(currentRevision, events, activeRuntime);
     }
 
     private String signalId(RuntimeEventRequest request) {

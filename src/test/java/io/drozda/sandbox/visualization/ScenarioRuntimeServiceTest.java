@@ -131,7 +131,30 @@ class ScenarioRuntimeServiceTest {
         assertTrue(pending.hasResult());
         ScenarioRuntimeUpdate update = (ScenarioRuntimeUpdate) pending.getResult();
         assertEquals(currentRevision + 1, update.revision());
+        assertEquals(1, update.events().size());
+        assertEquals(currentRevision + 1, update.events().get(0).sequence());
+        assertNull(update.events().get(0).before().scenarioId());
+        assertEquals("system-ready", update.events().get(0).after().scenarioId());
         assertEquals("system-ready", update.runtime().scenarioId());
+    }
+
+    @Test
+    void shouldReturnEveryRuntimeTransitionAfterSequenceCursor() {
+        ScenarioGraph scenario = scenarioCatalog.systemReadyScenario();
+        long beforeRun = runtimeService.currentRuntimeUpdate().revision();
+
+        runtimeService.startActiveSession(scenario, "timeline-test");
+        runtimeService.updateActiveStep(scenario, 1);
+        runtimeService.completeActiveSession(scenario);
+
+        DeferredResult<ScenarioRuntimeUpdate> result = runtimeService.awaitRuntimeUpdate(beforeRun, 5_000);
+        ScenarioRuntimeUpdate update = (ScenarioRuntimeUpdate) result.getResult();
+
+        assertEquals(3, update.events().size());
+        assertEquals(beforeRun + 1, update.events().get(0).sequence());
+        assertEquals(beforeRun + 3, update.events().get(2).sequence());
+        assertEquals("session-started", update.events().get(0).after().lastEventType());
+        assertEquals("session-completed", update.events().get(2).after().lastEventType());
     }
 
     @Test

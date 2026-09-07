@@ -102,6 +102,11 @@ public class ScenarioGraphController {
         return scenarioRuntimeService.activeRuntime();
     }
 
+    @GetMapping("/runtime/head")
+    public ScenarioRuntimeUpdate runtimeHead() {
+        return scenarioRuntimeService.currentRuntimeUpdate();
+    }
+
     @GetMapping("/runtime/updates")
     public DeferredResult<ScenarioRuntimeUpdate> runtimeUpdates(
             @RequestParam(defaultValue = "-1") long after,
