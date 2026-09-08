@@ -695,26 +695,26 @@ final class ScenarioSourceCatalog {
             case "system-ready" -> switch (nodeId) {
                 case "spring-app" -> List.of(
                         new ScenarioSourceReference("SystemReadyScenarioApplication",
-                                "src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioApplication.java", 11,
+                                "src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioApplication.java", 12,
                                 "Import the baseline components into the readiness application."),
                         new ScenarioSourceReference("SystemReadyProbe",
-                                "src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java", 27,
+                                "src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java", 25,
                                 "Check injected beans; this does not check broker health.")
                 );
                 case "publisher" -> List.of(
                         new ScenarioSourceReference("TradeEventPublisher",
-                                "src/main/java/io/drozda/sandbox/TradeEventPublisher.java", 21,
+                                "src/main/java/io/drozda/sandbox/scenario/systemready/producer/TradeEventPublisher.java", 18,
                                 "Baseline Kafka publisher."),
                         new ScenarioSourceReference("SystemReadyProbe",
-                                "src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java", 27,
+                                "src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java", 25,
                                 "Check publisher bean presence.")
                 );
                 case "listener" -> List.of(
                         new ScenarioSourceReference("TradeEventListener",
-                                "src/main/java/io/drozda/sandbox/TradeEventListener.java", 20,
+                                "src/main/java/io/drozda/sandbox/scenario/systemready/consumer/TradeEventListener.java", 13,
                                 "Baseline Kafka subscription."),
                         new ScenarioSourceReference("SystemReadyProbe",
-                                "src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java", 31,
+                                "src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java", 29,
                                 "Check listener bean presence.")
                 );
                 case "kafka" -> List.of(
@@ -725,7 +725,7 @@ final class ScenarioSourceCatalog {
                                 "src/main/resources/application.yml", 7,
                                 "Spring Kafka bootstrap servers and serialization defaults."),
                         new ScenarioSourceReference("SystemReadyProbe",
-                                "src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java", 35,
+                                "src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java", 33,
                                 "Only client wiring is checked; the external broker is not probed.")
                 );
                 default -> throw new IllegalArgumentException("No source references for " + scenarioId + "/" + nodeId);

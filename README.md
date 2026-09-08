@@ -6,8 +6,8 @@ visual timeline at your own pace.
 
 The application includes **12 implemented scenarios**: Spring wiring, end-to-end
 message delivery, partitions and offsets, message keys, ordering, consumer groups,
-offset reset, rebalance, and consumer takeover. Scenario 001 checks Spring bean
-wiring; scenarios 002–012 execute Kafka experiments.
+offset reset, rebalance, and consumer takeover. Scenario 001 checks isolated Spring bean
+wiring with its Kafka listener stopped; scenarios 002–012 execute Kafka experiments.
 
 Read the [scenario articles in Russian or English](docs/README.md), with links to
 the implementation lines, or consult the [learning roadmap](KAFKA_100_PROBLEMS_AND_PATTERNS.md).

@@ -1,6 +1,5 @@
 package io.drozda.sandbox.scenario.systemready;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.boot.WebApplicationType;
@@ -37,12 +36,15 @@ public class SystemReadyEnvironment implements ScenarioEnvironment {
         if (applicationContext == null) {
             applicationContext = new SpringApplicationBuilder(SystemReadyScenarioApplication.class)
                     .web(WebApplicationType.SERVLET)
-                    .properties(Map.of(
-                            "server.port", "0",
-                            "spring.application.name", "system-ready-scenario-app",
-                            "spring.kafka.consumer.group-id", "system-ready-scenario-" + UUID.randomUUID()
-                    ))
-                    .run();
+                    .run(
+                            "--scenario.system-ready.enabled=true",
+                            "--server.port=0",
+                            "--spring.application.name=system-ready-scenario-app",
+                            "--spring.kafka.consumer.group-id=system-ready-" + UUID.randomUUID(),
+                            "--app.kafka.topics.system-ready=system-ready-" + UUID.randomUUID(),
+                            "--spring.kafka.consumer.properties.spring.json.trusted.packages=io.drozda.sandbox.scenario.systemready.model",
+                            "--spring.kafka.consumer.properties.spring.json.value.default.type=io.drozda.sandbox.scenario.systemready.model.TradeEvent"
+                    );
             WebServerApplicationContext webContext = (WebServerApplicationContext) applicationContext;
             baseUrl = "http://localhost:" + webContext.getWebServer().getPort();
         }
