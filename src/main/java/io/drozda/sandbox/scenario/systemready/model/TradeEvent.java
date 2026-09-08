@@ -1,4 +1,4 @@
-package io.drozda.sandbox.model;
+package io.drozda.sandbox.scenario.systemready.model;
 
 public record TradeEvent(
     String eventId,

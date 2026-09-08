@@ -30,6 +30,9 @@ All 12 catalog scenarios have starters and environments. `system-ready` verifies
 Spring wiring only. Scenarios 002–012 send and consume real Kafka records; static
 steps remain as baseline topology and legacy step navigation, not evidence of success.
 Tests exercise the same mediator path but are not the user-facing runner.
+The former `VisualAction` AOP logger and its dependency have been removed; starters
+emit runtime events explicitly. The old root-level publisher integration test was
+replaced by the isolated 002 experiment and the 001 lifecycle/isolation checks.
 
 ## Scenario ownership and lifecycle
 
@@ -39,7 +42,10 @@ conditional configuration, scenario-owned models, topics, and consumer groups.
 The [catalog source mapping](src/main/java/io/drozda/sandbox/visualization/ScenarioCatalog.java#L30)
 lists the semantic package for every scenario ID.
 
-- 001 reuses its context while checking injected components.
+- 001 reuses its context while checking injected components. Its publisher, listener,
+  model, and probe belong to `scenario.systemready`; conditional configuration
+  imports them only inside the scenario application. The listener does not auto-start.
+  Scenario-specific topic/group and JSON settings are passed by its environment.
 - 002–009 reuse their context on repeated Play; a new context gets unique topic/group names.
 - 010–012 recreate the context for each experiment, with new topics and group IDs.
 - Stop closes the context and its listeners; the controller also clears the visual runtime.

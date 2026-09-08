@@ -1,5 +1,6 @@
 package io.drozda.sandbox.scenario.systemready.app;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +12,7 @@ import io.drozda.sandbox.scenario.systemready.SystemReadyProbe;
 import io.drozda.sandbox.scenario.systemready.SystemReadyScenarioStarter;
 
 @RestController
+@ConditionalOnProperty(name = "scenario.system-ready.enabled", havingValue = "true")
 @RequestMapping("/internal/system-ready")
 public class SystemReadyScenarioController {
 

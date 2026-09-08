@@ -94,19 +94,22 @@ Mediator выбирает их по `scenarioId()`. `runDefault()` берёт п
    включает автоматическое воспроизведение и отправляет
    `POST /api/scenarios/system-ready/run` с именем запуска.
 2. [`ScenarioGraphController.runScenario()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioGraphController.java#L167) передаёт запрос в mediator.
-3. Mediator находит [`SystemReadyEnvironment`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyEnvironment.java#L36) и вызывает `start()`.
-4. Environment запускает [`SystemReadyScenarioApplication`](../src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioApplication.java#L11) через
+3. Mediator находит [`SystemReadyEnvironment`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyEnvironment.java#L35) и вызывает `start()`.
+4. Environment запускает [`SystemReadyScenarioApplication`](../src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioApplication.java#L12) через
    `SpringApplicationBuilder.run()` и сохраняет `ConfigurableApplicationContext`.
    Созданный HTTP-порт читается из `WebServerApplicationContext`, а адрес сохраняется
-   в `baseUrl`. У 001 настройки заданы через `.properties(...)` как defaults;
-   в 002 через `.run("--server.port=0", ...)` передаются аргументы запуска.
-   Defaults 001 могут быть переопределены конфигурацией с более высоким приоритетом.
+   в `baseUrl`. Настройки передаются аргументами `.run(...)`: флаг
+   `scenario.system-ready.enabled=true`, случайный HTTP-порт, уникальные topic/group
+   и JSON-настройки модели из `scenario.systemready.model`.
 5. `SystemReadyScenarioApplication` импортирует publisher, listener, probe и
-   внутренний controller. Spring создаёт бины и внедряет зависимости.
+   внутренний controller. Условная конфигурация включается только флагом сценария.
+   Publisher, listener и probe не имеют component-аннотаций; основной context
+   не создаёт их при сканировании. Listener объявлен с `autoStartup=false`: проверка
+   wiring не подписывается на broker.
 6. [`SystemReadyScenarioStarter.execute()`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyScenarioStarter.java#L51) вызывает
    `SystemReadyEnvironment.baselineReadiness()`. Environment отправляет внутренний
    HTTP-запрос в `/internal/system-ready/commands/baseline-readiness`.
-7. [`SystemReadyScenarioController`](../src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioController.java#L34) получает из [`SystemReadyProbe`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java#L27) три факта:
+7. [`SystemReadyScenarioController`](../src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioController.java#L36) получает из [`SystemReadyProbe`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java#L25) три факта:
    присутствуют ли publisher, listener и `KafkaTemplate`. Возвращается
    `SystemReadyScenarioStatus`.
 8. Starter создаёт runtime-сессию, публикует события готовности компонентов и
@@ -139,6 +142,8 @@ Experiment ждёт broker acknowledgement и получает partition/offset.
 Kafka record — данные опыта. Runtime event — описание подтверждённого факта для
 визуализатора: «компонент готов», «началось движение сигнала», «обновился текст узла».
 Listener не отправляет сообщения прямо в браузер и не публикует UI timeline в Kafka.
+Старый `@VisualAction` и его AOP-аспект удалены: они только писали лог вокруг
+метода publisher и никогда не формировали runtime-события.
 
 Starter получает результат опыта и вызывает [`ScenarioRuntimeService`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L162) напрямую.
 `applyRuntimeEvent()` обновляет карты статусов и список сигналов.
@@ -202,7 +207,7 @@ baselineReadiness → applyRuntimeEvent`. Затем добавьте в мар�
 конфигурация сценарного приложения, внутренняя команда и наблюдаемый результат.
 В [`ScenarioSourceCatalog`](../src/main/java/io/drozda/sandbox/visualization/ScenarioSourceCatalog.java#L9) укажите ключевые места для каждого узла; отдельная
 статья описывает Kafka-смысл опыта. Проверки должны подтверждать наблюдения, а не
-только зелёный цвет. Примеры — [`AllComponentsTest`](../src/test/java/io/drozda/sandbox/basic/AllComponentsTest.java#L37), [`TradeFlowScenarioTest`](../src/test/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowScenarioTest.java#L21) и
+только зелёный цвет. Примеры — [`AllComponentsTest`](../src/test/java/io/drozda/sandbox/basic/AllComponentsTest.java#L25), [`TradeFlowScenarioTest`](../src/test/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowScenarioTest.java#L21) и
 [`ScenarioRuntimeServiceTest`](../src/test/java/io/drozda/sandbox/visualization/ScenarioRuntimeServiceTest.java#L17).
 
 Текущие границы платформы: одна общая активная runtime-сессия, память без постоянного

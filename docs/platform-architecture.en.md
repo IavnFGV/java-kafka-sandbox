@@ -93,19 +93,22 @@ structures: 001 uses a probe without a Kafka experiment.
 1. The browser calls [`runScenario()`](../src/main/resources/static/app.js#L138), clears the selected local timeline, enables
    autoplay, and sends `POST /api/scenarios/system-ready/run` with a run name.
 2. [`ScenarioGraphController.runScenario()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioGraphController.java#L167) forwards the request to the mediator.
-3. The mediator finds [`SystemReadyEnvironment`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyEnvironment.java#L36) and calls `start()`.
+3. The mediator finds [`SystemReadyEnvironment`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyEnvironment.java#L35) and calls `start()`.
 4. The environment calls `SpringApplicationBuilder.run()` for
-   [`SystemReadyScenarioApplication`](../src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioApplication.java#L11) and stores the resulting
+   [`SystemReadyScenarioApplication`](../src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioApplication.java#L12) and stores the resulting
    `ConfigurableApplicationContext`. It reads the actual server port through
-   `WebServerApplicationContext` and stores `baseUrl`. Scenario 001 supplies
-   `.properties(...)` defaults; 002 passes arguments through
-   `.run("--server.port=0", ...)`. Higher-priority configuration can override 001's defaults.
+   `WebServerApplicationContext` and stores `baseUrl`. Arguments to `.run(...)`
+   enable `scenario.system-ready.enabled=true`, set a random HTTP port, unique
+   topic/group names, and JSON settings for `scenario.systemready.model`.
 5. `SystemReadyScenarioApplication` imports the publisher, listener, probe, and
-   internal controller. Spring creates their beans and injects dependencies.
+   internal controller. Conditional configuration is enabled only by the scenario
+   flag. Publisher, listener, and probe have no component annotations, so the main
+   context does not discover them. The listener has `autoStartup=false`: the wiring
+   check does not subscribe to the broker.
 6. [`SystemReadyScenarioStarter.execute()`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyScenarioStarter.java#L51) calls
    `SystemReadyEnvironment.baselineReadiness()`, which makes an internal HTTP
    request to `/internal/system-ready/commands/baseline-readiness`.
-7. [`SystemReadyScenarioController`](../src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioController.java#L34) obtains three facts from [`SystemReadyProbe`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java#L27):
+7. [`SystemReadyScenarioController`](../src/main/java/io/drozda/sandbox/scenario/systemready/app/SystemReadyScenarioController.java#L36) obtains three facts from [`SystemReadyProbe`](../src/main/java/io/drozda/sandbox/scenario/systemready/SystemReadyProbe.java#L25):
    whether publisher, listener, and `KafkaTemplate` exist. It returns
    `SystemReadyScenarioStatus`.
 8. The starter starts a runtime session, emits component-readiness events, and
@@ -137,7 +140,8 @@ or processing completion time. These observations are what experiments verify.
 A Kafka record is experiment data. A runtime event describes an observed fact for
 the visualizer: component readiness, signal movement, or a node-detail change.
 The listener does not send messages directly to the browser or publish the UI
-timeline to Kafka.
+timeline to Kafka. The old `@VisualAction` annotation and AOP aspect were removed:
+they only logged around the publisher method and never generated runtime events.
 
 The starter receives experiment results and calls [`ScenarioRuntimeService`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L162)
 directly. `applyRuntimeEvent()` updates status maps and signals. [`publishRuntime()`](../src/main/java/io/drozda/sandbox/visualization/ScenarioRuntimeService.java#L270)
@@ -200,7 +204,7 @@ A new experiment needs consistent IDs in catalog, environment, and starter;
 scenario application configuration; an internal command; and an observable result.
 Add each node's key locations to [`ScenarioSourceCatalog`](../src/main/java/io/drozda/sandbox/visualization/ScenarioSourceCatalog.java#L9) and explain the Kafka
 behavior in a scenario article. Checks should verify observations, not just green
-colors. Examples include [`AllComponentsTest`](../src/test/java/io/drozda/sandbox/basic/AllComponentsTest.java#L37), [`TradeFlowScenarioTest`](../src/test/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowScenarioTest.java#L21), and
+colors. Examples include [`AllComponentsTest`](../src/test/java/io/drozda/sandbox/basic/AllComponentsTest.java#L25), [`TradeFlowScenarioTest`](../src/test/java/io/drozda/sandbox/scenario/tradeeventflow/TradeFlowScenarioTest.java#L21), and
 [`ScenarioRuntimeServiceTest`](../src/test/java/io/drozda/sandbox/visualization/ScenarioRuntimeServiceTest.java#L17).
 
 Current boundaries are a shared active runtime session, in-memory history,

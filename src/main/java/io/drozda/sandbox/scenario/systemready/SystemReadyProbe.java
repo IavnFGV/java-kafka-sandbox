@@ -1,13 +1,11 @@
 package io.drozda.sandbox.scenario.systemready;
 
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Component;
 
-import io.drozda.sandbox.TradeEventListener;
-import io.drozda.sandbox.TradeEventPublisher;
-import io.drozda.sandbox.model.TradeEvent;
+import io.drozda.sandbox.scenario.systemready.consumer.TradeEventListener;
+import io.drozda.sandbox.scenario.systemready.producer.TradeEventPublisher;
+import io.drozda.sandbox.scenario.systemready.model.TradeEvent;
 
-@Component
 public class SystemReadyProbe {
 
     private final TradeEventPublisher tradeEventPublisher;
